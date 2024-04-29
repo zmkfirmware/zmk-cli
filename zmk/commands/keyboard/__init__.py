@@ -1,3 +1,7 @@
+"""
+"zmk keyboard" command.
+"""
+
 import typer
 
 from .add import keyboard_add

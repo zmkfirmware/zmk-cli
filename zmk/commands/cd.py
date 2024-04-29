@@ -1,7 +1,12 @@
+"""
+"zmk cd" command.
+"""
+
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
+
 import shellingham
 import typer
 
@@ -22,7 +27,7 @@ def cd(ctx: typer.Context):
     home = cfg.home_path
 
     if home is None:
-        raise InvalidRepoError.not_set()
+        raise InvalidRepoError.home_not_set()
 
     if home == Path(os.getcwd()):
         # Already in the home directory. Nothing to do.

@@ -1,5 +1,10 @@
+"""
+CLI tool to setup up ZMK Firmware.
+"""
+
 from pathlib import Path
 from typing import Optional
+
 import typer
 from typing_extensions import Annotated
 
@@ -20,6 +25,13 @@ def main(
         ),
     ] = None,
 ):
-    """Set up ZMK Firmware"""
+    """
+    Set up ZMK Firmware
+
+    Run "zmk init" to set up a user config repo. All other "zmk" commands will
+    run in this repo unless the current working directory is a different repo.
+
+    Once you have a config repo, run "zmk keyboard add" to add a keyboard to it.
+    """
     cfg = Config(config_file)
     ctx.obj = cfg

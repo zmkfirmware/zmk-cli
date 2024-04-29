@@ -1,3 +1,7 @@
+"""
+"zmk west" command.
+"""
+
 import typer
 
 from ..config import Config

@@ -1,3 +1,7 @@
+"""
+"zmk init" command.
+"""
+
 import typer
 
 from ..config import Config

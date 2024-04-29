@@ -1,9 +1,14 @@
+"""
+Config repo and Zephyr module utilities.
+"""
+
+import os
+import shutil
 from contextlib import redirect_stdout
 from io import StringIO
-import os
 from pathlib import Path
-import shutil
 from typing import Any, Generator, Optional
+
 from west.app.main import main as west_main
 
 from .util import read_yaml, set_directory

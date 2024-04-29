@@ -1,12 +1,14 @@
+"""
+ZMK CLI subcommands.
+"""
+
 import typer
-from . import cd
-from . import config
-from . import init
-from . import keyboard
-from . import west
+
+from . import cd, config, init, keyboard, west
 
 
 def register(app: typer.Typer):
+    """Register all commands with the app"""
     app.command()(cd.cd)
     app.command()(config.config)
     app.command()(init.init)

@@ -1,14 +1,18 @@
-from enum import StrEnum
+"""
+"zmk keyboard list" command.
+"""
+
 import sys
+from enum import StrEnum
 from typing import Iterable, Optional
-from rich.console import Console
-from rich.columns import Columns
+
 import typer
+from rich.columns import Columns
+from rich.console import Console
 from typing_extensions import Annotated
 
 from ...hardware import Board, Hardware, Shield, get_hardware, is_compatible
 from ..config import Config
-
 
 # TODO: allow filtering output by interconnect
 # TODO: allow output as unformatted list

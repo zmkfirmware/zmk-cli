@@ -1,4 +1,9 @@
+"""
+"zmk keyboard add" command.
+"""
+
 from typing import Optional
+
 import typer
 from typing_extensions import Annotated
 

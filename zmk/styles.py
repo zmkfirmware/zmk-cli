@@ -1,3 +1,7 @@
+"""
+Console styling utilities.
+"""
+
 from rich.highlighter import RegexHighlighter
 from rich.theme import Theme
 

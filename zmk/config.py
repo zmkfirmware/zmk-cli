@@ -1,14 +1,20 @@
+"""
+User configuration.
+"""
+
 from collections import defaultdict
 from configparser import ConfigParser
+from enum import StrEnum
 from itertools import chain
 from pathlib import Path
 from typing import Optional
+
 import platformdirs
 
 from .repo import Repo, is_repo
 
 
-class Settings:
+class Settings(StrEnum):
     """List of setting names used by commands"""
 
     USER_HOME = "user.home"
@@ -16,14 +22,21 @@ class Settings:
 
 
 class InvalidRepoError(Exception):
+    """Error indicating a failure to find the ZMK config repo"""
+
     @staticmethod
-    def not_set():
+    def home_not_set():
+        """Get an InvalidRepoError indicating the home directory setting is not set"""
         raise InvalidRepoError(
             "Home directory not set. Run 'zmk init' to create a new config repo."
         )
 
     @staticmethod
-    def missing(path: Path):
+    def home_missing(path: Path):
+        """
+        Get an InvalidRepoError indicating the home directory setting is set, but
+        that path is missing or is no longer a repo.
+        """
         raise InvalidRepoError(
             f'Home directory "{path}" is missing or no longer looks like a config repo. '
             "Run 'zmk config user.home=/path/to/zmk-config' if you moved it, "
@@ -61,8 +74,8 @@ class Config:
             section, option, vars=self._vars(section), **kwargs
         )
 
-    def set(self, name: str, value: Optional[str] = None):
-        """Set a setting"""
+    def set(self, name: str, value: Optional[str]):
+        """Set a setting. Set to None to remove the setting"""
         section, option = self._split_option(name)
 
         if value is None:
@@ -75,7 +88,8 @@ class Config:
         except KeyError:
             pass
 
-    def set_override(self, name: str, value: Optional[str] = None):
+    # TODO: is this still necessary?
+    def set_override(self, name: str, value: Optional[str]):
         """
         Set a temporary override for a a setting.
 
@@ -135,12 +149,12 @@ class Config:
 
         home = self.home_path
         if not home:
-            raise InvalidRepoError.not_set()
+            raise InvalidRepoError.home_not_set()
 
         if is_repo(home):
             return Repo(home)
 
-        raise InvalidRepoError.missing(home)
+        raise InvalidRepoError.home_missing(home)
 
 
 def _default_config_path():

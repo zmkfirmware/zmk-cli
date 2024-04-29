@@ -1,11 +1,15 @@
+"""
+"zmk config" command.
+"""
+
 from typing import Optional
-from typing_extensions import Annotated
-from rich.console import Console
+
 import typer
+from rich.console import Console
+from typing_extensions import Annotated
 
 from .. import styles
 from ..config import Config
-
 
 console = Console(
     highlighter=styles.SeparatorHighlighter(), theme=styles.DIM_SEPARATORS
@@ -23,8 +27,16 @@ def config(
     ] = None,
     path: Annotated[
         bool,
-        typer.Option(help="Print the path to the ZMK CLI configuration file and exit."),
+        typer.Option(
+            "--path",
+            "-p",
+            help="Print the path to the ZMK CLI configuration file and exit.",
+        ),
     ] = False,
+    unset: Annotated[
+        Optional[list[str]],
+        typer.Option("--unset", "-u", help="Unset the settings with the given names."),
+    ] = None,
 ):
     """Read or write ZMK CLI configuration. Lists all settings if run with no arguments."""
 
@@ -34,10 +46,15 @@ def config(
         print(cfg.path)
         return
 
-    if not settings:
-        _list(cfg)
-        return
+    if unset:
+        _unset_settings(cfg, unset)
+    elif settings:
+        _set_settings(cfg, settings)
+    else:
+        _list_settings(cfg)
 
+
+def _set_settings(cfg: Config, settings: list[str]):
     show_name = len(settings) > 1
     do_write = False
 
@@ -51,11 +68,17 @@ def config(
             _get(cfg, name, show_name=show_name)
 
     if do_write:
-        cfg.write()
-        console.print(f"Configuration saved to {cfg.path}", highlight=False)
+        _write(cfg)
 
 
-def _list(cfg: Config):
+def _unset_settings(cfg: Config, settings: list[str]):
+    for setting in settings:
+        cfg.set(setting, None)
+
+    _write(cfg)
+
+
+def _list_settings(cfg: Config):
     for name, value in sorted(cfg.items()):
         console.print(f"{name}={value}")
 
@@ -74,6 +97,11 @@ def _set(cfg: Config, name: str, value: Optional[str] = None):
 
     cfg.set(name, value)
     console.print(f"{name}: {previous} -> {value}")
+
+
+def _write(cfg: Config):
+    cfg.write()
+    console.print(f"Configuration saved to {cfg.path}", highlight=False)
 
 
 def _strip_quotes(value: str):
