@@ -5,11 +5,9 @@ import sys
 import shellingham
 import typer
 
-from ..config import Config
-from ..subcommands import command
+from ..config import Config, InvalidRepoError
 
 
-@command
 def cd(ctx: typer.Context):
     """Go to the ZMK config repo."""
     if not sys.stdout.isatty():
@@ -21,7 +19,10 @@ def cd(ctx: typer.Context):
         raise typer.Exit(code=1)
 
     cfg = ctx.find_object(Config)
-    home = cfg.ensure_home()
+    home = cfg.home_path
+
+    if home is None:
+        raise InvalidRepoError.not_set()
 
     if home == Path(os.getcwd()):
         # Already in the home directory. Nothing to do.

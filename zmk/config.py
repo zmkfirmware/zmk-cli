@@ -5,16 +5,30 @@ from pathlib import Path
 from typing import Optional
 import platformdirs
 
+from .repo import Repo, is_repo
 
-class KnownSettings:
+
+class Settings:
     """List of setting names used by commands"""
 
     USER_HOME = "user.home"
     USER_NAME = "user.name"
 
 
-class InvalidHomeError(Exception):
-    pass
+class InvalidRepoError(Exception):
+    @staticmethod
+    def not_set():
+        raise InvalidRepoError(
+            "Home directory not set. Run 'zmk init' to create a new config repo."
+        )
+
+    @staticmethod
+    def missing(path: Path):
+        raise InvalidRepoError(
+            f'Home directory "{path}" is missing or no longer looks like a config repo. '
+            "Run 'zmk config user.home=/path/to/zmk-config' if you moved it, "
+            "or run 'zmk init' to create a new config repo."
+        )
 
 
 class Config:
@@ -96,39 +110,37 @@ class Config:
     # Shortcuts for commonly-used settings:
 
     @property
-    def home_path(self) -> Path:
+    def home_path(self) -> Optional[Path]:
         """
         Path to ZMK config repo.
-
-        Raised InvalidHomeError if the home directory is not set or no longer exists.
         """
-        home = self.get(KnownSettings.USER_HOME, fallback=None)
+        home = self.get(Settings.USER_HOME, fallback=None)
         return Path(home) if home else None
 
     @home_path.setter
     def home_path(self, value: Path):
-        self.set_override(KnownSettings.USER_HOME, str(value.resolve()))
+        self.set(Settings.USER_HOME, str(value.resolve()))
 
-    def ensure_home(self) -> Path:
+    def get_repo(self) -> Repo:
         """
-        Verifies that home_path is set and points to a valid directory.
-        If so, returns it. Otherwise, raises InvalidHomeError.
+        Return an object representing the repo at the current working directory
+        or the home path setting.
+
+        Raises InvalidRepoError if neither the current directory nor the home
+        path point to a valid directory.
         """
+        cwd = Path()
+        if is_repo(cwd):
+            return Repo(cwd)
+
         home = self.home_path
-        if home is None:
-            raise InvalidHomeError(
-                "Home directory not set. Run 'zmk init' to create a new config repo."
-            )
+        if not home:
+            raise InvalidRepoError.not_set()
 
-        home_path = Path(home)
-        if not home_path.exists():
-            raise InvalidHomeError(
-                f'Home directory "{home_path}" is missing. '
-                "Run 'zmk config user.home=/path/to/zmk-config' to fix it, "
-                "or run 'zmk init' to create a new config repo."
-            )
+        if is_repo(home):
+            return Repo(home)
 
-        return home_path
+        raise InvalidRepoError.missing(home)
 
 
 def _default_config_path():

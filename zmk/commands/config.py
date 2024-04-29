@@ -5,14 +5,13 @@ import typer
 
 from .. import styles
 from ..config import Config
-from ..subcommands import command
+
 
 console = Console(
     highlighter=styles.SeparatorHighlighter(), theme=styles.DIM_SEPARATORS
 )
 
 
-@command
 def config(
     ctx: typer.Context,
     settings: Annotated[
@@ -22,10 +21,18 @@ def config(
             help="One or more settings to get or set.",
         ),
     ] = None,
+    path: Annotated[
+        bool,
+        typer.Option(help="Print the path to the ZMK CLI configuration file and exit."),
+    ] = False,
 ):
     """Read or write ZMK CLI configuration. Lists all settings if run with no arguments."""
 
     cfg = ctx.find_object(Config)
+
+    if path:
+        print(cfg.path)
+        return
 
     if not settings:
         _list(cfg)
