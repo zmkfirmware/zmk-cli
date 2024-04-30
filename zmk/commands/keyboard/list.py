@@ -2,14 +2,12 @@
 "zmk keyboard list" command.
 """
 
-import sys
 from enum import StrEnum
-from typing import Iterable, Optional
+from typing import Annotated, Iterable, Optional
 
 import typer
 from rich.columns import Columns
 from rich.console import Console
-from typing_extensions import Annotated
 
 from ...hardware import Board, Hardware, Shield, get_hardware, is_compatible
 from ..config import Config
@@ -71,25 +69,31 @@ def keyboard_list(
     groups = get_hardware(repo)
 
     if board:
+        # Filter to keyboard shields compatible with a given controller.
         item = groups.find_controller(board)
         if item is None:
-            sys.exit(f'Could not find controller board "{board}".')
+            console.print(f'Could not find controller board "{board}".')
+            raise typer.Exit(code=1)
 
         groups.keyboards = [kb for kb in groups.keyboards if is_compatible(item, kb)]
         list_type = ListType.KEYBOARD
 
     elif shield:
+        # Filter to controllers compatible with a given keyboard shield.
         item = groups.find_keyboard(shield)
         if item is None:
-            sys.exit(f'Could not find keyboard "{shield}".')
+            console.print(f'Could not find keyboard "{shield}".')
+            raise typer.Exit(code=1)
 
         if not isinstance(item, Shield):
-            sys.exit(f'Keyboard "{shield}" is a standalone keyboard.')
+            console.print(f'Keyboard "{shield}" is a standalone keyboard.')
+            raise typer.Exit(code=1)
 
         groups.controllers = [c for c in groups.controllers if is_compatible(c, item)]
         list_type = ListType.CONTROLLER
 
     elif standalone:
+        # Filter to keyboards with on-board controllers
         groups.keyboards = [kb for kb in groups.keyboards if isinstance(kb, Board)]
         list_type = ListType.KEYBOARD
 

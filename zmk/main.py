@@ -3,10 +3,9 @@ CLI tool to setup up ZMK Firmware.
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 import typer
-from typing_extensions import Annotated
 
 from . import commands
 from .config import Config

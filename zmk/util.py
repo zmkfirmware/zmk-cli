@@ -7,9 +7,11 @@ import operator
 import os
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterable, TypeVar
+from typing import Any, Iterable, TypeVar
 
+import rich
 from ruamel.yaml import YAML
+import typer
 
 T = TypeVar("T")
 
@@ -36,3 +38,9 @@ def set_directory(path: Path):
         yield
     finally:
         os.chdir(original)
+
+
+def fatal_error(message: Any):
+    """Print an error message and exit"""
+    rich.print(message)
+    raise typer.Exit(code=1)

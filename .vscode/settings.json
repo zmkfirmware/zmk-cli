@@ -1,7 +1,10 @@
 {
   "editor.formatOnSave": true,
   "[python]": {
-    "editor.defaultFormatter": "ms-python.black-formatter"
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "always"
+    }
   },
   "[markdown][yaml]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"

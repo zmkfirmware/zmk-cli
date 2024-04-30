@@ -2,10 +2,9 @@
 "zmk remove" command.
 """
 
-from typing import Optional
+from typing import Annotated, Optional
 
 import typer
-from typing_extensions import Annotated
 
 from ..config import Config
 

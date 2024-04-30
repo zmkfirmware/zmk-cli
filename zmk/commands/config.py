@@ -2,11 +2,10 @@
 "zmk config" command.
 """
 
-from typing import Optional
+from typing import Annotated, Optional
 
 import typer
 from rich.console import Console
-from typing_extensions import Annotated
 
 from .. import styles
 from ..config import Config
@@ -34,9 +33,9 @@ def config(
         ),
     ] = False,
     unset: Annotated[
-        Optional[list[str]],
-        typer.Option("--unset", "-u", help="Unset the settings with the given names."),
-    ] = None,
+        bool,
+        typer.Option("--unset", "-u", help="Unset the given settings."),
+    ] = False,
 ):
     """Read or write ZMK CLI configuration. Lists all settings if run with no arguments."""
 
@@ -47,7 +46,7 @@ def config(
         return
 
     if unset:
-        _unset_settings(cfg, unset)
+        _unset_settings(cfg, settings)
     elif settings:
         _set_settings(cfg, settings)
     else:

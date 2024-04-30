@@ -7,11 +7,13 @@ from configparser import ConfigParser
 from enum import StrEnum
 from itertools import chain
 from pathlib import Path
-from typing import Optional
+from typing import NoReturn, Optional
 
 import platformdirs
+from rich.markdown import Markdown
 
 from .repo import Repo, is_repo
+from .util import fatal_error
 
 
 class Settings(StrEnum):
@@ -20,28 +22,24 @@ class Settings(StrEnum):
     USER_HOME = "user.home"
     USER_NAME = "user.name"
 
+    CORE_EDITOR = "core.editor"  # Text editor tool
+    CORE_EXPLORER = "core.explorer"  # Directory editor tool
 
-class InvalidRepoError(Exception):
-    """Error indicating a failure to find the ZMK config repo"""
 
-    @staticmethod
-    def home_not_set():
-        """Get an InvalidRepoError indicating the home directory setting is not set"""
-        raise InvalidRepoError(
-            "Home directory not set. Run 'zmk init' to create a new config repo."
-        )
+def fatal_home_not_set() -> NoReturn:
+    fatal_error(
+        Markdown("Home directory not set. Run `zmk init` to create a new config repo.")
+    )
 
-    @staticmethod
-    def home_missing(path: Path):
-        """
-        Get an InvalidRepoError indicating the home directory setting is set, but
-        that path is missing or is no longer a repo.
-        """
-        raise InvalidRepoError(
+
+def fatal_home_missing(path: Path) -> NoReturn:
+    fatal_error(
+        Markdown(
             f'Home directory "{path}" is missing or no longer looks like a config repo. '
-            "Run 'zmk config user.home=/path/to/zmk-config' if you moved it, "
-            "or run 'zmk init' to create a new config repo."
+            "Run `zmk config user.home=/path/to/zmk-config` if you moved it, "
+            "or run `zmk init` to create a new config repo."
         )
+    )
 
 
 class Config:
@@ -140,8 +138,8 @@ class Config:
         Return an object representing the repo at the current working directory
         or the home path setting.
 
-        Raises InvalidRepoError if neither the current directory nor the home
-        path point to a valid directory.
+        Exits the program if neither the current directory nor the home path
+        point to a valid directory.
         """
         cwd = Path()
         if is_repo(cwd):
@@ -149,12 +147,12 @@ class Config:
 
         home = self.home_path
         if not home:
-            raise InvalidRepoError.home_not_set()
+            fatal_home_not_set()
 
         if is_repo(home):
             return Repo(home)
 
-        raise InvalidRepoError.home_missing(home)
+        fatal_home_missing(home)
 
 
 def _default_config_path():

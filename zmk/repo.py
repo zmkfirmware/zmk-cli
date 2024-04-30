@@ -91,6 +91,11 @@ class Repo(Module):
             yield Module(self.west_path / line)
 
     @property
+    def config_path(self) -> Path:
+        """Path to the "config" folder."""
+        return self.path / _CONFIG_DIR_NAME
+
+    @property
     def west_path(self) -> Path:
         """Path to the west staging folder."""
         return self.path / _WEST_STAGING_PATH

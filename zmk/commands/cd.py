@@ -10,7 +10,7 @@ from pathlib import Path
 import shellingham
 import typer
 
-from ..config import Config, InvalidRepoError
+from ..config import Config, fatal_home_not_set
 
 
 def cd(ctx: typer.Context):
@@ -27,7 +27,7 @@ def cd(ctx: typer.Context):
     home = cfg.home_path
 
     if home is None:
-        raise InvalidRepoError.home_not_set()
+        fatal_home_not_set()
 
     if home == Path(os.getcwd()):
         # Already in the home directory. Nothing to do.
