@@ -25,3 +25,5 @@ def keyboard_add(
     """Add configuration for a keyboard and add it to the build."""
     cfg = ctx.find_object(Config)
     repo = cfg.get_repo()
+
+    # TODO

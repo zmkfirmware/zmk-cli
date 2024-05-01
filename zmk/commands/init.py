@@ -11,3 +11,4 @@ def init(ctx: typer.Context):
     """Create a new ZMK config repo or clone an existing one."""
 
     cfg = ctx.find_object(Config)
+    # TODO

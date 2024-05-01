@@ -27,3 +27,5 @@ def keyboard_remove(
     """Remove a keyboard from the build."""
     cfg = ctx.find_object(Config)
     repo = cfg.get_repo()
+
+    # TODO
