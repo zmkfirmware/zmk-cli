@@ -12,4 +12,4 @@ class SeparatorHighlighter(RegexHighlighter):
     highlights = [r"(?P<separator>[:=]|->)"]
 
 
-DIM_SEPARATORS = Theme({"separator": "blue"})
+DIM_SEPARATORS = Theme({"separator": "dim"})
