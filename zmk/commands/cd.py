@@ -9,19 +9,21 @@ from pathlib import Path
 
 import shellingham
 import typer
+from rich.markdown import Markdown
 
 from ..config import Config, fatal_home_not_set
+from ..util import fatal_error
 
 
 def cd(ctx: typer.Context):
     """Go to the ZMK config repo."""
     if not sys.stdout.isatty():
-        print(
-            "This command can only be used from an interactive shell. "
-            "Use 'cd $(zmk config user.home)' instead.",
-            file=sys.stderr,
+        fatal_error(
+            Markdown(
+                "This command can only be used from an interactive shell. "
+                "Use `cd $(zmk config user.home)` instead."
+            )
         )
-        raise typer.Exit(code=1)
 
     cfg = ctx.find_object(Config)
     home = cfg.home_path

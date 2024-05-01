@@ -5,13 +5,14 @@ General utilities.
 import functools
 import operator
 import os
+import sys
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterable, TypeVar
 
 import rich
-from ruamel.yaml import YAML
 import typer
+from ruamel.yaml import YAML
 
 T = TypeVar("T")
 
@@ -42,5 +43,5 @@ def set_directory(path: Path):
 
 def fatal_error(message: Any):
     """Print an error message and exit"""
-    rich.print(message)
+    rich.print(message, file=sys.stderr)
     raise typer.Exit(code=1)

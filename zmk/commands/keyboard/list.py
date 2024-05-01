@@ -5,11 +5,12 @@
 from enum import StrEnum
 from typing import Annotated, Iterable, Optional
 
+import rich
 import typer
 from rich.columns import Columns
-from rich.console import Console
 
 from ...hardware import Board, Hardware, Shield, get_hardware, is_compatible
+from ...util import fatal_error
 from ..config import Config
 
 # TODO: allow filtering output by interconnect
@@ -62,7 +63,7 @@ def keyboard_list(
 ):
     """Print a list of supported keyboards."""
 
-    console = Console()
+    console = rich.get_console()
 
     cfg = ctx.find_object(Config)
     repo = cfg.get_repo()
@@ -72,8 +73,7 @@ def keyboard_list(
         # Filter to keyboard shields compatible with a given controller.
         item = groups.find_controller(board)
         if item is None:
-            console.print(f'Could not find controller board "{board}".')
-            raise typer.Exit(code=1)
+            fatal_error(f'Could not find controller board "{board}".')
 
         groups.keyboards = [kb for kb in groups.keyboards if is_compatible(item, kb)]
         list_type = ListType.KEYBOARD
@@ -82,12 +82,10 @@ def keyboard_list(
         # Filter to controllers compatible with a given keyboard shield.
         item = groups.find_keyboard(shield)
         if item is None:
-            console.print(f'Could not find keyboard "{shield}".')
-            raise typer.Exit(code=1)
+            fatal_error(f'Could not find keyboard "{shield}".')
 
         if not isinstance(item, Shield):
-            console.print(f'Keyboard "{shield}" is a standalone keyboard.')
-            raise typer.Exit(code=1)
+            fatal_error(f'Keyboard "{shield}" is a standalone keyboard.')
 
         groups.controllers = [c for c in groups.controllers if is_compatible(c, item)]
         list_type = ListType.CONTROLLER
