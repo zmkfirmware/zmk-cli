@@ -4,13 +4,14 @@ Terminal menus
 
 from typing import Any, Callable, Generic, Iterable, Optional, TypeVar
 
+import rich
 from rich.console import Console
-from rich.style import Style
+from rich.theme import Theme
 
 from . import terminal
 
 
-class StopMenu(Exception):
+class StopMenu(KeyboardInterrupt):
     """
     Exception thrown when the user cancels the menu without making a selection
     """
@@ -24,18 +25,25 @@ class TerminalMenu(Generic[T]):
     Manages an interactive menu in a terminal window.
     """
 
-    TITLE_LINES = 3  # One line of context + title line + blank line at end
+    CONTROLS = "[↑↓: select] [Enter: confirm] [Esc: cancel]"
+    EXTRA_LINES = 2  # One line of context + blank line at end
+    DEFAULT_THEME = Theme(
+        {
+            "title": "bright_magenta",
+            "focus": "bright_cyan",
+            "unfocus": "default",
+            "ellipsis": "dim",
+            "controls": "dim",
+        }
+    )
 
     title: Any
     items: list[T]
     formatter: Callable[[T], str]
-    title_style: Optional[str | Style]
-    default_style: Optional[str | Style]
-    focus_style: Optional[str | Style]
-    ellipsis_style: Optional[str | Style]
     default_index: int
     _focus_index: int
     _scroll_index: int
+    _title_lines: int
 
     def __init__(
         self,
@@ -43,23 +51,19 @@ class TerminalMenu(Generic[T]):
         items: Iterable[T],
         formatter: Optional[Callable[[T], Any]] = None,
         console: Optional[Console] = None,
-        title_style: Optional[str | Style] = "bold yellow",
-        default_style: Optional[str | Style] = None,
-        focus_style: Optional[str | Style] = "green",
-        ellipsis_style: Optional[str | Style] = "dim",
+        theme: Optional[Theme] = None,
         default_index=0,
     ):
         self.title = title
         self.items = list(items)
         self.formatter = formatter or str
-        self.console = console or Console()
-        self.title_style = title_style
-        self.default_style = default_style
-        self.focus_style = focus_style
-        self.ellipsis_style = ellipsis_style
+        self.console = console or rich.get_console()
+        self.theme = theme or self.DEFAULT_THEME
         self.default_index = default_index
         self._focus_index = 0
         self._scroll_index = 0
+        # TODO: self.console.measure() doesn't give useful data?
+        self._title_lines = 1
 
     def show(self):
         """
@@ -68,8 +72,9 @@ class TerminalMenu(Generic[T]):
         :return: The selected item.
         :raises StopMenu: The user canceled the menu without making a selection.
         """
+
         try:
-            with terminal.hide_cursor():
+            with terminal.hide_cursor(), self.console.use_theme(self.theme):
                 self._focus_index = self.default_index
 
                 while True:
@@ -82,15 +87,15 @@ class TerminalMenu(Generic[T]):
                     self._reset_cursor_to_top()
         finally:
             # Add one blank line at the end to separate further output from the menu.
-            print()
+            self._erase_controls()
 
     @property
     def _menu_height(self):
-        return self.console.size.height - self.TITLE_LINES
+        return self.console.height - self.EXTRA_LINES - self._title_lines
 
     def _print_menu(self):
         self.console.print(
-            self.title, style=self.title_style, justify="left", overflow="ellipsis"
+            self.title, style="title", justify="left", overflow="ellipsis"
         )
 
         display_count = self._get_display_count()
@@ -107,12 +112,10 @@ class TerminalMenu(Generic[T]):
 
             self._print_item(self.items[index], focused=focused, show_more=show_more)
 
+        self.console.print(self.CONTROLS, style="controls", end="", overflow="crop")
+
     def _print_item(self, item: T, focused: bool, show_more: bool):
-        style = (
-            self.ellipsis_style
-            if show_more
-            else self.focus_style if focused else self.default_style
-        )
+        style = "ellipsis" if show_more else "focus" if focused else "unfocus"
 
         indent = "> " if focused else "  "
         text = "..." if show_more else self.formatter(item)
@@ -176,6 +179,10 @@ class TerminalMenu(Generic[T]):
         row = max(0, row - display_count - 1)
 
         terminal.set_cursor_pos(row=row)
+
+    def _erase_controls(self):
+        terminal.set_cursor_column(0)
+        self.console.print(justify="left")
 
 
 def show_menu(
