@@ -27,12 +27,14 @@ class Settings(StrEnum):
 
 
 def fatal_home_not_set() -> NoReturn:
+    """Exits with a message indicating the home directory is not set."""
     fatal_error(
         Markdown("Home directory not set. Run `zmk init` to create a new config repo.")
     )
 
 
 def fatal_home_missing(path: Path) -> NoReturn:
+    """Exits with a message indicating the home directory is missing."""
     fatal_error(
         Markdown(
             f'Home directory "{path}" is missing or no longer looks like a config repo. '
@@ -63,53 +65,32 @@ class Config:
     def get(self, name: str, **kwargs) -> str:
         """Get a setting"""
         section, option = self._split_option(name)
-        return self._parser.get(section, option, vars=self._vars(section), **kwargs)
+        return self._parser.get(section, option, **kwargs)
 
     def getboolean(self, name: str, **kwargs) -> bool:
         """Get a setting as a boolean"""
         section, option = self._split_option(name)
-        return self._parser.getboolean(
-            section, option, vars=self._vars(section), **kwargs
-        )
+        return self._parser.getboolean(section, option, **kwargs)
 
-    def set(self, name: str, value: Optional[str]):
-        """Set a setting. Set to None to remove the setting"""
+    def set(self, name: str, value: str):
+        """Set a setting"""
         section, option = self._split_option(name)
+        self._parser.set(section, option, value)
 
-        if value is None:
-            self._parser.remove_option(section, option)
-        else:
-            self._parser.set(section, option, value)
-
-        try:
-            del self._vars(section)[option]
-        except KeyError:
-            pass
-
-    # TODO: is this still necessary?
-    def set_override(self, name: str, value: Optional[str]):
-        """
-        Set a temporary override for a a setting.
-
-        Calling write() will not save the overridden value to the config file.
-
-        Calling set() will clear any corresponding override.
-        """
+    def remove(self, name: str):
+        """Remove a setting"""
         section, option = self._split_option(name)
-        self._vars(section)[option] = value
+        self._parser.remove_option(section, option)
 
     def items(self):
         """Yields ('section.option', 'value') tuples for all settings"""
         sections = set(chain(self._overrides.keys(), self._parser.sections()))
 
         for section in sections:
-            items = self._parser.items(section, vars=self._vars(section))
+            items = self._parser.items(section)
 
             for option, value in items:
                 yield f"{section}.{option}", value
-
-    def _vars(self, section: str):
-        return self._overrides[section]
 
     def _split_option(self, name: str):
         section, _, option = name.partition(".")
@@ -149,10 +130,10 @@ class Config:
         if not home:
             fatal_home_not_set()
 
-        if is_repo(home):
-            return Repo(home)
+        if not is_repo(home):
+            fatal_home_missing(home)
 
-        fatal_home_missing(home)
+        return Repo(home)
 
 
 def _default_config_path():

@@ -165,7 +165,7 @@ def _select_editor(cfg: Config):
 
     explorer = None
     if editor.support & Support.DIR:
-        cfg.set(Settings.CORE_EXPLORER, None)
+        cfg.remove(Settings.CORE_EXPLORER)
     elif dir_editors:
         rich.print("This text editor only supports opening files.")
         explorer = show_menu(

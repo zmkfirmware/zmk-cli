@@ -72,7 +72,7 @@ def _set_settings(cfg: Config, settings: list[str]):
 
 def _unset_settings(cfg: Config, settings: list[str]):
     for setting in settings:
-        cfg.set(setting, None)
+        cfg.remove(setting)
 
     _write(cfg)
 
@@ -90,8 +90,7 @@ def _get(cfg: Config, name: str, show_name: bool):
         console.print(value)
 
 
-def _set(cfg: Config, name: str, value: Optional[str] = None):
-    value = value or None
+def _set(cfg: Config, name: str, value: str):
     previous = cfg.get(name, fallback=None)
 
     cfg.set(name, value)
