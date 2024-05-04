@@ -13,6 +13,7 @@ def register(app: typer.Typer):
     app.command()(code.code)
     app.command()(config.config)
     app.command()(init.init)
+    app.command()(west.update)
     app.command(
         add_help_option=False,
         context_settings={

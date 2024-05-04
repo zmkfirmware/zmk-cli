@@ -19,3 +19,12 @@ def west(ctx: typer.Context):
         return
 
     repo.run_west(*ctx.args)
+
+
+def update(ctx: typer.Context):
+    """Get the latest versions of dependencies (run "west update")."""
+
+    cfg = ctx.find_object(Config)
+    repo = cfg.get_repo()
+
+    repo.run_west("update")
