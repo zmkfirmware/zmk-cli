@@ -96,7 +96,7 @@ class Editor:
     paths: list[str] = field(default_factory=list)
     "Extra paths to search for the executable if `test` is not set"
 
-    def __str__(self):
+    def __rich__(self):
         return self.name
 
     def get_command(self):
@@ -167,9 +167,10 @@ def _select_editor(cfg: Config):
     if editor.support & Support.DIR:
         cfg.remove(Settings.CORE_EXPLORER)
     elif dir_editors:
-        rich.print("This text editor only supports opening files.")
         explorer = show_menu(
-            "Select another tool for opening directories:", dir_editors
+            "This text editor only supports opening files.\n"
+            "Select another tool for opening directories:",
+            dir_editors,
         )
         cfg.set(Settings.CORE_EXPLORER, explorer.get_command())
 

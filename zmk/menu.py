@@ -2,7 +2,7 @@
 Terminal menus
 """
 
-from typing import Any, Callable, Generic, Iterable, Optional, TypeVar
+from typing import Any, Generic, Iterable, Optional, TypeVar
 
 import rich
 from rich.console import Console
@@ -26,7 +26,7 @@ class TerminalMenu(Generic[T]):
     """
 
     CONTROLS = "[↑↓: select] [Enter: confirm] [Esc: cancel]"
-    EXTRA_LINES = 2  # One line of context + blank line at end
+    EXTRA_LINES = 2  # One line of context before the menu + controls line at end
     DEFAULT_THEME = Theme(
         {
             "title": "bright_magenta",
@@ -39,31 +39,37 @@ class TerminalMenu(Generic[T]):
 
     title: Any
     items: list[T]
-    formatter: Callable[[T], str]
     default_index: int
     _focus_index: int
     _scroll_index: int
-    _title_lines: int
+    _num_title_lines: int
 
     def __init__(
         self,
         title: Any,
         items: Iterable[T],
-        formatter: Optional[Callable[[T], Any]] = None,
+        default_index=0,
         console: Optional[Console] = None,
         theme: Optional[Theme] = None,
-        default_index=0,
     ):
+        """
+        An interactive terminal menu.
+
+        :param title: Text to display at the top of the menu.
+        :param items: List of items to display. Items should either be strings or
+            implement __rich__() to return the data to display.
+        :param default_index: Index of the item to focus initially.
+        :param console: Console in which to display the menu.
+        :param theme: Theme to apply. See TerminalMenu.DEFAULT_THEME for style names.
+        """
         self.title = title
         self.items = list(items)
-        self.formatter = formatter or str
         self.console = console or rich.get_console()
         self.theme = theme or self.DEFAULT_THEME
         self.default_index = default_index
         self._focus_index = 0
         self._scroll_index = 0
-        # TODO: self.console.measure() doesn't give useful data?
-        self._title_lines = 1
+        self._num_title_lines = len(self.console.render_lines(self.title))
 
     def show(self):
         """
@@ -91,7 +97,7 @@ class TerminalMenu(Generic[T]):
 
     @property
     def _menu_height(self):
-        return self.console.height - self.EXTRA_LINES - self._title_lines
+        return self.console.height - self.EXTRA_LINES - self._num_title_lines
 
     def _print_menu(self):
         self.console.print(
@@ -118,10 +124,11 @@ class TerminalMenu(Generic[T]):
         style = "ellipsis" if show_more else "focus" if focused else "unfocus"
 
         indent = "> " if focused else "  "
-        text = "..." if show_more else self.formatter(item)
-        text = indent + text
+        item = "..." if show_more else item
 
-        self.console.print(text, style=style, justify="left", overflow="ellipsis")
+        self.console.print(
+            indent, item, sep="", style=style, justify="left", overflow="ellipsis"
+        )
 
     def _handle_input(self):
         key = terminal.read_key()
@@ -176,7 +183,7 @@ class TerminalMenu(Generic[T]):
         display_count = self._get_display_count()
 
         row, _ = terminal.get_cursor_pos()
-        row = max(0, row - display_count - 1)
+        row = max(0, row - display_count - self._num_title_lines)
 
         terminal.set_cursor_pos(row=row)
 
@@ -188,23 +195,27 @@ class TerminalMenu(Generic[T]):
 def show_menu(
     title: str,
     items: Iterable[T],
-    formatter: Optional[Callable[[T], Any]] = None,
     default_index=0,
+    console: Optional[Console] = None,
+    theme: Optional[Theme] = None,
 ):
     """
     Displays an interactive menu.
 
     :param title: Text to display at the top of the menu.
-    :param items: List of items to display.
-    :param formatter: Function which returns the text to display for an item.
+    :param items: List of items to display. Items should either be strings or
+        implement __rich__() to return the data to display.
     :param default_index: Index of the item to focus initially.
+    :param console: Console in which to display the menu.
+    :param theme: Theme to apply. See TerminalMenu.DEFAULT_THEME for style names.
     :return: The selected item.
     :raises StopMenu: The user canceled the menu without making a selection.
     """
     menu = TerminalMenu(
         title=title,
         items=items,
-        formatter=formatter,
         default_index=default_index,
+        console=console,
+        theme=theme,
     )
     return menu.show()
