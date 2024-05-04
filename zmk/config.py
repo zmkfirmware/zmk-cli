@@ -9,7 +9,7 @@ from itertools import chain
 from pathlib import Path
 from typing import NoReturn, Optional
 
-import platformdirs
+import typer
 from rich.markdown import Markdown
 
 from .repo import Repo, is_repo
@@ -137,4 +137,4 @@ class Config:
 
 
 def _default_config_path():
-    return platformdirs.user_config_path(appname="zmk") / "zmk.ini"
+    return Path(typer.get_app_dir("zmk")) / "zmk.ini"
