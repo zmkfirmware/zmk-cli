@@ -146,13 +146,15 @@ class Repo(Module):
 
     def _update_gitignore(self):
         gitignore = self.path / ".gitignore"
+        ignore_line = _WEST_STAGING_PATH + "/"
 
-        with gitignore.open("r+", encoding="utf-8") as f:
-            if any(line.strip() == _WEST_STAGING_PATH for line in f):
+        with gitignore.open("a+", encoding="utf-8") as f:
+            f.seek(0)
+
+            if any(line.strip() == ignore_line for line in f):
                 return
 
-            f.seek(0, os.SEEK_END)
-            f.write(f"\n{_WEST_STAGING_PATH}\n")
+            f.write(f"\n{ignore_line}\n")
 
     def _update_west_manifest(self):
         symlink_dir = self.west_path / _CONFIG_DIR_NAME
