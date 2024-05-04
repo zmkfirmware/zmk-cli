@@ -22,7 +22,7 @@ def west(ctx: typer.Context):
 
 
 def update(ctx: typer.Context):
-    """Get the latest versions of dependencies (run "west update")."""
+    """Fetch the latest keyboard data."""
 
     cfg = ctx.find_object(Config)
     repo = cfg.get_repo()
