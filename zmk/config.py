@@ -137,4 +137,4 @@ class Config:
 
 
 def _default_config_path():
-    return Path(typer.get_app_dir("zmk")) / "zmk.ini"
+    return Path(typer.get_app_dir("zmk", roaming=False)) / "zmk.ini"
