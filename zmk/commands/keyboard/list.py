@@ -10,7 +10,7 @@ import typer
 from rich.columns import Columns
 
 from ...hardware import Board, Hardware, Shield, get_hardware, is_compatible
-from ...util import fatal_error
+from ...util import fatal_error, spinner
 from ..config import Config
 
 # TODO: allow filtering output by interconnect
@@ -67,7 +67,9 @@ def keyboard_list(
 
     cfg = ctx.find_object(Config)
     repo = cfg.get_repo()
-    groups = get_hardware(repo)
+
+    with spinner("Finding hardware..."):
+        groups = get_hardware(repo)
 
     if board:
         # Filter to keyboard shields compatible with a given controller.

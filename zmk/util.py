@@ -8,10 +8,12 @@ import os
 import sys
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterable, TypeVar
+from typing import Any, Iterable, Optional, TypeVar
 
 import rich
 import typer
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from ruamel.yaml import YAML
 
 T = TypeVar("T")
@@ -24,9 +26,7 @@ def flatten(items: Iterable[T | Iterable[T]]) -> Iterable[T]:
 
 def read_yaml(path: Path):
     """Parse a YAML file"""
-    with path.open(encoding="utf-8") as f:
-        yaml = YAML()
-        return yaml.load(f)
+    return YAML().load(path)
 
 
 @contextmanager
@@ -39,6 +39,19 @@ def set_directory(path: Path):
         yield
     finally:
         os.chdir(original)
+
+
+@contextmanager
+def spinner(message: str, console: Optional[Console] = None, transient: bool = True):
+    """Context manager which displays a loading spinner for its duration"""
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+        transient=transient,
+    ) as progress:
+        progress.add_task(message, total=None)
+        yield
 
 
 def fatal_error(message: Any):
