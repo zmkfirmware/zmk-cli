@@ -44,6 +44,7 @@ class TerminalMenu(Generic[T]):
     _scroll_index: int
     _num_title_lines: int
 
+    # TODO: add an option for a text filter field
     def __init__(
         self,
         title: Any,
@@ -101,7 +102,11 @@ class TerminalMenu(Generic[T]):
 
     def _print_menu(self):
         self.console.print(
-            self.title, style="title", justify="left", overflow="ellipsis"
+            self.title,
+            style="title",
+            justify="left",
+            overflow="ellipsis",
+            highlight=False,
         )
 
         display_count = self._get_display_count()
@@ -127,7 +132,13 @@ class TerminalMenu(Generic[T]):
         item = "..." if show_more else item
 
         self.console.print(
-            indent, item, sep="", style=style, justify="left", overflow="ellipsis"
+            indent,
+            item,
+            sep="",
+            style=style,
+            justify="left",
+            overflow="ellipsis",
+            highlight=False,
         )
 
     def _handle_input(self):

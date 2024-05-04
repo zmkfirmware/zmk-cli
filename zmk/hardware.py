@@ -2,11 +2,12 @@
 Hardware metadata discovery and processing.
 """
 
-import inspect
 from dataclasses import dataclass, field
 from functools import reduce
 from pathlib import Path
-from typing import Generator, Iterable, Literal, Optional, TypeAlias, TypeGuard
+from typing import Any, Generator, Iterable, Literal, Optional, TypeAlias, TypeGuard
+
+import dacite
 
 from .repo import Repo
 from .util import flatten, read_yaml
@@ -37,12 +38,16 @@ class Hardware:
     manufacturer: Optional[str] = None
     version: Optional[str] = None
 
+    def __str__(self) -> str:
+        return self.id
+
+    def __rich__(self) -> Any:
+        return f"{self.id}  [dim]{self.name}"
+
     @classmethod
     def from_dict(cls, data):
         """Read a hardware description from a dict"""
-        return cls(
-            **{k: v for k, v in data.items() if k in inspect.signature(cls).parameters}
-        )
+        return dacite.from_dict(cls, data)
 
 
 @dataclass
@@ -106,15 +111,21 @@ class GroupedHardware:
 
     def find_keyboard(self, item_id: str):
         """Find a keyboard by ID"""
-        return next((i for i in self.keyboards if i.id == item_id), None)
+        item_id = item_id.casefold()
+        return next((i for i in self.keyboards if i.id.casefold() == item_id), None)
 
     def find_controller(self, item_id: str):
         """Find a controller by ID"""
-        return next((i for i in self.controllers if i.id == item_id), None)
+        item_id = item_id.casefold()
+        return next((i for i in self.controllers if i.id.casefold() == item_id), None)
 
     def find_interconnect(self, item_id: str):
         """Find an interconnect by ID"""
-        return next((i for i in self.interconnects if i.id == item_id), None)
+        item_id = item_id.casefold()
+        return next(
+            (i for i in self.interconnects if i.id.casefold() == item_id),
+            None,
+        )
 
 
 def is_keyboard(hardware: Hardware) -> TypeGuard[Keyboard]:
@@ -137,7 +148,7 @@ def is_interconnect(hardware: Hardware) -> TypeGuard[Interconnect]:
     return isinstance(hardware, Interconnect)
 
 
-def is_compatible(base: Keyboard | Iterable[Keyboard], shield: Shield):
+def is_compatible(base: Board | Shield | Iterable[Board | Shield], shield: Shield):
     """
     Get whether a shield can be attached to the given hardware.
 

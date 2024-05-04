@@ -14,6 +14,7 @@ from west.app.main import main as west_main
 from .util import read_yaml, set_directory
 
 _APP_DIR_NAME = "app"
+_BUILD_MATRIX_PATH = "build.yaml"
 _CONFIG_DIR_NAME = "config"
 _PROJECT_MANIFEST_PATH = f"{_CONFIG_DIR_NAME}/west.yml"
 _MODULE_MANIFEST_PATH = "zephyr/module.yml"
@@ -89,6 +90,11 @@ class Repo(Module):
         modules = self.run_west("list", "-f", "{path}", capture_output=True)
         for line in modules.splitlines():
             yield Module(self.west_path / line)
+
+    @property
+    def build_matrix_path(self) -> Path:
+        """Path to the "build.yaml" file."""
+        return self.path / _BUILD_MATRIX_PATH
 
     @property
     def config_path(self) -> Path:
