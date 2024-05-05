@@ -31,7 +31,11 @@ def code(
     ] = None,
     open_conf: Annotated[
         bool,
-        typer.Option("--conf", "-c", help="Open the .conf file instead of the keymap"),
+        typer.Option("--conf", "-c", help="Open the .conf file instead of the keymap."),
+    ] = False,
+    open_build_matrix: Annotated[
+        bool,
+        typer.Option("--buid", "-b", help="Open the build matrix instead of a keymap."),
     ] = False,
 ):
     """Open the repo or a .keymap or .conf file in a text editor."""
@@ -39,7 +43,11 @@ def code(
     cfg = ctx.find_object(Config)
     repo = cfg.get_repo()
 
-    path = _get_file(repo, keyboard, open_conf)
+    if open_build_matrix:
+        path = repo.build_matrix_path
+    else:
+        path = _get_file(repo, keyboard, open_conf)
+
     editor = _get_editor(cfg, path.is_dir())
 
     cmd = shlex.split(editor) + [path]
