@@ -24,6 +24,14 @@ def flatten(items: Iterable[T | Iterable[T]]) -> Iterable[T]:
     return functools.reduce(operator.iconcat, items, [])
 
 
+def splice(text: str, index: int, count: int = 0, insert_text: str = ""):
+    """
+    Remove `count` characters starting from `index` in `text` and replace them
+    with `insert_text`.
+    """
+    return text[0:index] + insert_text + text[index + count :]
+
+
 def read_yaml(path: Path):
     """Parse a YAML file"""
     return YAML().load(path)

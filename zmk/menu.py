@@ -2,7 +2,7 @@
 Terminal menus
 """
 
-from contextlib import contextmanager, nullcontext
+from contextlib import contextmanager
 from typing import Any, Callable, Generic, Iterable, Optional, TypeVar
 
 import rich
@@ -13,6 +13,7 @@ from rich.text import Text
 from rich.theme import Theme
 
 from . import terminal
+from .util import splice
 
 
 class StopMenu(KeyboardInterrupt):
@@ -31,7 +32,9 @@ class TerminalMenu(Generic[T], Highlighter):
 
     CONTROLS = "[↑↓: select] [Enter: confirm] [Esc: cancel]"
     FILTER_CONTROLS = " [Type to search]"
-    EXTRA_LINES = 2  # One line of context before the menu + controls line at end
+
+    TOP_MARGIN = 1  # Number of lines of context to display before the menu
+    CONTROL_LINES = 1  # number of lines for displaying controls
     SCROLL_MARGIN = 1  # Start scrolling when cursor is this many lines from the end
 
     DEFAULT_THEME = Theme(
@@ -79,6 +82,9 @@ class TerminalMenu(Generic[T], Highlighter):
         :param items: List of items to display. Items should either be strings or
             implement __rich__() to return the data to display.
         :param default_index: Index of the item to focus initially.
+        :param filter_func: Function which takes an item and a filter string and
+            returns whether the item should be displayed. If set, a text entry
+            field will be displayed after the menu title.
         :param console: Console in which to display the menu.
         :param theme: Theme to apply. See TerminalMenu.DEFAULT_THEME for style names.
         """
@@ -103,7 +109,7 @@ class TerminalMenu(Generic[T], Highlighter):
             self._top_row = 1
         else:
             row, _ = terminal.get_cursor_pos()
-            self._top_row = min(row, self.console.height - self._get_menu_height() + 1)
+            self._top_row = min(row, self.console.height - self._get_menu_height())
 
         self._apply_filter()
 
@@ -115,12 +121,12 @@ class TerminalMenu(Generic[T], Highlighter):
         :raises StopMenu: The user canceled the menu without making a selection.
         """
 
+        self._focus_index = self.default_index
+
         try:
             with self._context():
-                self._focus_index = self.default_index
-
                 while True:
-                    self._update_scroll_index()
+                    self._scroll_index = self._get_scroll_index()
                     self._print_menu()
                     self._move_cursor_to_filter()
 
@@ -137,9 +143,7 @@ class TerminalMenu(Generic[T], Highlighter):
                         terminal.hide_cursor()
 
                     self._move_cursor_to_top()
-
         finally:
-            # Add one blank line at the end to separate further output from the menu.
             self._erase_controls()
 
     @property
@@ -259,6 +263,12 @@ class TerminalMenu(Generic[T], Highlighter):
         self._cursor_index = min(max(0, self._cursor_index), len(self._filter_text))
 
     def _handle_input(self):
+        """
+        Process one key of input.
+
+        :return: True if the user pressed enter or False otherwise.
+        :raises StopMenu: The user pressed escape.
+        """
         key = terminal.read_key()
 
         match key:
@@ -306,7 +316,7 @@ class TerminalMenu(Generic[T], Highlighter):
         if self._cursor_index == 0:
             return
 
-        self._filter_text = _splice(self._filter_text, self._cursor_index - 1, count=1)
+        self._filter_text = splice(self._filter_text, self._cursor_index - 1, count=1)
         self._cursor_index -= 1
         self._apply_filter()
 
@@ -314,12 +324,12 @@ class TerminalMenu(Generic[T], Highlighter):
         if self._cursor_index == len(self._filter_text):
             return
 
-        self._filter_text = _splice(self._filter_text, self._cursor_index, count=1)
+        self._filter_text = splice(self._filter_text, self._cursor_index, count=1)
         self._apply_filter()
 
     def _handle_text(self, key: bytes):
         text = key.decode()
-        self._filter_text = _splice(
+        self._filter_text = splice(
             self._filter_text, self._cursor_index, insert_text=text
         )
         self._cursor_index += len(text)
@@ -327,18 +337,24 @@ class TerminalMenu(Generic[T], Highlighter):
 
     @property
     def _max_items_per_page(self):
-        return self.console.height - self.EXTRA_LINES - self._num_title_lines
+        """Maximum number of items that can be displayed at once"""
+        return (
+            self.console.height
+            - self.TOP_MARGIN
+            - self.CONTROL_LINES
+            - self._num_title_lines
+        )
 
     def _get_display_count(self):
+        """Number of items to display in the menu"""
         return min(len(self.items), self._max_items_per_page)
 
     def _get_menu_height(self):
-        return self._get_display_count() + self.EXTRA_LINES + self._num_title_lines
-
-    def _update_scroll_index(self):
-        self._scroll_index = self._get_scroll_index()
+        """Total height of the menu, including"""
+        return self._get_display_count() + self.CONTROL_LINES + self._num_title_lines
 
     def _get_scroll_index(self):
+        """Calculate the scroll index according to the focus index and items list"""
         items_count = len(self._filter_items)
         display_count = self._get_display_count()
 
@@ -358,15 +374,18 @@ class TerminalMenu(Generic[T], Highlighter):
         return self._scroll_index
 
     def _move_cursor_to_top(self):
+        """Move the cursor to the start of the menu"""
         terminal.set_cursor_pos(row=self._top_row)
 
     def _move_cursor_to_filter(self):
+        """Move the cursor to the filter text field"""
         row = self._top_row + self._num_title_lines - 1
         col = self._last_title_line_len + self._cursor_index
 
         terminal.set_cursor_pos(row, col)
 
     def _erase_controls(self):
+        """Hide the controls text and reset the cursor to after the menu"""
         row = self.console.height - 1
 
         terminal.set_cursor_pos(row=row, col=0)
@@ -391,6 +410,9 @@ def show_menu(
     :param items: List of items to display. Items should either be strings or
         implement __rich__() to return the data to display.
     :param default_index: Index of the item to focus initially.
+    :param filter_func: Function which takes an item and a filter string and
+        returns whether the item should be displayed. If set, a text entry
+        field will be displayed after the menu title.
     :param console: Console in which to display the menu.
     :param theme: Theme to apply. See TerminalMenu.DEFAULT_THEME for style names.
     :return: The selected item.
@@ -405,7 +427,3 @@ def show_menu(
         theme=theme,
     )
     return menu.show()
-
-
-def _splice(text: str, index: int, count: int = 0, insert_text: str = ""):
-    return text[0:index] + insert_text + text[index + count :]
