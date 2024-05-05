@@ -15,6 +15,13 @@ console = Console(
 )
 
 
+def _path_callback(ctx: typer.Context, value: bool):
+    if value:
+        cfg = ctx.find_object(Config)
+        print(cfg.path)
+        raise typer.Exit()
+
+
 def config(
     ctx: typer.Context,
     settings: Annotated[
@@ -24,26 +31,24 @@ def config(
             help="One or more settings to get or set.",
         ),
     ] = None,
-    path: Annotated[
+    unset: Annotated[
         bool,
+        typer.Option("--unset", "-u", help="Unset the given settings."),
+    ] = False,
+    _: Annotated[
+        Optional[bool],
         typer.Option(
             "--path",
             "-p",
             help="Print the path to the ZMK CLI configuration file and exit.",
+            is_eager=True,
+            callback=_path_callback,
         ),
-    ] = False,
-    unset: Annotated[
-        bool,
-        typer.Option("--unset", "-u", help="Unset the given settings."),
     ] = False,
 ):
     """Read or write ZMK CLI configuration. Lists all settings if run with no arguments."""
 
     cfg = ctx.find_object(Config)
-
-    if path:
-        print(cfg.path)
-        return
 
     if unset:
         _unset_settings(cfg, settings)
