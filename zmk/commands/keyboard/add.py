@@ -82,13 +82,17 @@ def keyboard_add(
 
     # Prompt the user for any necessary components they didn't specify
     if keyboard is None:
-        keyboard = show_menu("Select a keyboard:", hardware.keyboards)
+        keyboard = show_menu(
+            "Select a keyboard:", hardware.keyboards, filter_func=_filter
+        )
 
     if isinstance(keyboard, Shield) and controller is None:
         hardware.controllers = [
             c for c in hardware.controllers if is_compatible(c, keyboard)
         ]
-        controller = show_menu("Select a controller:", hardware.controllers)
+        controller = show_menu(
+            "Select a controller:", hardware.controllers, filter_func=_filter
+        )
 
     # Sanity check that everything is compatible
     if keyboard and controller and not is_compatible(controller, keyboard):
@@ -106,6 +110,11 @@ def keyboard_add(
         console.print(f'"{name}" is already in the build matrix.')
 
     console.print(Markdown(f"Run `zmk code {keyboard.id}` to edit the keymap."))
+
+
+def _filter(item: Board | Shield, text: str):
+    text = text.casefold().strip()
+    return text in item.id.casefold() or text in item.name.casefold()
 
 
 def _check_keyboard_found(keyboard: Optional[Keyboard], keyboard_id: str):

@@ -2,7 +2,8 @@
 Terminal menus
 """
 
-from typing import Any, Generic, Iterable, Optional, TypeVar
+from contextlib import contextmanager
+from typing import Any, Callable, Generic, Iterable, Optional, TypeVar
 
 import rich
 from rich.console import Console
@@ -30,6 +31,7 @@ class TerminalMenu(Generic[T]):
     DEFAULT_THEME = Theme(
         {
             "title": "bright_magenta",
+            "filter": "default",
             "focus": "bright_cyan",
             "unfocus": "default",
             "ellipsis": "dim",
@@ -40,16 +42,26 @@ class TerminalMenu(Generic[T]):
     title: Any
     items: list[T]
     default_index: int
+
+    _filter_func: Optional[Callable[[T, str], bool]]
+    _filter_text: str
+    _filter_items: list[T]
+    _cursor_index: int
+
+    _top_row: int
     _focus_index: int
     _scroll_index: int
     _num_title_lines: int
+    _last_title_line_len: int
 
     # TODO: add an option for a text filter field
     def __init__(
         self,
         title: Any,
         items: Iterable[T],
+        *,
         default_index=0,
+        filter_func: Optional[Callable[[T, str], bool]] = None,
         console: Optional[Console] = None,
         theme: Optional[Theme] = None,
     ):
@@ -68,9 +80,22 @@ class TerminalMenu(Generic[T]):
         self.console = console or rich.get_console()
         self.theme = theme or self.DEFAULT_THEME
         self.default_index = default_index
+
+        self._filter_func = filter_func
+        self._filter_text = ""
+        self._cursor_index = 0
         self._focus_index = 0
         self._scroll_index = 0
-        self._num_title_lines = len(self.console.render_lines(self.title))
+
+        title_lines = self.console.render_lines(self.title, pad=False)
+        self._num_title_lines = len(title_lines)
+        self._last_title_line_len = 1 + sum(s.cell_length for s in title_lines[-1])
+
+        self._top_row = max(
+            1, self.console.height - len(self.items) - 1 - self._num_title_lines
+        )
+
+        self._apply_filter()
 
     def show(self):
         """
@@ -81,20 +106,43 @@ class TerminalMenu(Generic[T]):
         """
 
         try:
-            with terminal.hide_cursor(), self.console.use_theme(self.theme):
+            with self._context():
                 self._focus_index = self.default_index
 
                 while True:
                     self._update_scroll_index()
                     self._print_menu()
+                    self._move_cursor_to_filter()
 
                     if self._handle_input():
-                        return self.items[self._focus_index]
+                        try:
+                            return self._filter_items[self._focus_index]
+                        except IndexError:
+                            pass
 
-                    self._reset_cursor_to_top()
+                    self._move_cursor_to_top()
+
         finally:
             # Add one blank line at the end to separate further output from the menu.
             self._erase_controls()
+
+    @contextmanager
+    def _context(self):
+        if self._filter_func:
+            with self.console.use_theme(self.theme):
+                yield
+        else:
+            with terminal.hide_cursor(), self.console.use_theme(self.theme):
+                yield
+
+    def _apply_filter(self):
+        if self._filter_func:
+            # TODO: preserve _focus_index as much as possible
+            self._filter_items = [
+                i for i in self.items if self._filter_func(i, self._filter_text)
+            ]
+        else:
+            self._filter_items = self.items
 
     @property
     def _menu_height(self):
@@ -102,26 +150,33 @@ class TerminalMenu(Generic[T]):
 
     def _print_menu(self):
         self.console.print(
-            self.title,
-            style="title",
+            f"[title]{self.title}[/title] [filter]{self._filter_text}[/filter]",
             justify="left",
-            overflow="ellipsis",
+            overflow="crop",
             highlight=False,
         )
 
         display_count = self._get_display_count()
 
         for row in range(display_count):
+            if row == 0 and not self._filter_items:
+                self.console.print("[dim]No matching items", justify="left")
+                continue
+
             index = self._scroll_index + row
             focused = index == self._focus_index
 
             at_start = self._scroll_index == 0
-            at_end = self._scroll_index + display_count >= len(self.items)
+            at_end = self._scroll_index + display_count >= len(self._filter_items)
             show_more = (not at_start and row == 0) or (
                 not at_end and row == display_count - 1
             )
 
-            self._print_item(self.items[index], focused=focused, show_more=show_more)
+            try:
+                item = self._filter_items[index]
+                self._print_item(item, focused=focused, show_more=show_more)
+            except IndexError:
+                self.console.print(justify="left")
 
         self.console.print(self.CONTROLS, style="controls", end="", overflow="crop")
 
@@ -161,10 +216,49 @@ class TerminalMenu(Generic[T]):
         elif key == terminal.HOME:
             self._focus_index = 0
         elif key == terminal.END:
-            self._focus_index = len(self.items) - 1
+            self._focus_index = len(self._filter_items) - 1
+        else:
+            self._handle_filter_input(key)
 
-        self._focus_index = min(max(0, self._focus_index), len(self.items) - 1)
+        self._clamp_focus_index()
         return False
+
+    def _clamp_focus_index(self):
+        self._focus_index = min(max(0, self._focus_index), len(self._filter_items) - 1)
+
+    def _clamp_cursor_index(self):
+        self._cursor_index = min(max(0, self._cursor_index), len(self._filter_text))
+
+    def _handle_filter_input(self, key: bytes):
+        if key == terminal.TAB:
+            return
+
+        if key == terminal.LEFT:
+            self._cursor_index -= 1
+        elif key == terminal.RIGHT:
+            self._cursor_index += 1
+        elif key == terminal.BACKSPACE:
+            if self._cursor_index == 0:
+                return
+
+            self._filter_text = _splice(
+                self._filter_text, self._cursor_index - 1, count=1
+            )
+            self._cursor_index -= 1
+        elif key == terminal.DELETE:
+            if self._cursor_index == len(self._filter_text):
+                return
+
+            self._filter_text = _splice(self._filter_text, self._cursor_index, count=1)
+        else:
+            text = key.decode()
+            self._filter_text = _splice(
+                self._filter_text, self._cursor_index, insert_text=text
+            )
+            self._cursor_index += len(text)
+
+        self._clamp_cursor_index()
+        self._apply_filter()
 
     def _get_display_count(self):
         return min(len(self.items), self._menu_height)
@@ -173,7 +267,7 @@ class TerminalMenu(Generic[T]):
         self._scroll_index = self._get_scroll_index()
 
     def _get_scroll_index(self):
-        items_count = len(self.items)
+        items_count = len(self._filter_items)
         display_count = self._get_display_count()
 
         if items_count < display_count:
@@ -190,23 +284,30 @@ class TerminalMenu(Generic[T]):
 
         return self._scroll_index
 
-    def _reset_cursor_to_top(self):
-        display_count = self._get_display_count()
+    def _move_cursor_to_top(self):
+        terminal.set_cursor_pos(row=self._top_row)
 
-        row, _ = terminal.get_cursor_pos()
-        row = max(0, row - display_count - self._num_title_lines)
+    def _move_cursor_to_filter(self):
+        row = self._top_row + self._num_title_lines - 1
+        col = self._last_title_line_len + self._cursor_index
 
-        terminal.set_cursor_pos(row=row)
+        terminal.set_cursor_pos(row, col)
 
     def _erase_controls(self):
-        terminal.set_cursor_column(0)
+        row = self.console.height - 1
+
+        terminal.set_cursor_pos(row=row, col=0)
         self.console.print(justify="left")
+
+        terminal.set_cursor_pos(self._top_row + len(self._filter_items) + 1)
 
 
 def show_menu(
     title: str,
     items: Iterable[T],
+    *,
     default_index=0,
+    filter_func: Optional[Callable[[T, str], bool]] = None,
     console: Optional[Console] = None,
     theme: Optional[Theme] = None,
 ):
@@ -226,7 +327,12 @@ def show_menu(
         title=title,
         items=items,
         default_index=default_index,
+        filter_func=filter_func,
         console=console,
         theme=theme,
     )
     return menu.show()
+
+
+def _splice(text: str, index: int, count: int = 0, insert_text: str = ""):
+    return text[0:index] + insert_text + text[index + count :]

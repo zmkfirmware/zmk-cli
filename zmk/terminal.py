@@ -21,13 +21,16 @@ def hide_cursor():
 
 
 ESCAPE = b"\x1b"
+BACKSPACE = b"\b"
 RETURN = b"\n"
+TAB = b"\t"
 UP = b"\x1b[A"
 DOWN = b"\x1b[B"
 RIGHT = b"\x1b[C"
 LEFT = b"\x1b[D"
 END = b"\x1b[F"
 HOME = b"\x1b[H"
+DELETE = b"\x1b[3~"
 PAGE_UP = b"\x1b[5~"
 PAGE_DOWN = b"\x1b[6~"
 
@@ -57,6 +60,7 @@ try:
         79: END,
         80: DOWN,
         81: PAGE_DOWN,
+        83: DELETE,
     }
 
     def read_key():
