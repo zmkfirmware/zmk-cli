@@ -129,7 +129,7 @@ def _check_controller_found(controller: Optional[Board], controller_id: str):
 
 def _copy_keyboard_file(repo: Repo, path: Path):
     dest_path = repo.config_path / path.name
-    if not dest_path.exists():
+    if path.exists() and not dest_path.exists():
         shutil.copy2(path, dest_path)
 
 
