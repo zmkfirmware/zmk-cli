@@ -7,8 +7,11 @@ from typing import Annotated, Iterable, Optional
 
 import rich
 import typer
+from rich import box
 from rich.columns import Columns
+from rich.table import Table
 
+from ...build import BuildItem, BuildMatrix
 from ...hardware import Board, Hardware, Shield, get_hardware, is_compatible
 from ...util import fatal_error, spinner
 from ..config import Config
@@ -27,8 +30,62 @@ class ListType(StrEnum):
     INTERCONNECT = "interconnect"
 
 
+def _list_build_matrix(ctx: typer.Context, value: bool):
+    if not value:
+        return
+
+    console = rich.get_console()
+
+    cfg = ctx.find_object(Config)
+    repo = cfg.get_repo()
+
+    matrix = BuildMatrix.from_repo(repo)
+    include = matrix.include
+
+    has_snippet = any(item.snippet for item in include)
+    has_cmake_args = any(item.cmake_args for item in include)
+    has_artifact_name = any(item.artifact_name for item in include)
+
+    table = Table(box=box.SQUARE, border_style="dim blue", header_style="bright_cyan")
+    table.add_column("Board")
+    table.add_column("Shield")
+    if has_snippet:
+        table.add_column("Snippet")
+    if has_artifact_name:
+        table.add_column("Artifact Name")
+    if has_cmake_args:
+        table.add_column("CMake Args")
+
+    def add_row(item: BuildItem):
+        cols = [item.board, item.shield]
+        if has_snippet:
+            cols.append(item.snippet)
+        if has_artifact_name:
+            cols.append(item.artifact_name)
+        if has_cmake_args:
+            cols.append(item.cmake_args)
+
+        table.add_row(*cols)
+
+    for item in include:
+        add_row(item)
+
+    console.print(table)
+
+    raise typer.Exit()
+
+
 def keyboard_list(
     ctx: typer.Context,
+    _: Annotated[
+        Optional[bool],
+        typer.Option(
+            "--build",
+            help="Show the build matrix.",
+            is_eager=True,
+            callback=_list_build_matrix,
+        ),
+    ] = None,
     list_type: Annotated[
         ListType,
         typer.Option(
@@ -62,7 +119,7 @@ def keyboard_list(
         ),
     ] = False,
 ):
-    """Print a list of supported keyboards."""
+    """List supported keyboards or keyboards in the build matrix."""
 
     console = rich.get_console()
 

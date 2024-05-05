@@ -22,6 +22,7 @@ def keyboard_remove(ctx: typer.Context):
     item = show_menu("Select a build to remove:", items)
 
     if removed := matrix.remove(item):
-        rich.print("Removed:", *removed)
+        items = ", ".join(f'"{item.__rich__()}"' for item in removed)
+        rich.print(f"Removed {items} from the build.")
 
     matrix.write()

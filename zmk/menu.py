@@ -204,7 +204,6 @@ class TerminalMenu(Generic[T], Highlighter):
         self.console.print(
             f"[title]{self.title}[/title] [filter]{self._filter_text}[/filter]",
             justify="left",
-            overflow="crop",
             highlight=False,
         )
 
@@ -213,7 +212,10 @@ class TerminalMenu(Generic[T], Highlighter):
         for row in range(display_count):
             if row == 0 and not self._filter_items:
                 self.console.print(
-                    "[dim]No matching items", justify="left", highlight=False
+                    "[dim]No matching items",
+                    justify="left",
+                    highlight=False,
+                    no_wrap=True,
                 )
                 continue
 
@@ -237,7 +239,12 @@ class TerminalMenu(Generic[T], Highlighter):
             controls += self.FILTER_CONTROLS
 
         self.console.print(
-            controls, style="controls", end="", overflow="crop", highlight=False
+            controls,
+            style="controls",
+            end="",
+            highlight=False,
+            no_wrap=True,
+            overflow="crop",
         )
 
     def _print_item(self, item: T, focused: bool, show_more: bool):
@@ -251,9 +258,10 @@ class TerminalMenu(Generic[T], Highlighter):
             item,
             sep="",
             style=style,
-            justify="left",
-            overflow="ellipsis",
             highlight=True,
+            justify="left",
+            no_wrap=True,
+            overflow="ellipsis",
         )
 
     def _clamp_focus_index(self):

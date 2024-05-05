@@ -25,19 +25,19 @@ class BuildItem:
 
     def __rich__(self):
         parts = []
+        parts.append(self.board)
+
         if self.shield:
             parts.append(self.shield)
-
-        parts.append(self.board)
 
         if self.snippet:
             parts.append(f"[dim]snippet: {self.snippet}[/dim]")
 
-        if self.cmake_args:
-            parts.append(f"[dim]cmake-args: {self.cmake_args}[/dim]")
-
         if self.artifact_name:
             parts.append(f"[dim]artifact-name: {self.artifact_name}[/dim]")
+
+        if self.cmake_args:
+            parts.append(f"[dim]cmake-args: {self.cmake_args}[/dim]")
 
         return "[dim], [/dim]".join(parts)
 
