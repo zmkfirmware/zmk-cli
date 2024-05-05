@@ -17,6 +17,7 @@ from ..config import Config
 # TODO: allow output as unformatted list
 # TODO: allow output as more detailed metadata
 # TODO: allow search for items by glob pattern
+# TODO: allow listing build matrix
 
 
 class ListType(StrEnum):

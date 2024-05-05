@@ -158,7 +158,7 @@ def _add_keyboard(repo: Repo, keyboard: Keyboard, controller: Optional[Board]):
     items = _get_build_items(keyboard, controller)
 
     matrix = BuildMatrix.from_repo(repo)
-    added = matrix.add_items(items)
+    added = matrix.append(items)
     matrix.write()
 
     return added

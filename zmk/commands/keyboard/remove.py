@@ -2,30 +2,26 @@
 "zmk remove" command.
 """
 
-from typing import Annotated, Optional
-
+import rich
 import typer
 
+from ...build import BuildMatrix
+from ...menu import show_menu
 from ..config import Config
 
 
-def keyboard_remove(
-    ctx: typer.Context,
-    board: Annotated[
-        Optional[str],
-        typer.Option(
-            "--board", "-b", metavar="BOARD", help="ID of the board to remove."
-        ),
-    ] = None,
-    shield: Annotated[
-        Optional[str],
-        typer.Option(
-            "--shield", "-s", metavar="SHIELD", help="ID of the shield to remove."
-        ),
-    ] = None,
-):
+# TODO: add options to select items from command line
+def keyboard_remove(ctx: typer.Context):
     """Remove a keyboard from the build."""
     cfg = ctx.find_object(Config)
     repo = cfg.get_repo()
 
-    # TODO
+    matrix = BuildMatrix.from_repo(repo)
+    items = matrix.include
+
+    item = show_menu("Select a build to remove:", items)
+
+    if removed := matrix.remove(item):
+        rich.print("Removed:", *removed)
+
+    matrix.write()

@@ -23,6 +23,24 @@ class BuildItem:
     cmake_args: Optional[str] = None
     artifact_name: Optional[str] = None
 
+    def __rich__(self):
+        parts = []
+        if self.shield:
+            parts.append(self.shield)
+
+        parts.append(self.board)
+
+        if self.snippet:
+            parts.append(f"[dim]snippet: {self.snippet}[/dim]")
+
+        if self.cmake_args:
+            parts.append(f"[dim]cmake-args: {self.cmake_args}[/dim]")
+
+        if self.artifact_name:
+            parts.append(f"[dim]artifact-name: {self.artifact_name}[/dim]")
+
+        return "[dim], [/dim]".join(parts)
+
 
 @dataclass
 class _BuildMatrixWrapper:
@@ -73,17 +91,19 @@ class BuildMatrix:
         """Get whether the matrix has a build item"""
         return item in self.include
 
-    def add_items(self, items: Iterable[BuildItem]) -> bool:
+    def append(self, items: BuildItem | Iterable[BuildItem]) -> list[BuildItem]:
         """
         Add build items to the matrix.
 
-        Returns whether any items were added.
+        :return: the items that were added.
         """
+        items = [items] if isinstance(items, BuildItem) else items
+
         include = self.include
         items = [i for i in items if i not in include]
 
         if not items:
-            return False
+            return []
 
         if not self._data:
             self._data = self._yaml.map()
@@ -92,7 +112,30 @@ class BuildMatrix:
             self._data["include"] = self._yaml.seq()
 
         self._data["include"].extend([_to_yaml(i) for i in items])
-        return True
+        return items
+
+    def remove(self, items: BuildItem | Iterable[BuildItem]) -> list[BuildItem]:
+        """
+        Remove build items from the matrix.
+
+        :return: the items that were removed.
+        """
+        if not self._data or "include" not in self._data:
+            return False
+
+        removed = []
+        items = [items] if isinstance(items, BuildItem) else items
+
+        # TODO: there's probably a more efficient way to do this, but this is easy
+        for item in items:
+            try:
+                index = self.include.index(item)
+                del self._data["include"][index]
+                removed.append(item)
+            except ValueError:
+                pass
+
+        return removed
 
 
 def _keys_to_python(data: Any):
