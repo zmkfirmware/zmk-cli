@@ -160,7 +160,7 @@ def _select_editor(cfg: Config):
             )
         )
 
-    editor = show_menu("Select a text editor:", file_editors)
+    editor = show_menu("Select a text editor:", file_editors, filter_func=_filter)
     cfg.set(Settings.CORE_EDITOR, editor.get_command())
 
     explorer = None
@@ -171,6 +171,7 @@ def _select_editor(cfg: Config):
             "This text editor only supports opening files.\n"
             "Select another tool for opening directories:",
             dir_editors,
+            filter_func=_filter,
         )
         cfg.set(Settings.CORE_EXPLORER, explorer.get_command())
 
@@ -182,3 +183,7 @@ def _select_editor(cfg: Config):
         rich.print(Markdown(f'`zmk config core.explorer="{explorer.get_command()}"`'))
 
     rich.print()
+
+
+def _filter(editor: Editor, text: str):
+    return text.casefold() in editor.name.casefold()

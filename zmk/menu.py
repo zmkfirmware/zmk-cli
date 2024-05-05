@@ -2,11 +2,14 @@
 Terminal menus
 """
 
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from typing import Any, Callable, Generic, Iterable, Optional, TypeVar
 
 import rich
 from rich.console import Console
+from rich.highlighter import Highlighter
+from rich.style import Style
+from rich.text import Text
 from rich.theme import Theme
 
 from . import terminal
@@ -21,21 +24,25 @@ class StopMenu(KeyboardInterrupt):
 T = TypeVar("T")
 
 
-class TerminalMenu(Generic[T]):
+class TerminalMenu(Generic[T], Highlighter):
     """
     Manages an interactive menu in a terminal window.
     """
 
     CONTROLS = "[↑↓: select] [Enter: confirm] [Esc: cancel]"
+    FILTER_CONTROLS = " [Type to search]"
     EXTRA_LINES = 2  # One line of context before the menu + controls line at end
+    SCROLL_MARGIN = 1  # Start scrolling when cursor is this many lines from the end
+
     DEFAULT_THEME = Theme(
         {
-            "title": "bright_magenta",
-            "filter": "default",
-            "focus": "bright_cyan",
-            "unfocus": "default",
-            "ellipsis": "dim",
-            "controls": "dim",
+            "title": "bright_magenta",  # Prompt text
+            "filter": "default",  # Search/filter text
+            "unfocus": "default",  # Unfocused item
+            "focus": "bright_cyan",  # Focused item
+            "highlight": Style(bgcolor="grey19"),  # Text in item that matches filter
+            "ellipsis": "dim",  # '...' to indicate more items
+            "controls": "dim",  # Bottom text which lists controls
         }
     )
 
@@ -83,6 +90,7 @@ class TerminalMenu(Generic[T]):
 
         self._filter_func = filter_func
         self._filter_text = ""
+        self._filter_items = []
         self._cursor_index = 0
         self._focus_index = 0
         self._scroll_index = 0
@@ -91,9 +99,11 @@ class TerminalMenu(Generic[T]):
         self._num_title_lines = len(title_lines)
         self._last_title_line_len = 1 + sum(s.cell_length for s in title_lines[-1])
 
-        self._top_row = max(
-            1, self.console.height - len(self.items) - 1 - self._num_title_lines
-        )
+        if self._get_display_count() == self._max_items_per_page:
+            self._top_row = 1
+        else:
+            row, _ = terminal.get_cursor_pos()
+            self._top_row = min(row, self.console.height - self._get_menu_height() + 1)
 
         self._apply_filter()
 
@@ -114,11 +124,17 @@ class TerminalMenu(Generic[T]):
                     self._print_menu()
                     self._move_cursor_to_filter()
 
+                    if self.has_filter:
+                        terminal.show_cursor()
+
                     if self._handle_input():
                         try:
                             return self._filter_items[self._focus_index]
                         except IndexError:
                             pass
+
+                    if self.has_filter:
+                        terminal.hide_cursor()
 
                     self._move_cursor_to_top()
 
@@ -126,27 +142,59 @@ class TerminalMenu(Generic[T]):
             # Add one blank line at the end to separate further output from the menu.
             self._erase_controls()
 
+    @property
+    def has_filter(self):
+        """Get whether a filter function is set"""
+        return bool(self._filter_func)
+
+    def highlight(self, text: Text):
+        normfilter = self._filter_text.casefold().strip()
+        if not normfilter:
+            return
+
+        normtext = text.plain.casefold()
+        prev = 0
+        while True:
+            start = normtext.find(normfilter, prev)
+            if start < 0:
+                break
+
+            end = start + len(normfilter)
+            text.stylize("highlight", start=start, end=end)
+            prev = end
+
     @contextmanager
     def _context(self):
-        if self._filter_func:
+        old_highlighter = self.console.highlighter
+        try:
+            terminal.hide_cursor()
+            self.console.highlighter = self
+
             with self.console.use_theme(self.theme):
                 yield
-        else:
-            with terminal.hide_cursor(), self.console.use_theme(self.theme):
-                yield
+        finally:
+            terminal.show_cursor()
+            self.console.highlighter = old_highlighter
 
     def _apply_filter(self):
-        if self._filter_func:
-            # TODO: preserve _focus_index as much as possible
+        if self.has_filter:
+            try:
+                old_focus = self._filter_items[self._focus_index]
+            except IndexError:
+                old_focus = None
+
             self._filter_items = [
                 i for i in self.items if self._filter_func(i, self._filter_text)
             ]
+
+            try:
+                self._focus_index = self._filter_items.index(old_focus)
+            except ValueError:
+                pass
         else:
             self._filter_items = self.items
 
-    @property
-    def _menu_height(self):
-        return self.console.height - self.EXTRA_LINES - self._num_title_lines
+        self._clamp_focus_index()
 
     def _print_menu(self):
         self.console.print(
@@ -160,7 +208,9 @@ class TerminalMenu(Generic[T]):
 
         for row in range(display_count):
             if row == 0 and not self._filter_items:
-                self.console.print("[dim]No matching items", justify="left")
+                self.console.print(
+                    "[dim]No matching items", justify="left", highlight=False
+                )
                 continue
 
             index = self._scroll_index + row
@@ -178,7 +228,13 @@ class TerminalMenu(Generic[T]):
             except IndexError:
                 self.console.print(justify="left")
 
-        self.console.print(self.CONTROLS, style="controls", end="", overflow="crop")
+        controls = self.CONTROLS
+        if self.has_filter:
+            controls += self.FILTER_CONTROLS
+
+        self.console.print(
+            controls, style="controls", end="", overflow="crop", highlight=False
+        )
 
     def _print_item(self, item: T, focused: bool, show_more: bool):
         style = "ellipsis" if show_more else "focus" if focused else "unfocus"
@@ -193,7 +249,7 @@ class TerminalMenu(Generic[T]):
             style=style,
             justify="left",
             overflow="ellipsis",
-            highlight=False,
+            highlight=True,
         )
 
     def _handle_input(self):
@@ -210,9 +266,9 @@ class TerminalMenu(Generic[T]):
         elif key == terminal.DOWN:
             self._focus_index += 1
         elif key == terminal.PAGE_UP:
-            self._focus_index -= self._menu_height
+            self._focus_index -= self._max_items_per_page
         elif key == terminal.PAGE_DOWN:
-            self._focus_index += self._menu_height
+            self._focus_index += self._max_items_per_page
         elif key == terminal.HOME:
             self._focus_index = 0
         elif key == terminal.END:
@@ -260,8 +316,15 @@ class TerminalMenu(Generic[T]):
         self._clamp_cursor_index()
         self._apply_filter()
 
+    @property
+    def _max_items_per_page(self):
+        return self.console.height - self.EXTRA_LINES - self._num_title_lines
+
     def _get_display_count(self):
-        return min(len(self.items), self._menu_height)
+        return min(len(self.items), self._max_items_per_page)
+
+    def _get_menu_height(self):
+        return self._get_display_count() + self.EXTRA_LINES + self._num_title_lines
 
     def _update_scroll_index(self):
         self._scroll_index = self._get_scroll_index()
@@ -276,11 +339,12 @@ class TerminalMenu(Generic[T]):
         first_displayed = self._scroll_index
         last_displayed = first_displayed + display_count - 1
 
-        if self._focus_index <= first_displayed:
-            return max(0, self._focus_index - 1)
+        if self._focus_index <= first_displayed + self.SCROLL_MARGIN:
+            return max(0, self._focus_index - 1 - self.SCROLL_MARGIN)
 
-        if self._focus_index >= last_displayed:
-            return min(items_count - 1, self._focus_index + 1) - (display_count - 1)
+        if self._focus_index >= last_displayed - self.SCROLL_MARGIN:
+            end = min(items_count - 1, self._focus_index + 1 + self.SCROLL_MARGIN)
+            return end - (display_count - 1)
 
         return self._scroll_index
 

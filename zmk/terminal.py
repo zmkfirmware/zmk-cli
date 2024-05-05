@@ -7,17 +7,14 @@ import sys
 from contextlib import contextmanager
 
 
-@contextmanager
 def hide_cursor():
-    """Context manager which hides the terminal cursor"""
+    sys.stdout.write("\x1b[?25l")
+    sys.stdout.flush()
 
-    try:
-        sys.stdout.write("\x1b[?25l")
-        sys.stdout.flush()
-        yield
-    finally:
-        sys.stdout.write("\x1b[?25h")
-        sys.stdout.flush()
+
+def show_cursor():
+    sys.stdout.write("\x1b[?25h")
+    sys.stdout.flush()
 
 
 ESCAPE = b"\x1b"
