@@ -252,68 +252,77 @@ class TerminalMenu(Generic[T], Highlighter):
             highlight=True,
         )
 
-    def _handle_input(self):
-        key = terminal.read_key()
-
-        if key == terminal.RETURN:
-            return True
-
-        if key == terminal.ESCAPE:
-            raise StopMenu()
-
-        if key == terminal.UP:
-            self._focus_index -= 1
-        elif key == terminal.DOWN:
-            self._focus_index += 1
-        elif key == terminal.PAGE_UP:
-            self._focus_index -= self._max_items_per_page
-        elif key == terminal.PAGE_DOWN:
-            self._focus_index += self._max_items_per_page
-        elif key == terminal.HOME:
-            self._focus_index = 0
-        elif key == terminal.END:
-            self._focus_index = len(self._filter_items) - 1
-        else:
-            self._handle_filter_input(key)
-
-        self._clamp_focus_index()
-        return False
-
     def _clamp_focus_index(self):
         self._focus_index = min(max(0, self._focus_index), len(self._filter_items) - 1)
 
     def _clamp_cursor_index(self):
         self._cursor_index = min(max(0, self._cursor_index), len(self._filter_text))
 
-    def _handle_filter_input(self, key: bytes):
-        if key == terminal.TAB:
-            return
+    def _handle_input(self):
+        key = terminal.read_key()
 
-        if key == terminal.LEFT:
-            self._cursor_index -= 1
-        elif key == terminal.RIGHT:
-            self._cursor_index += 1
-        elif key == terminal.BACKSPACE:
-            if self._cursor_index == 0:
-                return
+        match key:
+            case terminal.TAB:
+                pass
 
-            self._filter_text = _splice(
-                self._filter_text, self._cursor_index - 1, count=1
-            )
-            self._cursor_index -= 1
-        elif key == terminal.DELETE:
-            if self._cursor_index == len(self._filter_text):
-                return
+            case terminal.RETURN:
+                return True
+            case terminal.ESCAPE:
+                raise StopMenu()
 
-            self._filter_text = _splice(self._filter_text, self._cursor_index, count=1)
-        else:
-            text = key.decode()
-            self._filter_text = _splice(
-                self._filter_text, self._cursor_index, insert_text=text
-            )
-            self._cursor_index += len(text)
+            case terminal.UP:
+                self._focus_index -= 1
+            case terminal.DOWN:
+                self._focus_index += 1
+
+            case terminal.PAGE_UP:
+                self._focus_index -= self._max_items_per_page
+            case terminal.PAGE_DOWN:
+                self._focus_index += self._max_items_per_page
+
+            case terminal.HOME:
+                self._focus_index = 0
+            case terminal.END:
+                self._focus_index = len(self._filter_items) - 1
+
+            case terminal.LEFT:
+                self._cursor_index -= 1
+            case terminal.RIGHT:
+                self._cursor_index += 1
+
+            case terminal.BACKSPACE:
+                self._handle_backspace()
+            case terminal.DELETE:
+                self._handle_delete()
+
+            case _:
+                self._handle_text(key)
 
         self._clamp_cursor_index()
+        self._clamp_focus_index()
+        return False
+
+    def _handle_backspace(self):
+        if self._cursor_index == 0:
+            return
+
+        self._filter_text = _splice(self._filter_text, self._cursor_index - 1, count=1)
+        self._cursor_index -= 1
+        self._apply_filter()
+
+    def _handle_delete(self):
+        if self._cursor_index == len(self._filter_text):
+            return
+
+        self._filter_text = _splice(self._filter_text, self._cursor_index, count=1)
+        self._apply_filter()
+
+    def _handle_text(self, key: bytes):
+        text = key.decode()
+        self._filter_text = _splice(
+            self._filter_text, self._cursor_index, insert_text=text
+        )
+        self._cursor_index += len(text)
         self._apply_filter()
 
     @property
