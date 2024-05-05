@@ -48,9 +48,12 @@ class Config:
     """Wrapper around ConfigParser to store CLI configuration"""
 
     path: Path
+    force_home: bool
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, force_home=False) -> None:
         self.path = path or _default_config_path()
+        self.force_home = force_home
+
         self._overrides: defaultdict[str, dict[str, str]] = defaultdict(dict)
         self._parser = ConfigParser()
         self._parser.read(self.path, encoding="utf-8")
@@ -122,9 +125,9 @@ class Config:
         Exits the program if neither the current directory nor the home path
         point to a valid directory.
         """
-        cwd = Path()
-        if is_repo(cwd):
-            return Repo(cwd)
+        if not self.force_home:
+            if home := _find_cwd_repo():
+                return Repo(home)
 
         home = self.home_path
         if not home:
@@ -138,3 +141,13 @@ class Config:
 
 def _default_config_path():
     return Path(typer.get_app_dir("zmk", roaming=False)) / "zmk.ini"
+
+
+def _find_cwd_repo():
+    cwd = Path().absolute()
+
+    for path in [cwd, *cwd.parents]:
+        if is_repo(path):
+            return path
+
+    return None

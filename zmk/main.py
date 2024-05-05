@@ -23,6 +23,13 @@ def main(
             envvar="ZMK_CLI_CONFIG", help="Path to the ZMK CLI configuration file."
         ),
     ] = None,
+    force_home: Annotated[
+        bool,
+        typer.Option(
+            "--home",
+            help="Use the home directory, even if the current directory is a repo.",
+        ),
+    ] = False,
 ):
     """
     Set up ZMK Firmware
@@ -32,5 +39,5 @@ def main(
 
     Once you have a config repo, run "zmk keyboard add" to add a keyboard to it.
     """
-    cfg = Config(config_file)
+    cfg = Config(config_file, force_home=force_home)
     ctx.obj = cfg

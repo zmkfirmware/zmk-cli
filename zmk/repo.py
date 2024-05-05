@@ -23,7 +23,7 @@ _WEST_CONFIG_PATH = ".west/config"
 
 
 def is_repo(path: Path):
-    return _is_config_repo(path) or _is_module_repo(path)
+    return (path / _PROJECT_MANIFEST_PATH).is_file()
 
 
 class Module:
@@ -185,14 +185,6 @@ class Repo(Module):
 
         # TODO: can we filter the modules to ignore ZMK dependencies that aren't needed?
         self._run_west("update")
-
-
-def _is_config_repo(path: Path):
-    return (path / _PROJECT_MANIFEST_PATH).is_file()
-
-
-def _is_module_repo(path: Path):
-    return (path / _MODULE_MANIFEST_PATH).is_file()
 
 
 def _run_west(path: Path, args: list[str], capture_output=False):
