@@ -6,111 +6,94 @@ import re
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Generic, Optional, TypeVar
+from typing import Annotated, Optional
 
 import rich
 import typer
-from rich.console import Console
-from rich.prompt import Confirm, Prompt
-from rich.text import Text
+from rich.prompt import Confirm, InvalidResponse, PromptBase
 
-from ...menu import show_menu
+from ...menu import detail_list, show_menu
 from ...templates import get_template_files
 from ...util import fatal_error
 from ..config import Config
 
-T = TypeVar("T")
-
 
 class KeyboardType(StrEnum):
+    """The Zephyr hardware type for a keyboard."""
+
     SHIELD = "shield"
     BOARD = "board"
 
 
 class KeyboardLayout(StrEnum):
+    """The physical layout of a keyboard."""
+
     UNIBODY = "unibody"
     SPLIT = "split"
 
 
 @dataclass
 class TemplateData:
+    """Data needed to read template files."""
+
     folder: str = ""
     dest: str = ""
     data: dict[str, str] = field(default_factory=dict)
 
 
-class Detail(Generic[T]):
-    MIN_PAD = 2
-
-    data: T
-    detail: str
-    _pad_len: int
-
-    def __init__(self, data: T, detail: str):
-        self.data = data
-        self.detail = detail
-        self._pad_len = self.MIN_PAD
-
-    def __rich__(self):
-        return Text.assemble(self.data, " " * self._pad_len, (self.detail, "dim"))
-
-    # pylint: disable=protected-access
-    @classmethod
-    def align(cls, items: list["Detail[T]"], console: Optional[Console] = None):
-        console = console or rich.get_console()
-
-        for item in items:
-            item._pad_len = console.measure(item.data).minimum
-
-        width = max(item._pad_len for item in items)
-
-        for item in items:
-            item._pad_len = width - item._pad_len + cls.MIN_PAD
-
-        return items
-
-
 ID_PATTERN = re.compile(r"[a-z_]\w*")
-ID_HELP = (
-    "Keyboard ID must use only lowercase letters, numbers, and underscores "
-    "and must not start with a number."
-)
-
 MAX_NAME_LENGTH = 16
-SHORT_NAME_HELP = f"Short name must be <= {MAX_NAME_LENGTH} characters."
 
 
-def _is_valid_id(keyboard_id: str):
-    return ID_PATTERN.fullmatch(keyboard_id)
+def _validate_id(value: str):
+    if not value:
+        raise typer.BadParameter("ID must be at least one character long.")
+
+    if not ID_PATTERN.fullmatch(value):
+        raise typer.BadParameter(
+            "Keyboard ID must use only lowercase letters, numbers, and underscores "
+            "and must not start with a number."
+        )
 
 
-def _is_valid_name(name: str):
-    return bool(name)
+def _validate_name(name: str):
+    name = name.strip()
+    if not name:
+        raise typer.BadParameter("Name must be at least one character long.")
 
 
-def _is_valid_short_name(name: str):
-    return 1 <= len(name) <= MAX_NAME_LENGTH
+def _validate_short_name(name: str):
+    if not name:
+        raise typer.BadParameter("Name must be at least one character long.")
+
+    if len(name) > MAX_NAME_LENGTH:
+        raise typer.BadParameter(f"Name must be <= {MAX_NAME_LENGTH} characters.")
 
 
-def _check_id(keyboard_id: Optional[str]):
-    if keyboard_id and not _is_valid_id(keyboard_id):
-        fatal_error(ID_HELP)
+def _id_callback(value: Optional[str]):
+    if value is not None:
+        _validate_id(value)
 
 
-def _check_short_name(name: Optional[str]):
-    if name and not _is_valid_short_name(name):
-        fatal_error(SHORT_NAME_HELP)
+def _name_callback(name: Optional[str]):
+    if name is not None:
+        _validate_name(name)
+
+
+def _short_name_callback(name: Optional[str]):
+    if name is not None:
+        _validate_short_name(name)
 
 
 def keyboard_new(
     ctx: typer.Context,
     keyboard_id: Annotated[
         Optional[str],
-        typer.Option("--id", "-i", help="Board/shield ID.", callback=_check_id),
+        typer.Option("--id", "-i", help="Board/shield ID.", callback=_id_callback),
     ] = None,
     keyboard_name: Annotated[
         Optional[str],
-        typer.Option("--name", "-n", help="Keyboard name."),
+        typer.Option("--name", "-n", help="Keyboard name.", callback=_name_callback),
     ] = None,
     short_name: Annotated[
         Optional[str],
@@ -118,7 +101,7 @@ def keyboard_new(
             "--shortname",
             "-s",
             help=f"Abbreviated keyboard name (<= {MAX_NAME_LENGTH} characters).",
-            callback=_check_short_name,
+            callback=_short_name_callback,
         ),
     ] = None,
     keyboard_type: Annotated[
@@ -143,16 +126,16 @@ def keyboard_new(
         fatal_error('Cannot find repo\'s "boards" folder.')
 
     if not keyboard_name:
-        keyboard_name = _prompt_keyboard_name()
+        keyboard_name = NamePrompt.ask()
 
     if not short_name:
         if len(keyboard_name) <= MAX_NAME_LENGTH:
             short_name = keyboard_name
         else:
-            short_name = _prompt_keyboard_short_name()
+            short_name = ShortNamePrompt.ask()
 
     if not keyboard_id:
-        keyboard_id = _prompt_keyboard_id(short_name)
+        keyboard_id = IdPrompt.ask(name=short_name)
 
     if not keyboard_type:
         keyboard_type = _prompt_keyboard_type()
@@ -191,10 +174,10 @@ def keyboard_new(
 
 
 def _prompt_keyboard_type():
-    items = Detail.align(
+    items = detail_list(
         [
-            Detail(KeyboardType.SHIELD, "A PCB which uses a separate controller board"),
-            Detail(KeyboardType.BOARD, "A standalone PCB with onboard controller"),
+            (KeyboardType.SHIELD, "A PCB which uses a separate controller board"),
+            (KeyboardType.BOARD, "A standalone PCB with onboard controller"),
         ]
     )
 
@@ -203,12 +186,10 @@ def _prompt_keyboard_type():
 
 
 def _prompt_keyboard_layout():
-    items = Detail.align(
+    items = detail_list(
         [
-            Detail(KeyboardLayout.UNIBODY, "A keyboard with a single controller"),
-            Detail(
-                KeyboardLayout.SPLIT, "A keyboard with separate left/right controllers"
-            ),
+            (KeyboardLayout.UNIBODY, "A keyboard with a single controller"),
+            (KeyboardLayout.SPLIT, "A keyboard with separate left/right controllers"),
         ]
     )
 
@@ -216,38 +197,61 @@ def _prompt_keyboard_layout():
     return result.data
 
 
-def _prompt_keyboard_name():
-    while True:
-        result = Prompt.ask("[bright_magenta]Enter the keyboard name")
+class NamePromptBase(PromptBase[str]):
+    """Base class for keyboard name prompts."""
 
-        if _is_valid_name(result):
-            return result
+    @classmethod
+    def validate(cls, value: str) -> None:
+        """:raise: typer.BadParameter if the value is invalid"""
+        raise NotImplementedError()
+
+    def process_response(self, value: str) -> str:
+        value = value.strip()
+        try:
+            self.validate(value)
+            return value
+        except typer.BadParameter as exc:
+            raise InvalidResponse(f"[prompt.invalid]{exc}") from exc
 
 
-def _prompt_keyboard_short_name():
-    # TODO: reimplement this loop using PromptBase
-    while True:
-        result = Prompt.ask(
-            f"[bright_magenta]Enter an abbreviated name (<= {MAX_NAME_LENGTH} chars)"
+class NamePrompt(NamePromptBase):
+    """Prompt for a keyboard name."""
+
+    @classmethod
+    def validate(cls, value: str):
+        _validate_name(value)
+
+    @classmethod
+    def ask(cls):
+        return super().ask("Enter the name of the keyboard")
+
+
+class ShortNamePrompt(NamePromptBase):
+    """Prompt for an abbreviated keyboard name."""
+
+    @classmethod
+    def validate(cls, value: str):
+        _validate_short_name(value)
+
+    @classmethod
+    def ask(cls):
+        return super().ask(
+            f"Enter an abbreviated name [dim](<= {MAX_NAME_LENGTH} chars)"
         )
 
-        if _is_valid_short_name(result):
-            return result
 
-        rich.print(f"[red]{SHORT_NAME_HELP}")
+class IdPrompt(NamePromptBase):
+    """Prompt for a keyboard identifier."""
 
+    @classmethod
+    def validate(cls, value: str):
+        _validate_id(value)
 
-def _prompt_keyboard_id(short_name: str):
-    default_id = re.sub(r"\W+", "_", short_name).lower()
-
-    # TODO: reimplement this loop using PromptBase
-    while True:
-        result = Prompt.ask("[bright_magenta]Enter a keyboard ID", default=default_id)
-
-        if _is_valid_id(result):
-            return result
-
-        rich.print(f"[red]{ID_HELP}")
+    @classmethod
+    def ask(cls, name: str):
+        return super().ask(
+            "Enter an ID for the keyboard", default=_get_default_id(name)
+        )
 
 
 def _get_template(
@@ -283,3 +287,17 @@ def _get_template(
             raise NotImplementedError()
 
     return template
+
+
+def _get_default_id(name: str):
+    # ID must be lowercase
+    result = name.strip().lower()
+
+    # ID must contain only word characters
+    result = re.sub(r"\W+", "_", result)
+    result = result.strip("_")
+
+    # ID cannot start with a number
+    result = re.sub(r"^\d+_*", "", result)
+
+    return result if result else ...

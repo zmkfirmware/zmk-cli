@@ -435,3 +435,47 @@ def show_menu(
         theme=theme,
     )
     return menu.show()
+
+
+class Detail(Generic[T]):
+    """A menu item with a description appended to the end."""
+
+    MIN_PAD = 2
+
+    data: T
+    detail: str
+    _pad_len: int
+
+    def __init__(self, data: T, detail: str):
+        self.data = data
+        self.detail = detail
+        self._pad_len = self.MIN_PAD
+
+    def __rich__(self):
+        return Text.assemble(self.data, " " * self._pad_len, (self.detail, "dim"))
+
+    # pylint: disable=protected-access
+    @classmethod
+    def align(cls, items: Iterable["Detail[T]"], console: Optional[Console] = None):
+        """Set the padding for each item in the list to align the detail strings."""
+        items = list(items)
+        console = console or rich.get_console()
+
+        for item in items:
+            item._pad_len = console.measure(item.data).minimum
+
+        width = max(item._pad_len for item in items)
+
+        for item in items:
+            item._pad_len = width - item._pad_len + cls.MIN_PAD
+
+        return items
+
+
+def detail_list(
+    items: Iterable[tuple[T, str]], console: Optional[Console] = None
+) -> list[Detail[T]]:
+    """
+    Create a list of menu items with a description appended to each item.
+    """
+    return Detail.align([Detail(item, desc) for item, desc in items], console=console)
