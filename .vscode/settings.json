@@ -9,6 +9,9 @@
   "[markdown][yaml]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "[dts]": {
+    "editor.formatOnSave": false
+  },
   "files.exclude": {
     "**/__pycache__": true
   },

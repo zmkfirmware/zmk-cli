@@ -1,0 +1,5 @@
+config SHIELD_${shield.upper()}_LEFT
+    def_bool $(shields_list_contains,${shield}_left)
+
+config SHIELD_${shield.upper()}_RIGHT
+    def_bool $(shields_list_contains,${shield}_right)

@@ -1,0 +1,20 @@
+// This file was generated from a template. Edit it to match your shield.
+// See https: //zmk.dev/docs/development/new-shield for more instructions.
+
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+
+/ {
+    // Define a default keymap here.
+    // See https://zmk.dev/docs/development/new-shield#default-keymap.
+    keymap {
+        compatible = "zmk,keymap";
+
+        default_layer {
+            bindings = <
+                &kp A &kp B
+                &kp C &kp D
+            >;
+        };
+    };
+};

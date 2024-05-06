@@ -1,0 +1,48 @@
+// This file was generated from a template. Edit it to match your shield.
+// See https: //zmk.dev/docs/development/new-shield for more instructions.
+
+#include <dt-bindings/zmk/matrix_transform.h>
+
+/ {
+    chosen {
+        zmk,kscan = &kscan;
+        zmk,matrix-transform = &default_transform;
+    };
+
+    kscan: kscan {
+        // If the hardware does not use a switch matrix, change this to the
+        // appropriate driver and update the properties below to match.
+        // See https://zmk.dev/docs/config/kscan for supported key scan drivers.
+        compatible = "zmk,kscan-gpio-matrix";
+        // Set this to "col2row" or "row2col" to match the hardware. If using
+        // "row2col", change the col-gpios to (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)
+        // and the row-gpios to GPIO_ACTIVE_HIGH.
+        diode-direction = "col2row";
+        wakeup-source;
+
+        // Replace these comments with the GPIO pins in the matrix.
+        // See https://zmk.dev/docs/development/new-shield#shield-overlays
+        col-gpios
+            = </* &pro_micro 0 */ GPIO_ACTIVE_HIGH>
+            , </* &pro_micro 0 */ GPIO_ACTIVE_HIGH>
+            ;
+
+        row-gpios
+            = </* &pro_micro 0 */ (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , </* &pro_micro 0 */ (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            ;
+    };
+
+    default_transform: default_transform {
+        // See https://zmk.dev/docs/development/new-shield#optional-matrix-transform
+        // for how to configure this
+        compatible = "zmk,matrix-transform";
+        columns = <2>;
+        rows = <2>;
+
+        map = <
+            RC(0, 0) RC(0, 1)
+            RC(1, 0) RC(1, 1)
+        >;
+    };
+};
