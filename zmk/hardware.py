@@ -62,13 +62,13 @@ class Interconnect(Hardware):
 class Keyboard(Hardware):
     """Base class for hardware that forms a keyboard"""
 
-    siblings: list[str] = field(default_factory=list)
+    siblings: Optional[list[str]] = field(default_factory=list)
     """List of board/shield IDs for a split keyboard"""
-    exposes: list[str] = field(default_factory=list)
+    exposes: Optional[list[str]] = field(default_factory=list)
     """List of interconnect IDs this board/shield provides"""
-    features: list[Feature] = field(default_factory=list)
+    features: Optional[list[Feature]] = field(default_factory=list)
     """List of features this board/shield supports"""
-    variants: list[Variant] = field(default_factory=list)
+    variants: Optional[list[Variant]] = field(default_factory=list)
 
     @property
     def config_path(self):
