@@ -12,8 +12,9 @@ from rich.columns import Columns
 from rich.table import Table
 
 from ...build import BuildItem, BuildMatrix
+from ...exceptions import FatalError
 from ...hardware import Board, Hardware, Shield, get_hardware, is_compatible
-from ...util import fatal_error, spinner
+from ...util import spinner
 from ..config import Config
 
 # TODO: allow filtering output by interconnect
@@ -133,7 +134,7 @@ def keyboard_list(
         # Filter to keyboard shields compatible with a given controller.
         item = groups.find_controller(board)
         if item is None:
-            fatal_error(f'Could not find controller board "{board}".')
+            raise FatalError(f'Could not find controller board "{board}".')
 
         groups.keyboards = [kb for kb in groups.keyboards if is_compatible(item, kb)]
         list_type = ListType.KEYBOARD
@@ -142,10 +143,10 @@ def keyboard_list(
         # Filter to controllers compatible with a given keyboard shield.
         item = groups.find_keyboard(shield)
         if item is None:
-            fatal_error(f'Could not find keyboard "{shield}".')
+            raise FatalError(f'Could not find keyboard "{shield}".')
 
         if not isinstance(item, Shield):
-            fatal_error(f'Keyboard "{shield}" is a standalone keyboard.')
+            raise FatalError(f'Keyboard "{shield}" is a standalone keyboard.')
 
         groups.controllers = [c for c in groups.controllers if is_compatible(c, item)]
         list_type = ListType.CONTROLLER

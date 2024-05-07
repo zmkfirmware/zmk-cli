@@ -12,9 +12,9 @@ import rich
 import typer
 from rich.prompt import Confirm, InvalidResponse, PromptBase
 
+from ...exceptions import FatalError
 from ...menu import detail_list, show_menu
 from ...templates import get_template_files
-from ...util import fatal_error
 from ..config import Config
 
 
@@ -123,7 +123,7 @@ def keyboard_new(
 
     board_root = repo.board_root
     if not board_root:
-        fatal_error('Cannot find repo\'s "boards" folder.')
+        raise FatalError('Cannot find repo\'s "boards" folder.')
 
     if not keyboard_name:
         keyboard_name = NamePrompt.ask()
@@ -151,7 +151,7 @@ def keyboard_new(
         keyboard_id=keyboard_id,
     )
 
-    dest: Path = board_root / template.dest
+    dest = board_root / template.dest
 
     try:
         dest.mkdir(parents=True)

@@ -7,13 +7,12 @@ from configparser import ConfigParser
 from enum import StrEnum
 from itertools import chain
 from pathlib import Path
-from typing import NoReturn, Optional
+from typing import Optional
 
 import typer
-from rich.markdown import Markdown
 
+from .exceptions import FatalHomeMissing, FatalHomeNotSet
 from .repo import Repo, is_repo
-from .util import fatal_error
 
 
 class Settings(StrEnum):
@@ -24,24 +23,6 @@ class Settings(StrEnum):
 
     CORE_EDITOR = "core.editor"  # Text editor tool
     CORE_EXPLORER = "core.explorer"  # Directory editor tool
-
-
-def fatal_home_not_set() -> NoReturn:
-    """Exits with a message indicating the home directory is not set."""
-    fatal_error(
-        Markdown("Home directory not set. Run `zmk init` to create a new config repo.")
-    )
-
-
-def fatal_home_missing(path: Path) -> NoReturn:
-    """Exits with a message indicating the home directory is missing."""
-    fatal_error(
-        Markdown(
-            f'Home directory "{path}" is missing or no longer looks like a config repo. '
-            "Run `zmk config user.home=/path/to/zmk-config` if you moved it, "
-            "or run `zmk init` to create a new config repo."
-        )
-    )
 
 
 class Config:
@@ -131,10 +112,10 @@ class Config:
 
         home = self.home_path
         if not home:
-            fatal_home_not_set()
+            raise FatalHomeNotSet()
 
         if not is_repo(home):
-            fatal_home_missing(home)
+            raise FatalHomeMissing(home)
 
         return Repo(home)
 

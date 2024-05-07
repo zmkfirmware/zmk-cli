@@ -16,9 +16,9 @@ import typer
 from rich.markdown import Markdown
 
 from ..config import Config, Settings
+from ..exceptions import FatalError
 from ..menu import show_menu
 from ..repo import Repo
-from ..util import fatal_error
 
 
 def code(
@@ -160,12 +160,10 @@ def _select_editor(cfg: Config):
     dir_editors = [e for e in available if e.support & Support.DIR]
 
     if not file_editors:
-        fatal_error(
-            Markdown(
-                "Could not find a known text editor.\n"
-                'Run `zmk config core.editor="<command>"` '
-                "replacing `<command>` with the path to a text editor."
-            )
+        raise FatalError(
+            "Could not find a known text editor.\n"
+            "Run \"zmk config core.editor='<command>'\" "
+            'replacing "<command>" with the path to a text editor.'
         )
 
     editor = show_menu("Select a text editor:", file_editors, filter_func=_filter)

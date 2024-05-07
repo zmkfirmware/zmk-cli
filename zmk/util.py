@@ -60,9 +60,3 @@ def spinner(message: str, console: Optional[Console] = None, transient: bool = T
     ) as progress:
         progress.add_task(message, total=None)
         yield
-
-
-def fatal_error(message: Any):
-    """Print an error message and exit"""
-    rich.print(message, file=sys.stderr)
-    raise typer.Exit(code=1)

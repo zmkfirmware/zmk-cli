@@ -9,13 +9,13 @@ from typing import Annotated, Optional
 
 import rich
 import typer
-from rich.markdown import Markdown
 
 from ...build import BuildItem, BuildMatrix
+from ...exceptions import FatalError
 from ...hardware import Board, Keyboard, Shield, get_hardware, is_compatible
 from ...menu import show_menu
 from ...repo import Repo
-from ...util import fatal_error, spinner
+from ...util import spinner
 from ..config import Config
 
 
@@ -60,7 +60,7 @@ def keyboard_add(
 
         if controller_id:
             if not isinstance(keyboard, Shield):
-                fatal_error(
+                raise FatalError(
                     f'Keyboard "{keyboard.id}" has an onboard controller '
                     "and does not require a controller board."
                 )
@@ -96,7 +96,7 @@ def keyboard_add(
 
     # Sanity check that everything is compatible
     if keyboard and controller and not is_compatible(controller, keyboard):
-        fatal_error(
+        raise FatalError(
             f'Keyboard "{keyboard.id}" is not compatible with controller "{controller.id}"'
         )
 
@@ -109,7 +109,7 @@ def keyboard_add(
     else:
         console.print(f'"{name}" is already in the build matrix.')
 
-    console.print(Markdown(f"Run `zmk code {keyboard.id}` to edit the keymap."))
+    console.print(f'Run "zmk code {keyboard.id}" to edit the keymap.')
 
 
 def _filter(item: Board | Shield, text: str):
@@ -119,12 +119,12 @@ def _filter(item: Board | Shield, text: str):
 
 def _check_keyboard_found(keyboard: Optional[Keyboard], keyboard_id: str):
     if keyboard is None:
-        fatal_error(f'Could not find a keyboard with ID "{keyboard_id}"')
+        raise FatalError(f'Could not find a keyboard with ID "{keyboard_id}"')
 
 
 def _check_controller_found(controller: Optional[Board], controller_id: str):
     if controller is None:
-        fatal_error(f'Could not find a controller board with ID "{controller_id}"')
+        raise FatalError(f'Could not find a controller board with ID "{controller_id}"')
 
 
 def _copy_keyboard_file(repo: Repo, path: Path):
