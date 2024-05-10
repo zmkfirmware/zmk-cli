@@ -69,7 +69,7 @@ class Repo(Module):
         self._west_ready = False
 
     @property
-    def project_manifest_path(self) -> Optional[Path]:
+    def project_manifest_path(self) -> Path:
         """Path to the "west.yml" file."""
         return self.path / _PROJECT_MANIFEST_PATH
 

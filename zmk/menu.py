@@ -452,7 +452,9 @@ class Detail(Generic[T]):
         self._pad_len = self.MIN_PAD
 
     def __rich__(self):
-        return Text.assemble(self.data, " " * self._pad_len, (self.detail, "dim"))
+        text = Text.assemble(str(self.data), " " * self._pad_len, (self.detail, "dim"))
+        # Returning the Text object directly works, but it doesn't get highlighted.
+        return text.markup
 
     # pylint: disable=protected-access
     @classmethod
@@ -462,7 +464,7 @@ class Detail(Generic[T]):
         console = console or rich.get_console()
 
         for item in items:
-            item._pad_len = console.measure(item.data).minimum
+            item._pad_len = console.measure(str(item.data)).minimum
 
         width = max(item._pad_len for item in items)
 

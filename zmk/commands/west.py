@@ -2,6 +2,8 @@
 "zmk west" command.
 """
 
+from typing import Annotated, Optional
+
 import typer
 
 from ..config import Config
@@ -21,10 +23,20 @@ def west(ctx: typer.Context):
     repo.run_west(*ctx.args)
 
 
-def update(ctx: typer.Context):
+def update(
+    ctx: typer.Context,
+    modules: Annotated[
+        Optional[list[str]],
+        typer.Argument(
+            help="Names of modules to update. Updates all modules if omitted."
+        ),
+    ] = None,
+):
     """Fetch the latest keyboard data."""
 
     cfg = ctx.find_object(Config)
     repo = cfg.get_repo()
 
-    repo.run_west("update")
+    modules = modules or []
+
+    repo.run_west("update", *modules)
