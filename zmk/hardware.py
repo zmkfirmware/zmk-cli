@@ -70,6 +70,12 @@ class Keyboard(Hardware):
     """List of features this board/shield supports"""
     variants: Optional[list[Variant]] = field(default_factory=list)
 
+    def __post_init__(self):
+        self.siblings = self.siblings or []
+        self.exposes = self.exposes or []
+        self.features = self.features or []
+        self.variants = self.variants or []
+
     @property
     def config_path(self):
         """Path to the .conf file for this keyboard"""
@@ -89,17 +95,27 @@ class Board(Keyboard):
     outputs: list[Output] = field(default_factory=list)
     """List of methods by which this board supports sending HID data"""
 
+    def __post_init__(self):
+        super().__post_init__()
+        self.outputs = self.outputs or []
+
 
 @dataclass
 class Shield(Keyboard):
     """Hardware that attaches to a board. May be a keyboard or a peripheral."""
 
-    requires: list[str] = field(default_factory=list)
+    requires: Optional[list[str]] = field(default_factory=list)
     """List of interconnects to which this shield attaches"""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.requires = self.requires or []
 
 
 @dataclass
 class GroupedHardware:
+    """Hardware grouped by type."""
+
     keyboards: list[Keyboard] = field(default_factory=list)
     """List of boards/shields that are keyboard PCBs"""
     controllers: list[Board] = field(default_factory=list)

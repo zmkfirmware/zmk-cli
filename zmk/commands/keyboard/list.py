@@ -17,11 +17,9 @@ from ...hardware import Board, Hardware, Shield, get_hardware, is_compatible
 from ...util import spinner
 from ..config import Config
 
-# TODO: allow filtering output by interconnect
 # TODO: allow output as unformatted list
 # TODO: allow output as more detailed metadata
 # TODO: allow search for items by glob pattern
-# TODO: allow listing build matrix
 
 
 class ListType(StrEnum):
@@ -113,6 +111,15 @@ def keyboard_list(
             help="List only controllers compatible with this keyboard shield.",
         ),
     ] = None,
+    interconnect: Annotated[
+        Optional[str],
+        typer.Option(
+            "--interconnect",
+            "-i",
+            metavar="INTERCONNECT",
+            help="List only keyboards and controllers that have this interconnect.",
+        ),
+    ] = None,
     standalone: Annotated[
         bool,
         typer.Option(
@@ -151,16 +158,32 @@ def keyboard_list(
         groups.controllers = [c for c in groups.controllers if is_compatible(c, item)]
         list_type = ListType.CONTROLLER
 
+    elif interconnect:
+        # Filter to controllers that provide an interconnect and keyboards that use it.
+        item = groups.find_interconnect(interconnect)
+        if item is None:
+            raise FatalError(f'Could not find interconnect "{interconnect}".')
+
+        groups.controllers = [c for c in groups.controllers if item.id in c.exposes]
+        groups.keyboards = [
+            kb
+            for kb in groups.keyboards
+            if isinstance(kb, Shield) and item.id in kb.requires
+        ]
+        groups.interconnects = []
+
     elif standalone:
         # Filter to keyboards with on-board controllers
         groups.keyboards = [kb for kb in groups.keyboards if isinstance(kb, Board)]
         list_type = ListType.KEYBOARD
 
     def print_items(header: str, items: Iterable[Hardware]):
+        names = [item.id for item in items]
+        if not names:
+            return
+
         if list_type == ListType.ALL:
             console.print(header, style="green")
-
-        names = [item.id for item in items]
 
         columns = Columns(names, padding=(0, 2), equal=True, column_first=True)
         console.print(columns)

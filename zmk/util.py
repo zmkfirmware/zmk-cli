@@ -5,13 +5,10 @@ General utilities.
 import functools
 import operator
 import os
-import sys
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterable, Optional, TypeVar
+from typing import Iterable, Optional, TypeVar
 
-import rich
-import typer
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from ruamel.yaml import YAML
