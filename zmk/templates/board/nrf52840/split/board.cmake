@@ -1,5 +1,1 @@
-board_runner_args(nrfjprog "--nrf-family=NRF52" "--softreset")
-<%text>
-include(${ZEPHYR_BASE}/boards/common/uf2.board.cmake)
-include(${ZEPHYR_BASE}/boards/common/nrfjprog.board.cmake)
-</%text>
+<%inherit file="board/nrf52840/board.cmake" />

@@ -1,22 +1,3 @@
-# This file was generated from a template. Edit it to match your board.
-# See https://docs.zephyrproject.org/3.6.0/hardware/porting/board_porting.html#write-kconfig-files
-# for more information.
+<%inherit file="board/nrf52840/Kconfig" />
 
-if BOARD_${id.upper()}
-
-config BOARD_ENABLE_DCDC
-    bool "DCDC mode"
-    select SOC_DCDC_NRF52X
-    default y
-
-# Uncomment this block if you are powering the SoC from the VDDH pin and have
-# an inductor between VDD and DCCH. Otherwise, delete this block.
-# WARNING: uncommenting this without the correct inductor will brick the device
-# and require reprogramming it with a J-Link or similar debug probe!
-
-# config BOARD_ENABLE_DCDC_HV
-#     bool "High Voltage DCDC converter"
-#     select SOC_DCDC_NRF52X_HV
-#     default y
-
-endif # BOARD_${id.upper()}
+<%def name="guard()">BOARD_${id.upper()}</%def>

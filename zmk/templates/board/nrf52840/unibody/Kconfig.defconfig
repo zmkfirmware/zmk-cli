@@ -1,19 +1,8 @@
-if BOARD_${id.upper()}
+<%inherit file="board/nrf52840/Kconfig.defconfig" />
 
+<%def name="guard()">BOARD_${id.upper()}</%def>
+
+<%block name="inner">
 config ZMK_KEYBOARD_NAME
     default "${shortname}"
-
-if USB
-
-config USB_NRFX
-    default y
-
-config USB_DEVICE_STACK
-    default y
-
-endif # USB
-
-config BT_CTLR
-    default BT
-
-endif # BOARD_${id.upper()}
+</%block>

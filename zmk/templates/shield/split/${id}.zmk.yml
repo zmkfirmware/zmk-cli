@@ -1,29 +1,5 @@
-# This file was generated from a template. Edit it to match your shield.
-# See https://zmk.dev/docs/development/hardware-metadata-files for instructions.
-
-file_format: "1"
-id: ${id}
-name: ${name}
-type: shield
-
-# Set this to a URL that documents the keyboard.
-url: https://example.com
-
+<%inherit file="common/hardware.zmk.yml" />
 # Set this to the interconnect the shield uses.
 # Run "zmk keyboard list --type interconnect" to get the possible values.
 requires:
   - pro_micro
-
-# Uncomment this if the shield has a 4-pin OLED display header. See
-# https://zmk.dev/docs/development/hardware-metadata-files#interconnect-requiresexposes
-# for a list of other interconnects the shield could provide.
-exposes:
-#   - i2c_oled
-
-# Add any features your shield supports here.
-# See https://zmk.dev/docs/development/hardware-metadata-files#features.
-features:
-  - keys
-siblings:
-  - ${id}_left
-  - ${id}_right

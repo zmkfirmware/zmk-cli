@@ -1,0 +1,19 @@
+# This file was generated from a template. Edit it to match your keyboard.
+# See https://zmk.dev/docs/development/hardware-metadata-files for instructions.
+
+file_format: "1"
+id: ${id}
+name: ${name}
+type: ${keyboard_type}
+% if arch:
+arch: ${arch}
+% endif
+
+# Set this to a URL that documents the keyboard.
+url: https://example.com
+
+# Add any features your keyboard supports here.
+# See https://zmk.dev/docs/development/hardware-metadata-files#features.
+features:
+  - keys
+${self.body()}

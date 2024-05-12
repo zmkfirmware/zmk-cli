@@ -1,5 +1,14 @@
 """
 File templates.
+
+Templates will be provided the following parameters:
+
+    id: str -- The board/shield ID
+    name: str -- The keyboard display name
+    shortname: str -- A name abbreviated to <= 16 characters
+    keyboard_type: str -- "board" or "shield"
+    arch: Optional[str] -- The board architecture, e.g "arm"
+
 """
 
 from pathlib import Path

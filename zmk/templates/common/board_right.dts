@@ -1,0 +1,7 @@
+// This file was generated from a template. Edit it to match your board.
+// See https://zmk.dev/docs/development/new-shield for more instructions.
+
+#include "${id}.dtsi"
+#include "${id}_right-pinctrl.dtsi"
+
+<%include file="matrix_split_right.dtsi" />

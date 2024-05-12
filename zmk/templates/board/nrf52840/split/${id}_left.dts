@@ -2,7 +2,7 @@
 // See https://zmk.dev/docs/development/new-shield for more instructions.
 
 #include "${id}.dtsi"
-#include "${id}_le;ft-pinctrl.dtsi"
+#include "${id}_left-pinctrl.dtsi"
 
 &kscan {
     // Replace these comments with the GPIO pins in the matrix for the left side.

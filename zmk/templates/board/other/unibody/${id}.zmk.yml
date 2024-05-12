@@ -1,20 +1,4 @@
-# This file was generated from a template. Edit it to match your board.
-# See https://zmk.dev/docs/development/hardware-metadata-files for instructions.
-
-file_format: "1"
-id: ${id}
-name: ${name}
-type: board
-arch: arm
-
-# Set this to a URL that documents the keyboard.
-url: https://example.com
-
-# Add any features your shield supports here.
-# See https://zmk.dev/docs/development/hardware-metadata-files#features.
-features:
-  - keys
-
+<%inherit file="common/hardware.zmk.yml" />
 outputs:
   - usb
-  - ble
+#   - ble

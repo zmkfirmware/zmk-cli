@@ -1,15 +1,1 @@
-# This file was generated from a template. Edit it to match your board.
-# See https://docs.zephyrproject.org/3.6.0/hardware/porting/board_porting.html#write-kconfig-files
-# for more information.
-
-CONFIG_BOARD_${id.upper()}=y
-
-# Enable GPIO
-CONFIG_GPIO=y
-
-# Use pinctrl
-CONFIG_PINCTRL=y
-
-# Enable ZMK outputs
-# CONFIG_ZMK_BLE=y
-CONFIG_ZMK_USB=y
+<%inherit file="board/other/board_defconfig" />

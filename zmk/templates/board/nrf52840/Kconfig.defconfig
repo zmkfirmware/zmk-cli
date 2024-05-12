@@ -1,0 +1,21 @@
+# This file was generated from a template. Edit it to match your board.
+# See https://docs.zephyrproject.org/3.6.0/hardware/porting/board_porting.html#write-kconfig-files
+# for more information.
+<%block name="before" />
+if ${self.guard() | trim}
+<%block name="inner" />\
+
+if USB
+
+config USB_NRFX
+    default y
+
+config USB_DEVICE_STACK
+    default y
+
+endif # USB
+
+config BT_CTLR
+    default BT
+
+endif # ${self.guard() | trim}

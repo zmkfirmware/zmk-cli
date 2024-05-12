@@ -1,0 +1,18 @@
+# This file was generated from a template. Edit it to match your board.
+# See https://docs.zephyrproject.org/3.6.0/develop/test/twister.html#board-configuration
+# for more information.
+
+identifier: ${id}
+name: ${name}
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+supported:
+  - adc
+  - usb_device
+  - ble
+  - ieee802154
+  - pwm
+  - watchdog

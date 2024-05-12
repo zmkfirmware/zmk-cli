@@ -1,0 +1,12 @@
+    default_transform: default_transform {
+        // See https://zmk.dev/docs/development/new-shield#optional-matrix-transform
+        // for how to configure this
+        compatible = "zmk,matrix-transform";
+        columns = <2>;
+        rows = <2>;
+
+        map = <
+            RC(0, 0) RC(0, 1)
+            RC(1, 0) RC(1, 1)
+        >;
+    };

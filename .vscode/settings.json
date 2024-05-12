@@ -15,5 +15,10 @@
   "files.exclude": {
     "**/__pycache__": true
   },
+  "files.associations": {
+    "**/templates/board/**": "mako",
+    "**/templates/shield/**": "mako",
+    "**/templates/common/**": "mako"
+  },
   "isort.check": true
 }
