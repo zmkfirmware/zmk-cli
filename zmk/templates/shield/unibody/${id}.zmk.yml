@@ -2,7 +2,7 @@
 # See https://zmk.dev/docs/development/hardware-metadata-files for instructions.
 
 file_format: "1"
-id: ${shield}
+id: ${id}
 name: ${name}
 type: shield
 
@@ -24,6 +24,3 @@ exposes:
 # See https://zmk.dev/docs/development/hardware-metadata-files#features.
 features:
   - keys
-siblings:
-  - ${shield}_left
-  - ${shield}_right

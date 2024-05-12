@@ -2,7 +2,7 @@
 # See https://docs.zephyrproject.org/3.6.0/hardware/porting/board_porting.html#write-kconfig-files
 # for more information.
 
-if BOARD_${board.upper()}_LEFT
+if BOARD_${id.upper()}_LEFT
 
 config ZMK_KEYBOARD_NAME
     default "${shortname}"
@@ -10,9 +10,9 @@ config ZMK_KEYBOARD_NAME
 config ZMK_SPLIT_ROLE_CENTRAL
     default y
 
-endif # BOARD_${board.upper()}_LEFT
+endif # BOARD_${id.upper()}_LEFT
 
-if BOARD_${board.upper()}_LEFT || BOARD_${board.upper()}_RIGHT
+if BOARD_${id.upper()}_LEFT || BOARD_${id.upper()}_RIGHT
 
 if USB
 
@@ -24,4 +24,4 @@ endif # USB
 # config BT_CTLR
 #     default BT
 
-endif # BOARD_${board.upper()}_LEFT || BOARD_${board.upper()}_RIGHT
+endif # BOARD_${id.upper()}_LEFT || BOARD_${id.upper()}_RIGHT

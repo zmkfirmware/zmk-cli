@@ -2,7 +2,7 @@
 # See https://docs.zephyrproject.org/3.6.0/develop/test/twister.html#board-configuration
 # for more information.
 
-identifier: ${board}
+identifier: ${id}
 name: ${name}
 type: mcu
 arch: arm

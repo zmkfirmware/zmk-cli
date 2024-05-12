@@ -2,7 +2,7 @@
 # See https://zmk.dev/docs/development/hardware-metadata-files for instructions.
 
 file_format: "1"
-id: ${board}
+id: ${id}
 name: ${name}
 type: board
 arch: arm

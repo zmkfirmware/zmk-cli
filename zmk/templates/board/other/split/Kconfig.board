@@ -2,12 +2,12 @@
 # See https://docs.zephyrproject.org/3.6.0/hardware/porting/board_porting.html#write-kconfig-files
 # for more information.
 
-config BOARD_${board.upper()}_LEFT
+config BOARD_${id.upper()}_LEFT
     bool "${name} left"
     depends on SOC_SERIES_YOUR_SOC_SERIES_HERE
     select SOC_PART_NUMBER_ABCDEFGH
 
-config BOARD_${board.upper()}_RIGHT
+config BOARD_${id.upper()}_RIGHT
     bool "${name} right"
     depends on SOC_SERIES_YOUR_SOC_SERIES_HERE
     select SOC_PART_NUMBER_ABCDEFGH

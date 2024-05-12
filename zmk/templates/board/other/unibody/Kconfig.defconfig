@@ -2,7 +2,7 @@
 # See https://docs.zephyrproject.org/3.6.0/hardware/porting/board_porting.html#write-kconfig-files
 # for more information.
 
-if BOARD_${board.upper()}
+if BOARD_${id.upper()}
 
 config ZMK_KEYBOARD_NAME
     default "${shortname}"
@@ -17,4 +17,4 @@ endif # USB
 # config BT_CTLR
 #     default BT
 
-endif # BOARD_${board.upper()}
+endif # BOARD_${id.upper()}

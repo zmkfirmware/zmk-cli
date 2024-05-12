@@ -1,4 +1,4 @@
-if SHIELD_${shield.upper()}_LEFT
+if SHIELD_${id.upper()}_LEFT
 
 config ZMK_KEYBOARD_NAME
     default "${shortname}"
@@ -6,11 +6,11 @@ config ZMK_KEYBOARD_NAME
 config ZMK_SPLIT_ROLE_CENTRAL
     default y
 
-endif # SHIELD_${shield.upper()}_LEFT
+endif # SHIELD_${id.upper()}_LEFT
 
-if SHIELD_${shield.upper()}_LEFT || SHIELD_${shield.upper()}_RIGHT
+if SHIELD_${id.upper()}_LEFT || SHIELD_${id.upper()}_RIGHT
 
 config ZMK_SPLIT
     default y
 
-endif # SHIELD_${shield.upper()}_LEFT || SHIELD_${shield.upper()}_RIGHT
+endif # SHIELD_${id.upper()}_LEFT || SHIELD_${id.upper()}_RIGHT

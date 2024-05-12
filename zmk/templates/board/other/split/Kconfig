@@ -2,9 +2,9 @@
 # See https://docs.zephyrproject.org/3.6.0/hardware/porting/board_porting.html#write-kconfig-files
 # for more information.
 
-if BOARD_${board.upper()}_LEFT || BOARD_${board.upper()}_RIGHT
+if BOARD_${id.upper()}_LEFT || BOARD_${id.upper()}_RIGHT
 
 # Define any board-specific Kconfig options here.
 # If there are none, you may delete this file.
 
-endif # BOARD_${board.upper()}_LEFT || BOARD_${board.upper()}_RIGHT
+endif # BOARD_${id.upper()}_LEFT || BOARD_${id.upper()}_RIGHT

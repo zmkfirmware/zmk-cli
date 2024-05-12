@@ -1,8 +1,8 @@
 // This file was generated from a template. Edit it to match your board.
 // See https://zmk.dev/docs/development/new-shield for more instructions.
 
-#include "${board}.dtsi"
-#include "${board}_left-pinctrl.dtsi"
+#include "${id}.dtsi"
+#include "${id}_le;ft-pinctrl.dtsi"
 
 &kscan {
     // Replace these comments with the GPIO pins in the matrix for the left side.

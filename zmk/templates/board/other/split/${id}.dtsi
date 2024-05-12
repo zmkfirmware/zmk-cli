@@ -5,11 +5,9 @@
 /dts-v1/;
 #include <dt-bindings/zmk/matrix_transform.h>
 
-#include "${board}-pinctrl.dtsi"
-
 / {
     model = "${name}";
-    compatible = "${board}";
+    compatible = "${id};";
 
     chosen {
         zmk,kscan = &kscan;
@@ -29,11 +27,6 @@
 
         // Replace these comments with the GPIO pins in the matrix.
         // See https://zmk.dev/docs/development/new-shield#shield-overlays
-        col-gpios
-            = </* &gpio0 0 */ GPIO_ACTIVE_HIGH>
-            , </* &gpio0 0 */ GPIO_ACTIVE_HIGH>
-            ;
-
         row-gpios
             = </* &gpio0 0 */ (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
             , </* &gpio0 0 */ (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
@@ -48,8 +41,8 @@
         rows = <2>;
 
         map = <
-            RC(0, 0) RC(0, 1)
-            RC(1, 0) RC(1, 1)
+            RC(0, 0) RC(0, 1)    RC(0, 2) RC(0, 3)
+            RC(1, 0) RC(1, 1)    RC(1, 2) RC(1, 3)
         >;
     };
 };

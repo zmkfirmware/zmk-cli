@@ -2,7 +2,7 @@
 # See https://docs.zephyrproject.org/3.6.0/hardware/porting/board_porting.html#write-kconfig-files
 # for more information.
 
-CONFIG_BOARD_${board.upper()}=y
+CONFIG_BOARD_${id.upper()}=y
 
 # Enable GPIO
 CONFIG_GPIO=y

@@ -6,9 +6,11 @@
 #include <nordic/nrf52840_qiaa.dtsi>
 #include <dt-bindings/zmk/matrix_transform.h>
 
+#include "${id}-pinctrl.dtsi"
+
 / {
     model = "${name}";
-    compatible = "${board}";
+    compatible = "${id}";;
 
     chosen {
         zephyr,code-partition = &code_partition;
@@ -34,6 +36,11 @@
 
         // Replace these comments with the GPIO pins in the matrix.
         // See https://zmk.dev/docs/development/new-shield#shield-overlays
+        col-gpios
+            = </* &gpio0 0 */ GPIO_ACTIVE_HIGH>
+            , </* &gpio0 0 */ GPIO_ACTIVE_HIGH>
+            ;
+
         row-gpios
             = </* &gpio0 0 */ (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
             , </* &gpio0 0 */ (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
@@ -48,16 +55,15 @@
         rows = <2>;
 
         map = <
-            RC(0, 0) RC(0, 1)    RC(0, 2) RC(0, 3)
-            RC(1, 0) RC(1, 1)    RC(1, 2) RC(1, 3)
+            RC(0, 0) RC(0, 1)
+            RC(1, 0) RC(1, 1)
         >;
     };
 
     leds {
         compatible = "gpio-leds";
 
-        // If you have a GPIO routed to a status LED, set it here. If each side
-        // uses a different GPIO pin, move this to the left/right .dts files.
+        // If you have a GPIO routed to a status LED, set it here.
         // Otherwise, delete this block.
         blue_led: led_0 {
             gpios = </* &gpio0 0 */ GPIO_ACTIVE_HIGH>;
@@ -73,8 +79,7 @@
 
     // If you are powering the SoC from the VDD pin and you have a voltage divider
     // routed to an analog pin to read the battery voltage, uncomment this block
-    // and assign the correct ADC channel and resistance values. If each side
-    // uses a different ADC channel, move this to the left/right .dts files.
+    // and assign the correct ADC channel and resistance values.
     // Otherwise, delete it.
 
     // vbatt: vbatt {

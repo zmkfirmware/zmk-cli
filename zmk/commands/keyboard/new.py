@@ -308,19 +308,18 @@ def _get_template(
     keyboard_id: str,
 ):
     template = TemplateData()
+    template.data["id"] = keyboard_id
     template.data["name"] = keyboard_name
     template.data["shortname"] = short_name
 
     match keyboard_type:
         case KeyboardType.SHIELD:
-            template.data["shield"] = keyboard_id
             template.folder = "shield/"
             template.dest = f"shields/{keyboard_id}"
 
         case _:
             arch = _PLATFORM_ARCH.get(keyboard_platform, _DEFAULT_ARCH)
 
-            template.data["board"] = keyboard_id
             template.folder = f"board/{keyboard_platform}/"
             template.dest = f"{arch}/{keyboard_id}"
 
