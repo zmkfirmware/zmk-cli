@@ -1,0 +1,8 @@
+// This file was generated from a template. Edit it to match your board.
+// See https://docs.zephyrproject.org/3.6.0/hardware/porting/board_porting.html
+// and https://docs.zephyrproject.org/3.6.0/hardware/pinctrl/index.html for
+// more instructions.
+
+&pinctrl {
+
+};

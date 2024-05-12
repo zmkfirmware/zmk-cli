@@ -3,4 +3,4 @@ if SHIELD_${shield.upper()}
 config ZMK_KEYBOARD_NAME
     default "${shortname}"
 
-endif
+endif # SHIELD_${shield.upper()}

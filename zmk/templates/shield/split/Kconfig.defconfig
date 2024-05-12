@@ -6,11 +6,11 @@ config ZMK_KEYBOARD_NAME
 config ZMK_SPLIT_ROLE_CENTRAL
     default y
 
-endif
+endif # SHIELD_${shield.upper()}_LEFT
 
 if SHIELD_${shield.upper()}_LEFT || SHIELD_${shield.upper()}_RIGHT
 
 config ZMK_SPLIT
     default y
 
-endif
+endif # SHIELD_${shield.upper()}_LEFT || SHIELD_${shield.upper()}_RIGHT

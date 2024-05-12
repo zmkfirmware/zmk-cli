@@ -20,7 +20,9 @@ def get_template_files(
     template_path = _ROOT_PATH / folder
 
     for file in template_path.rglob("*"):
-        file_name = Template(str(file.relative_to(template_path)))
-        template = Template(filename=str(file))
+        file_name = Template(
+            str(file.relative_to(template_path)), strict_undefined=True
+        )
+        template = Template(filename=str(file), strict_undefined=True)
 
         yield (Path(file_name.render_unicode(**data)), template.render_unicode(**data))

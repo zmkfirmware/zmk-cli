@@ -5,7 +5,6 @@
 import re
 from dataclasses import dataclass, field
 from enum import StrEnum
-from pathlib import Path
 from typing import Annotated, Optional
 
 import rich
@@ -23,6 +22,13 @@ class KeyboardType(StrEnum):
 
     SHIELD = "shield"
     BOARD = "board"
+
+
+class KeyboardPlatform(StrEnum):
+    """Common keyboard platforms/SoCs"""
+
+    NRF52840 = "nrf52840"
+    OTHER = "other"
 
 
 class KeyboardLayout(StrEnum):
@@ -73,16 +79,19 @@ def _validate_short_name(name: str):
 def _id_callback(value: Optional[str]):
     if value is not None:
         _validate_id(value)
+    return value
 
 
 def _name_callback(name: Optional[str]):
     if name is not None:
         _validate_name(name)
+    return name
 
 
 def _short_name_callback(name: Optional[str]):
     if name is not None:
         _validate_short_name(name)
+    return name
 
 
 def keyboard_new(
@@ -112,9 +121,20 @@ def keyboard_new(
             help="Type of keyboard to create.",
         ),
     ] = None,
+    keyboard_platform: Annotated[
+        Optional[KeyboardPlatform],
+        typer.Option(
+            "--platform",
+            "-p",
+            help="If creating a board, the platform/SoC on which it is based.",
+        ),
+    ] = None,
     keyboard_layout: Annotated[
         Optional[KeyboardLayout],
         typer.Option("--layout", "-l", help="Keyboard hardware layout."),
+    ] = None,
+    force: Annotated[
+        bool, typer.Option("--force", "-f", help="Overwrite existing files.")
     ] = None,
 ):
     """Create a new keyboard from a template."""
@@ -140,11 +160,18 @@ def keyboard_new(
     if not keyboard_type:
         keyboard_type = _prompt_keyboard_type()
 
+    if not keyboard_platform:
+        if keyboard_type == KeyboardType.BOARD:
+            keyboard_platform = _prompt_keyboard_platform()
+        else:
+            keyboard_platform = KeyboardPlatform.OTHER
+
     if not keyboard_layout:
         keyboard_layout = _prompt_keyboard_layout()
 
     template = _get_template(
         keyboard_type,
+        keyboard_platform,
         keyboard_layout,
         keyboard_name=keyboard_name,
         short_name=short_name,
@@ -156,7 +183,7 @@ def keyboard_new(
     try:
         dest.mkdir(parents=True)
     except FileExistsError as exc:
-        if not Confirm.ask(
+        if not force and not Confirm.ask(
             "This keyboard already exists. Overwrite it?", default=False
         ):
             raise typer.Exit() from exc
@@ -182,6 +209,18 @@ def _prompt_keyboard_type():
     )
 
     result = show_menu("Select a keyboard type:", items)
+    return result.data
+
+
+def _prompt_keyboard_platform():
+    items = detail_list(
+        [
+            (KeyboardPlatform.NRF52840, "Nordic nRF52840 SoC"),
+            (KeyboardPlatform.OTHER, "Any other platform"),
+        ]
+    )
+
+    result = show_menu("Select the platform/SoC the keyboard uses:", items)
     return result.data
 
 
@@ -254,8 +293,15 @@ class IdPrompt(NamePromptBase):
         )
 
 
+_DEFAULT_ARCH = "arm"
+_PLATFORM_ARCH: dict[KeyboardPlatform, str] = {
+    KeyboardPlatform.NRF52840: "arm",
+}
+
+
 def _get_template(
     keyboard_type: KeyboardType,
+    keyboard_platform: KeyboardPlatform,
     keyboard_layout: KeyboardLayout,
     keyboard_name: str,
     short_name: str,
@@ -272,9 +318,11 @@ def _get_template(
             template.dest = f"shields/{keyboard_id}"
 
         case _:
+            arch = _PLATFORM_ARCH.get(keyboard_platform, _DEFAULT_ARCH)
+
             template.data["board"] = keyboard_id
-            template.folder = "board/"
-            template.dest = f"arm/{keyboard_id}"
+            template.folder = f"board/{keyboard_platform}/"
+            template.dest = f"{arch}/{keyboard_id}"
 
     match keyboard_layout:
         case KeyboardLayout.UNIBODY:

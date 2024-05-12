@@ -1,7 +1,8 @@
 // This file was generated from a template. Edit it to match your shield.
 // See https://zmk.dev/docs/development/new-shield for more instructions.
 
-#include "${shield}.dtsi"
+#include "${board}.dtsi"
+#include "${board}_right-pinctrl.dtsi"
 
 &default_transform {
     // Set this to the number of columns on the left side.
@@ -12,7 +13,7 @@
     // Replace these comments with the GPIO pins in the matrix for the right side.
     // See https://zmk.dev/docs/development/new-shield#shield-overlays
     col-gpios
-        = </* &pro_micro 0 */ GPIO_ACTIVE_HIGH>
-        , </* &pro_micro 0 */ GPIO_ACTIVE_HIGH>
+        = </* &gpio0 0 */ GPIO_ACTIVE_HIGH>
+        , </* &gpio0 0 */ GPIO_ACTIVE_HIGH>
         ;
 };
