@@ -1,6 +1,6 @@
 <%inherit file="board.dts" />
 <%block name="kscan">\
-<%include file="matrix_split_common.dtsi" />\
+<%include file="kscan_split_common.dtsi" />\
 </%block>\
 <%block name="matrix_transform">\
 <%include file="matrix_transform_split.dtsi" />\

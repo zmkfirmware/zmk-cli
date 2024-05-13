@@ -1,4 +1,4 @@
-<%page args="node = '&gpio0'">\
+<%page args="node = '&gpio0'" />\
 &kscan {
     // Replace these comments with the GPIO pins in the matrix for the left side.
     // See https://zmk.dev/docs/development/new-shield#shield-overlays

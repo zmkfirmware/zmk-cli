@@ -1,13 +1,1 @@
-// This file was generated from a template. Edit it to match your shield.
-// See https://zmk.dev/docs/development/new-shield for more instructions.
-
-#include "${id};.dtsi"
-
-&kscan {
-    // Replace these comments with the GPIO pins in the matrix for the left side.
-    // See https://zmk.dev/docs/development/new-shield#shield-overlays
-    col-gpios
-        = </* &pro_micro 0 */ GPIO_ACTIVE_HIGH>
-        , </* &pro_micro 0 */ GPIO_ACTIVE_HIGH>
-        ;
-};
+<%inherit file="common/split_left.overlay" />

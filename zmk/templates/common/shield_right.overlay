@@ -2,6 +2,5 @@
 // See https://zmk.dev/docs/development/new-shield for more instructions.
 
 #include "${id}.dtsi"
-#include "${id}_right-pinctrl.dtsi"
 
-<%include file="kscan_split_right.dtsi" />
+<%include file="kscan_split_right.dtsi" args="node = '&pro_micro'" />

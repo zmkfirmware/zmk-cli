@@ -2,7 +2,7 @@
         // See https://zmk.dev/docs/development/new-shield#optional-matrix-transform
         // for how to configure this
         compatible = "zmk,matrix-transform";
-        columns = <2>;
+        columns = <4>;
         rows = <2>;
 
         map = <

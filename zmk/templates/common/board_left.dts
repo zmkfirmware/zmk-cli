@@ -1,7 +1,7 @@
-// This file was generated from a template. Edit it to match your board.
+// This file was generated from a template. Edit it to match your keyboard.
 // See https://zmk.dev/docs/development/new-shield for more instructions.
 
 #include "${id}.dtsi"
 #include "${id}_left-pinctrl.dtsi"
 
-<%include file="matrix_split_left.dtsi" />
+<%include file="kscan_split_left.dtsi" />

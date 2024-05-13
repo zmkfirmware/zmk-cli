@@ -1,0 +1,28 @@
+    leds {
+        compatible = "gpio-leds";
+
+        // If you have a GPIO routed to a status LED, set it here.
+        // Otherwise, delete this block.
+        blue_led: led_0 {
+            gpios = </* &gpio0 0 */ GPIO_ACTIVE_HIGH>;
+        };
+    };
+
+    // If you are powering the SoC from the VDDH pin, uncomment this block.
+    // Otherwise, delete it.
+
+    // vbatt: vbatt {
+    //     compatible = "zmk,battery-nrf-vddh";
+    // };
+
+    // If you are powering the SoC from the VDD pin and you have a voltage divider
+    // routed to an analog pin to read the battery voltage, uncomment this block
+    // and assign the correct ADC channel and resistance values.
+    // Otherwise, delete it.
+
+    // vbatt: vbatt {
+    //     compatible = "voltage-divider";
+    //     io-channels = <&adc 2>;
+    //     output-ohms = <2000000>;
+    //     full-ohms = <(2000000 + 806000)>;
+    // };
