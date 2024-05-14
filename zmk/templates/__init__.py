@@ -48,21 +48,35 @@ def get_template_files(
         )
 
 
-_MAKO_TAG_RE = re.compile(r"\s*<\/?%\s*([\w:]+)(?:\s+.*?)?(\/?>)\s*")
+# Matches <%tag ...>, </%tag ...>, and <%tag ... />. Group 1 is the tag name.
+_MAKO_TAG_RE = re.compile(r"\s*<\/?%\s*([\w:]+)(?:\s+.*?)?\/?>\s*")
+_IGNORE_TAGS = [
+    "include",  # Includes seem to get trimmed, so keep the \n at the include site.
+    "text",  # "<%text>\" would insert a "\" as text instead of trimming the \n.
+]
 
 
 def _remove_tag_newlines(text: str) -> str:
+    """
+    Template preprocessor that finds Mako <%...> </%...> and <%.../> tags on a
+    line by themselves and escapes the trailing \\n so they do not create a
+    blank line in the rendered output.
+    """
+
     def escape(line: str):
         if m := _MAKO_TAG_RE.fullmatch(line):
-            if m.group(1) not in ("include", "text"):
+            if m.group(1) not in _IGNORE_TAGS:
                 return line + "\\"
         return line
 
     lines = text.splitlines()
+
+    # Do not escape the final line, since there is not a \n to escape there.
     escaped = [escape(line) for line in lines[:-1]] + lines[-1:]
 
     return "\n".join(escaped)
 
 
 def _ensure_trailing_newline(text: str) -> str:
+    """Trim whitespace from a string, then add a \\n to the end."""
     return text.strip() + "\n"
