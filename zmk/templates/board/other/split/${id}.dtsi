@@ -1,4 +1,5 @@
 <%inherit file="common/board_split.dtsi" />\
 <%block name="includes">
 #include "${id}-pinctrl.dtsi"
+
 </%block>

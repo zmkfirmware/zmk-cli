@@ -5,4 +5,5 @@
 <%block name="inner">
 config ZMK_KEYBOARD_NAME
     default "${shortname}"
+
 </%block>

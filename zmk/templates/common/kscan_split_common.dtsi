@@ -1,4 +1,4 @@
-<%page args="node = '&gpio0'" />\
+<%page args="node = '&gpio0'" />
     kscan: kscan {
         // If the hardware does not use a switch matrix, change this to the
         // appropriate driver and update the properties below to match.

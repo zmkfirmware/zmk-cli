@@ -1,7 +1,7 @@
-<%inherit file="common/shield.overlay" />\
-<%block name="kscan">\
+<%inherit file="common/shield.overlay" />
+<%block name="kscan">
 <%include file="common/kscan_split_common.dtsi" args="node = '&pro_micro'" />
-</%block>\
-<%block name="matrix_transform">\
+</%block>
+<%block name="matrix_transform">
 <%include file="common/matrix_transform_split.dtsi" />
-</%block>\
+</%block>

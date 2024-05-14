@@ -11,6 +11,8 @@ Templates will be provided the following parameters:
 
 """
 
+import re
+from itertools import pairwise
 from pathlib import Path
 from typing import Any, Generator
 
@@ -27,7 +29,11 @@ def get_template_files(
     Yield (filename, data) tuples for all the template files within the given
     folder (relative to the "templates" folder).
     """
-    lookup = TemplateLookup(directories=[str(_ROOT_PATH)], strict_undefined=True)
+    lookup = TemplateLookup(
+        directories=[str(_ROOT_PATH)],
+        preprocessor=_remove_tag_newlines,
+        strict_undefined=True,
+    )
     template_path = _ROOT_PATH / folder
 
     for file in template_path.rglob("*"):
@@ -38,5 +44,25 @@ def get_template_files(
 
         yield (
             file_name.render_unicode(**data),
-            template.render_unicode(**data),
+            _ensure_trailing_newline(template.render_unicode(**data)),
         )
+
+
+_MAKO_TAG_RE = re.compile(r"\s*<\/?%\s*([\w:]+)(?:\s+.*?)?(\/?>)\s*")
+
+
+def _remove_tag_newlines(text: str) -> str:
+    def escape(line: str):
+        if m := _MAKO_TAG_RE.fullmatch(line):
+            if m.group(1) not in ("include", "text"):
+                return line + "\\"
+        return line
+
+    lines = text.splitlines()
+    escaped = [escape(line) for line in lines[:-1]] + lines[-1:]
+
+    return "\n".join(escaped)
+
+
+def _ensure_trailing_newline(text: str) -> str:
+    return text.strip() + "\n"

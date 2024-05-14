@@ -1,10 +1,11 @@
 # This file was generated from a template. Edit it to match your keyboard.
 # See https://docs.zephyrproject.org/3.6.0/hardware/porting/board_porting.html#write-kconfig-files
 # for more information.
+
 <%block name="before" />
 if ${self.guard() | trim}
-<%block name="inner" />\
 
+<%block name="inner" />
 if USB
 
 config USB_NRFX

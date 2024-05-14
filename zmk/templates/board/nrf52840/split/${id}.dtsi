@@ -1,8 +1,8 @@
-<%inherit file="common/board.dts" />\
-<%block name="system_includes">\
+<%inherit file="common/board.dts" />
+<%block name="system_includes">
 #include <nordic/nrf52840_qiaa.dtsi>
 </%block>
-<%block name="chosen">\
+<%block name="chosen">
     chosen {
         zephyr,code-partition = &code_partition;
         zephyr,console = &cdc_acm_uart;
@@ -13,14 +13,14 @@
         zmk,kscan = &kscan;
         zmk,matrix_transform = &default_transform;
     };
-</%block>\
+</%block>
 <%block name="kscan">
 <%include file="common/kscan_split_common.dtsi" />
-</%block>\
+</%block>
 <%block name="matrix_transform">
 <%include file="common/matrix_transform_split.dtsi" />
-</%block>\
+</%block>
 <%block name="nodes">
 <%include file="board/nrf52840/common_inner.dtsi" />
-</%block>\
+</%block>
 <%include file="board/nrf52840/common_outer.dtsi" />

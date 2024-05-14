@@ -1,4 +1,4 @@
-<%page args="node = '&gpio0'" />\
+<%page args="node = '&gpio0'" />
 &default_transform {
     // Set this to the number of columns on the left side.
     col-offset = <2>;

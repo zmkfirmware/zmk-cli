@@ -12,4 +12,5 @@ config ZMK_SPLIT_ROLE_CENTRAL
     default y
 
 endif # BOARD_${id.upper()}_LEFT
+
 </%block>

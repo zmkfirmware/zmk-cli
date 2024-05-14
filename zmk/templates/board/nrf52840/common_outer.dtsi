@@ -44,7 +44,6 @@
         //     reg = <0x00026000 0x000c6000>;
         // };
 
-
         // The flash starting at 0x000d4000 and ending at
         // 0x000f3fff is reserved for use by the application.
 
