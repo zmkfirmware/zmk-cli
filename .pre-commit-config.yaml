@@ -1,9 +1,13 @@
 fail_fast: false
 repos:
   - repo: https://github.com/psf/black
-    rev: '23.9.1'
+    rev: "23.9.1"
     hooks:
       - id: black
+  - repo: https://github.com/pycqa/isort
+    rev: "5.13.2"
+    hooks:
+      - id: isort
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.2
     hooks:
@@ -13,5 +17,6 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: check-yaml
+        exclude: ^zmk/templates
       - id: check-added-large-files
       - id: check-shebang-scripts-are-executable
