@@ -20,5 +20,6 @@
     "**/templates/shield/**": "mako",
     "**/templates/common/**": "mako"
   },
-  "isort.check": true
+  "isort.check": true,
+  "isort.args": ["--profile", "black"]
 }

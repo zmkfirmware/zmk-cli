@@ -38,6 +38,9 @@ zmk = "zmk.main:app"
 requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
+[tool.isort]
+profile = "black"
+
 [tool.setuptools]
 packages = ["zmk"]
 
