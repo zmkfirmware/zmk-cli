@@ -2,6 +2,7 @@
 CLI tool to setup up ZMK Firmware.
 """
 
+from importlib import metadata
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -12,6 +13,12 @@ from .config import Config
 
 app = typer.Typer(short_help="h")
 commands.register(app)
+
+
+def _version_callback(version: bool):
+    if version:
+        print(metadata.version("zmk"))
+        raise typer.Exit()
 
 
 @app.callback()
@@ -30,6 +37,15 @@ def main(
             help="Use the home directory, even if the current directory is a repo.",
         ),
     ] = False,
+    _: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            help="Print version and exit.",
+            callback=_version_callback,
+            is_eager=True,
+        ),
+    ] = None,
 ):
     """
     Set up ZMK Firmware
