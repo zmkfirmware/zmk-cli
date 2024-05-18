@@ -11,7 +11,7 @@ from .. import styles
 from ..config import Config
 
 console = Console(
-    highlighter=styles.SeparatorHighlighter(), theme=styles.DIM_SEPARATORS
+    highlighter=styles.KeyValueHighlighter(), theme=styles.KEY_VALUE_THEME
 )
 
 
@@ -24,16 +24,19 @@ def _path_callback(ctx: typer.Context, value: bool):
 
 def config(
     ctx: typer.Context,
-    settings: Annotated[
-        Optional[list[str]],
+    name: Annotated[
+        Optional[str],
         typer.Argument(
-            metavar="[SETTING | SETTING=VALUE]",
-            help="One or more settings to get or set.",
+            help="Setting name. Prints all setting values if omitted.",
         ),
+    ] = None,
+    value: Annotated[
+        Optional[str],
+        typer.Argument(help="New setting value. Prints the current value if omitted."),
     ] = None,
     unset: Annotated[
         bool,
-        typer.Option("--unset", "-u", help="Unset the given settings."),
+        typer.Option("--unset", "-u", help="Remove the setting with the given name."),
     ] = False,
     _: Annotated[
         Optional[bool],
@@ -46,40 +49,18 @@ def config(
         ),
     ] = False,
 ):
-    """Read or write ZMK CLI configuration. Lists all settings if run with no arguments."""
+    """Read or write ZMK CLI configuration."""
 
     cfg = ctx.find_object(Config)
 
-    if unset:
-        _unset_settings(cfg, settings)
-    elif settings:
-        _set_settings(cfg, settings)
-    else:
+    if name is None:
         _list_settings(cfg)
-
-
-def _set_settings(cfg: Config, settings: list[str]):
-    show_name = len(settings) > 1
-    do_write = False
-
-    for setting in settings:
-        name, equals, value = (_strip_quotes(s) for s in setting.partition("="))
-
-        if equals:
-            do_write = True
-            _set(cfg, name, value)
-        else:
-            _get(cfg, name, show_name=show_name)
-
-    if do_write:
-        _write(cfg)
-
-
-def _unset_settings(cfg: Config, settings: list[str]):
-    for setting in settings:
-        cfg.remove(setting)
-
-    _write(cfg)
+    elif unset:
+        _unset_setting(cfg, name)
+    elif value:
+        _set_setting(cfg, name, value)
+    else:
+        _get_setting(cfg, name)
 
 
 def _list_settings(cfg: Config):
@@ -87,32 +68,16 @@ def _list_settings(cfg: Config):
         console.print(f"{name}={value}")
 
 
-def _get(cfg: Config, name: str, show_name: bool):
-    value = cfg.get(name, fallback="")
-    if show_name:
-        console.print(f"{name}={value}")
-    else:
-        console.print(value)
-
-
-def _set(cfg: Config, name: str, value: str):
-    previous = cfg.get(name, fallback=None)
-
-    cfg.set(name, value)
-    console.print(f"{name}: {previous} -> {value}")
-
-
-def _write(cfg: Config):
+def _unset_setting(cfg: Config, name: str):
+    cfg.remove(name)
     cfg.write()
-    console.print(f"Configuration saved to {cfg.path}", highlight=False)
 
 
-def _strip_quotes(value: str):
-    value = value.strip()
+def _set_setting(cfg: Config, name: str, value: str):
+    cfg.set(name, value)
+    cfg.write()
 
-    if (value.startswith('"') and value.endswith('"')) or (
-        value.startswith("'") and value.endswith("'")
-    ):
-        return value[1:-1]
 
-    return value
+def _get_setting(cfg: Config, name: str):
+    if value := cfg.get(name, fallback=None):
+        console.print(value)

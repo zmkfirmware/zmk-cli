@@ -6,10 +6,16 @@ from rich.highlighter import RegexHighlighter
 from rich.theme import Theme
 
 
-class SeparatorHighlighter(RegexHighlighter):
-    """Highlight anything that looks like a separator"""
+class KeyValueHighlighter(RegexHighlighter):
+    """Highlight "key=value" items."""
 
-    highlights = [r"(?P<separator>[:=]|->)"]
+    highlights = [r"(?P<key>[\w.]+)(?P<equals>=)(?P<value>.*)"]
 
 
-DIM_SEPARATORS = Theme({"separator": "dim"})
+KEY_VALUE_THEME = Theme(
+    {
+        "key": "bright_blue",
+        "equals": "dim blue",
+        "value": "default",
+    }
+)
