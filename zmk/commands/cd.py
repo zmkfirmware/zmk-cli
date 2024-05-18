@@ -11,7 +11,7 @@ import shellingham
 import typer
 
 from ..config import Config
-from ..exceptions import FatalError, FatalHomeNotSet
+from ..exceptions import FatalError, FatalHomeMissing, FatalHomeNotSet
 
 
 def cd(ctx: typer.Context):
@@ -27,6 +27,9 @@ def cd(ctx: typer.Context):
 
     if home is None:
         raise FatalHomeNotSet()
+
+    if not home.is_dir():
+        raise FatalHomeMissing(home)
 
     if home == Path(os.getcwd()):
         # Already in the home directory. Nothing to do.
