@@ -13,6 +13,7 @@ from west.manifest import ImportFlag, Manifest
 
 from ...config import Config
 from ...exceptions import FatalError
+from ...prompt import UrlPrompt
 from ...util import spinner
 from ...yaml import YAML
 
@@ -81,18 +82,6 @@ def module_add(
 
     yaml.dump(data, repo.project_manifest_path)
     repo.run_west("update", name)
-
-
-class UrlPrompt(PromptBase):
-    """Prompt for a URL."""
-
-    def process_response(self, value: str) -> str:
-        value = value.strip()
-
-        if not value:
-            raise InvalidResponse("[prompt.invalid]Enter a URL.")
-
-        return value
 
 
 def _get_name_from_url(repo_url: str):

@@ -22,15 +22,24 @@ _WEST_STAGING_PATH = ".zmk"
 _WEST_CONFIG_PATH = ".west/config"
 
 
-def is_repo(path: Path):
+def is_repo(path: Path) -> bool:
+    """Get whether a path is a ZMK config repo."""
     return (path / _PROJECT_MANIFEST_PATH).is_file()
+
+
+def find_containing_repo(path: Optional[Path] = None) -> Optional[Path]:
+    """Search upwards from the given path for a ZMK config repo."""
+    path = path or Path()
+    path = path.absolute()
+
+    return next((p for p in [path, *path.parents] if is_repo(p)), None)
 
 
 class Module:
     path: Path
 
     def __init__(self, path: Path):
-        self.path = path
+        self.path = path.resolve()
 
     @property
     def module_manifest_path(self) -> Path:
@@ -183,7 +192,9 @@ class Repo(Module):
         print("Initializing west application. This may take a while...")
         self._run_west("init", "-l", _CONFIG_DIR_NAME)
 
-        # TODO: can we filter the modules to ignore ZMK dependencies that aren't needed?
+        # Don't clone zephyr, because it's not necessary to discover keyboards.
+        self._run_west("config", "--local", "manifest.project-filter", " -zephyr")
+
         self._run_west("update")
 
 

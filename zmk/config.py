@@ -12,7 +12,7 @@ from typing import Optional
 import typer
 
 from .exceptions import FatalHomeMissing, FatalHomeNotSet
-from .repo import Repo, is_repo
+from .repo import Repo, find_containing_repo, is_repo
 
 
 class Settings(StrEnum):
@@ -107,7 +107,7 @@ class Config:
         point to a valid directory.
         """
         if not self.force_home:
-            if home := _find_cwd_repo():
+            if home := find_containing_repo():
                 return Repo(home)
 
         home = self.home_path
@@ -122,13 +122,3 @@ class Config:
 
 def _default_config_path():
     return Path(typer.get_app_dir("zmk", roaming=False)) / "zmk.ini"
-
-
-def _find_cwd_repo():
-    cwd = Path().absolute()
-
-    for path in [cwd, *cwd.parents]:
-        if is_repo(path):
-            return path
-
-    return None
