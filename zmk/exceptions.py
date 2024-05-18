@@ -41,12 +41,12 @@ class FatalHomeNotSet(FatalError):
 class FatalHomeMissing(FatalError):
     """
     Exception which indicates that the "user.home" setting points to a directory
-    that no longer exists or is not a ZMK config repo.
+    that no longer exists.
     """
 
     def __init__(self, path: Path):
         super().__init__(
-            f'Home directory "{path}" is missing or is not a ZMK config repo.\n'
+            f'Home directory "{path}" is missing.\n'
             'Run "zmk config user.home=/path/to/zmk-config" if you moved it, '
             'or run "zmk init" to create a new config repo.'
         )

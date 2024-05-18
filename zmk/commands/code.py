@@ -35,7 +35,9 @@ def code(
     ] = False,
     open_build_matrix: Annotated[
         bool,
-        typer.Option("--buid", "-b", help="Open the build matrix instead of a keymap."),
+        typer.Option(
+            "--build", "-b", help="Open the build matrix instead of a keymap."
+        ),
     ] = False,
 ):
     """Open the repo or a .keymap or .conf file in a text editor."""

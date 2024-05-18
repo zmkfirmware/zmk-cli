@@ -2,8 +2,8 @@
 Config repo and Zephyr module utilities.
 """
 
-import os
 import shutil
+import subprocess
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -11,7 +11,8 @@ from typing import Any, Generator, Optional
 
 from west.app.main import main as west_main
 
-from .util import read_yaml, set_directory
+from .util import set_directory
+from .yaml import read_yaml
 
 _APP_DIR_NAME = "app"
 _BUILD_MATRIX_PATH = "build.yaml"
@@ -36,6 +37,10 @@ def find_containing_repo(path: Optional[Path] = None) -> Optional[Path]:
 
 
 class Module:
+    """
+    Zephyr module repository.
+    """
+
     path: Path
 
     def __init__(self, path: Path):
@@ -67,10 +72,15 @@ class Module:
         return root if root.is_dir() else None
 
     def get_module_yaml(self) -> Any:
+        """Get the "zephyr/module.yml" file data."""
         return read_yaml(self.module_manifest_path)
 
 
 class Repo(Module):
+    """
+    ZMK config repository.
+    """
+
     _west_ready: bool
 
     def __init__(self, path: Path):
@@ -93,9 +103,11 @@ class Repo(Module):
         return root if root.is_dir() else None
 
     def get_project_yaml(self) -> Any:
+        """Get the "west.yml" file data."""
         return read_yaml(self.project_manifest_path)
 
     def get_modules(self) -> Generator[Module, None, None]:
+        """Get the modules imported by the repo."""
         modules = self.run_west("list", "-f", "{path}", capture_output=True)
         for line in modules.splitlines():
             yield Module(self.west_path / line)
@@ -115,7 +127,24 @@ class Repo(Module):
         """Path to the west staging folder."""
         return self.path / _WEST_STAGING_PATH
 
-    def run_west(self, *args: list[str], capture_output: bool = False) -> str | None:
+    def git(self, *args: str, capture_output: bool = False) -> str | None:
+        """
+        Run Git in the repo.
+
+        If capture_output is True, the command is run silently in the background
+        and this returns the output as a string.
+        """
+        args = ["git", *args]
+
+        if capture_output:
+            return subprocess.check_output(
+                args, encoding="utf-8", stderr=subprocess.PIPE, cwd=self.path
+            )
+
+        subprocess.check_call(args, encoding="utf-8")
+        return None
+
+    def run_west(self, *args: str, capture_output: bool = False) -> str | None:
         """
         Run west in the west staging folder.
 
@@ -143,7 +172,7 @@ class Repo(Module):
 
         self._west_ready = True
 
-    def _run_west(self, *args: list[str], capture_output=False):
+    def _run_west(self, *args: str, capture_output=False):
         if capture_output:
             with redirect_stdout(StringIO()) as output:
                 self.run_west(*args, capture_output=False)

@@ -11,7 +11,6 @@ from typing import Iterable, Optional, TypeVar
 
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from ruamel.yaml import YAML
 
 T = TypeVar("T")
 
@@ -27,11 +26,6 @@ def splice(text: str, index: int, count: int = 0, insert_text: str = ""):
     with `insert_text`.
     """
     return text[0:index] + insert_text + text[index + count :]
-
-
-def read_yaml(path: Path):
-    """Parse a YAML file"""
-    return YAML().load(path)
 
 
 @contextmanager

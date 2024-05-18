@@ -260,6 +260,7 @@ class NamePrompt(NamePromptBase):
     def validate(cls, value: str):
         _validate_name(value)
 
+    # pylint: disable=arguments-differ
     @classmethod
     def ask(cls):
         return super().ask("Enter the name of the keyboard")
@@ -272,6 +273,7 @@ class ShortNamePrompt(NamePromptBase):
     def validate(cls, value: str):
         _validate_short_name(value)
 
+    # pylint: disable=arguments-differ
     @classmethod
     def ask(cls):
         return super().ask(
@@ -286,6 +288,7 @@ class IdPrompt(NamePromptBase):
     def validate(cls, value: str):
         _validate_id(value)
 
+    # pylint: disable=arguments-differ
     @classmethod
     def ask(cls, name: str):
         return super().ask(

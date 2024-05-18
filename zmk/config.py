@@ -18,8 +18,7 @@ from .repo import Repo, find_containing_repo, is_repo
 class Settings(StrEnum):
     """List of setting names used by commands"""
 
-    USER_HOME = "user.home"
-    USER_NAME = "user.name"
+    USER_HOME = "user.home"  # Path to the ZMK config repo
 
     CORE_EDITOR = "core.editor"  # Text editor tool
     CORE_EXPLORER = "core.explorer"  # Directory editor tool

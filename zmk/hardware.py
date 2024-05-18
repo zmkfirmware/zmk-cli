@@ -10,7 +10,8 @@ from typing import Any, Generator, Iterable, Literal, Optional, TypeAlias, TypeG
 import dacite
 
 from .repo import Repo
-from .util import flatten, read_yaml
+from .util import flatten
+from .yaml import read_yaml
 
 Feature: TypeAlias = Literal[
     "keys", "display", "encoder", "underglow", "backlight", "pointer"

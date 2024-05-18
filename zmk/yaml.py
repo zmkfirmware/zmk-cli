@@ -57,3 +57,8 @@ def _seek_to_document_start(stream: IO):
             # start of the file.
             stream.seek(0)
             return
+
+
+def read_yaml(path: Path):
+    """Parse a YAML file"""
+    return YAML().load(path)

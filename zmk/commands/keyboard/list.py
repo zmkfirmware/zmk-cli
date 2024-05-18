@@ -23,6 +23,8 @@ from ..config import Config
 
 
 class ListType(StrEnum):
+    """Type of hardware to display"""
+
     ALL = "all"
     KEYBOARD = "keyboard"
     CONTROLLER = "controller"

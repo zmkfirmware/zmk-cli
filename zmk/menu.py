@@ -64,7 +64,6 @@ class TerminalMenu(Generic[T], Highlighter):
     _num_title_lines: int
     _last_title_line_len: int
 
-    # TODO: add an option for a text filter field
     def __init__(
         self,
         title: Any,

@@ -8,11 +8,13 @@ from contextlib import contextmanager
 
 
 def hide_cursor():
+    """Hides the terminal cursor."""
     sys.stdout.write("\x1b[?25l")
     sys.stdout.flush()
 
 
 def show_cursor():
+    """Unhides the terminal cursor."""
     sys.stdout.write("\x1b[?25h")
     sys.stdout.flush()
 
@@ -174,13 +176,4 @@ def set_cursor_pos(row=0, col=0):
     """
     with disable_echo():
         sys.stdout.write(f"\x1b[{row + 1};{col + 1}H")
-        sys.stdout.flush()
-
-
-def set_cursor_column(col=0):
-    """
-    Sets the cursor to the given column. Positions are 0-based.
-    """
-    with disable_echo():
-        sys.stdout.write(f"\x1b[{col + 1}G")
         sys.stdout.flush()
