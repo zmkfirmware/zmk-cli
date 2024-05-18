@@ -4,13 +4,13 @@
 
 import re
 from dataclasses import dataclass, field
-from enum import StrEnum
 from typing import Annotated, Optional
 
 import rich
 import typer
 from rich.prompt import Confirm, InvalidResponse, PromptBase
 
+from ...backports import StrEnum
 from ...exceptions import FatalError
 from ...menu import detail_list, show_menu
 from ...templates import get_template_files

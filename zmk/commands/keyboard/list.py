@@ -2,7 +2,6 @@
 "zmk keyboard list" command.
 """
 
-from enum import StrEnum
 from typing import Annotated, Iterable, Optional
 
 import rich
@@ -11,6 +10,7 @@ from rich import box
 from rich.columns import Columns
 from rich.table import Table
 
+from ...backports import StrEnum
 from ...build import BuildItem, BuildMatrix
 from ...exceptions import FatalError
 from ...hardware import Board, Hardware, Shield, get_hardware, is_compatible

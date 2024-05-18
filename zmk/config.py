@@ -4,13 +4,13 @@ User configuration.
 
 from collections import defaultdict
 from configparser import ConfigParser
-from enum import StrEnum
 from itertools import chain
 from pathlib import Path
 from typing import Optional
 
 import typer
 
+from .backports import StrEnum
 from .exceptions import FatalHomeMissing, FatalHomeNotSet
 from .repo import Repo, find_containing_repo, is_repo
 
