@@ -4,7 +4,7 @@ ZMK CLI subcommands.
 
 import typer
 
-from . import cd, code, config, init, keyboard, module, west
+from . import cd, code, config, download, init, keyboard, module, west
 
 
 def register(app: typer.Typer):
@@ -12,6 +12,8 @@ def register(app: typer.Typer):
     app.command()(cd.cd)
     app.command()(code.code)
     app.command()(config.config)
+    app.command()(download.download)
+    app.command(name="dl")(download.download)
     app.command()(init.init)
     app.command()(west.update)
     app.command(
