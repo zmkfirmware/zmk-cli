@@ -10,7 +10,10 @@ from ..config import Config
 
 
 def west(ctx: typer.Context):
-    """Run "west" in the config repo."""
+    # pylint: disable=line-too-long
+    """
+    Run [link=https://docs.zephyrproject.org/latest/develop/west/index.html]west[/link] in the config repo.
+    """
 
     cfg = ctx.find_object(Config)
     repo = cfg.get_repo()

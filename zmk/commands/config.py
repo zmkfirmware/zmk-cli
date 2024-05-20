@@ -49,7 +49,7 @@ def config(
         ),
     ] = False,
 ):
-    """Read or write ZMK CLI configuration."""
+    """Get and set ZMK CLI settings."""
 
     cfg = ctx.find_object(Config)
 

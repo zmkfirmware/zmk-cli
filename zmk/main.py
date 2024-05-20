@@ -11,7 +11,7 @@ import typer
 from . import commands
 from .config import Config
 
-app = typer.Typer(short_help="h")
+app = typer.Typer(rich_markup_mode="rich")
 commands.register(app)
 
 
@@ -48,12 +48,10 @@ def main(
     ] = None,
 ):
     """
-    Set up ZMK Firmware
+    ZMK Firmware command line tool
 
-    Run "zmk init" to set up a user config repo. All other "zmk" commands will
+    Run "zmk init" to set up a ZMK config repo. All other "zmk" commands will
     run in this repo unless the current working directory is a different repo.
-
-    Once you have a config repo, run "zmk keyboard add" to add a keyboard to it.
     """
     cfg = Config(config_file, force_home=force_home)
     ctx.obj = cfg

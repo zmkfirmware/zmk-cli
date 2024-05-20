@@ -53,7 +53,7 @@ You will then need to replace `python3` with `python3.10` in the rest of the ins
 
 ## Install pipx
 
-ZMK CLI can be installed directly with pip, but using [pipx](https://github.com/pypa/pipx) is recommended to avoid conflicts between Python packages.
+ZMK CLI can be installed with pip, but using [pipx](https://github.com/pypa/pipx) is recommended to avoid conflicts between Python packages.
 
 ### On Windows and Linux
 
@@ -63,6 +63,8 @@ Open a terminal and run:
 python3 -m pip install --user pipx
 python3 -m pipx ensurepath
 ```
+
+Some Linux distributions may disallow installing packages with pip. If this gives you an error, see the [install instructions](https://github.com/pypa/pipx?tab=readme-ov-file#on-linux) specific to your distribution.
 
 Close and reopen your terminal, then run the following command. It should print a version number if everything is installed correctly:
 
@@ -81,17 +83,16 @@ pipx ensurepath
 
 ## Install ZMK CLI
 
-Open a terminal and run the following command:
+Next, run the following commands:
 
 ```sh
 pipx install git+https://github.com/joelspadin/zmk-cli.git
+zmk --help
 ```
 
-Next, run the following command. It should print a version number if everything installed correctly:
+It should print a help message if everything installed correctly.
 
-```sh
-zmk --version
-```
+On Linux, you may get an error saying you need to install another package such as `python3.10-venv`. If so, follow the instructions in the error message, then try the above commands again.
 
 # Usage
 
@@ -99,23 +100,24 @@ All ZMK CLI commands start with `zmk`. Run `zmk --help` for general usage instru
 
 ## Initialize a Repository
 
+> ⚠️ If you have already created a repo and cloned it to your computer, you do not need to run this command. Set the [user.home](#userhome) setting to point to the existing repo instead.
+
 The `zmk init` command walks you through creating a GitHub repository, then clones it to your computer so you can edit it.
 
-Open a terminal and use the `cd` command to move to a directory where you'd like to place the ZMK files. Then run `zmk init`:
+Open a terminal and use the `cd` command to move to a directory where you'd like to place the ZMK files, then run `zmk init`. For example:
 
 ```sh
 cd ~/Documents
 zmk init
 ```
 
-Then follow the instructions. If you already have a ZMK config repo, you can enter its URL, for example:
+Follow the instructions it gives you. If you already have a ZMK config repo, you can enter its URL when prompted, for example:
 
 ```
-If you already have a ZMK config repo, enter its URL here. Otherwise, leave this blank to create a new repo.
 Repository URL: https://github.com/myusername/zmk-config
 ```
 
-Otherwise, leave this first prompt blank and press <key>Enter</key>, and it will walk you through creating a new repo.
+Otherwise, leave this first prompt blank and press <kbd>Enter</kbd>, and it will walk you through creating a new repo.
 
 Once you finish following all the instructions, you will have a copy of the repo stored on your computer. All `zmk` commands will run on this repo (unless the working directory is inside a different repo). If you ever forget where the repo is located, you can run `zmk cd` to find it.
 
@@ -208,11 +210,19 @@ zmk config <name> <value>  # Set <name> to <value>
 zmk config --unset <name>  # Remove the setting <name>
 ```
 
+By default, these settings are stored in a file in your user profile directory. Run `zmk config --path` to get the location of this file. You can change where the settings file is stored by setting a `ZMK_CLI_CONFIG` environment variable to the new path to use, or by adding a `--config-file=<path>` argument when running `zmk`.
+
 Other commands use the following settings:
 
 ### core.editor
 
 Command line for a text editor to use with the `zmk code` command.
+
+For example, so set Visual Studio Code as the editor and make it always open a new window, run:
+
+```sh
+zmk config core.editor "code --new-window"
+```
 
 ### core.explorer
 
@@ -223,3 +233,9 @@ If this setting is not set, the `core.editor` tool will be run instead. Set this
 ### user.home
 
 The path to the repository to use whenever `zmk` is run and the working directory is not inside a ZMK config repository.
+
+For example, to point ZMK CLI to an existing repo at `~/Documents/zmk-config`, run:
+
+```sh
+zmk config user.home ~/Documents/zmk-config
+```

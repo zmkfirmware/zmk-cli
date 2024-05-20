@@ -1,6 +1,6 @@
 [project]
 name = "zmk"
-description = "A program to help set up ZMK Firmware"
+description = "A command line program to help set up ZMK Firmware"
 readme = "README.md"
 license = { file = "LICENSE" }
 classifiers = [
@@ -28,8 +28,8 @@ dynamic = ["version"]
 
 [project.urls]
 Documentation = "https://zmk.dev/docs"
-"Source Code" = "https://github.com/zmkfirmware/zmk_cli/"
-"Issue Tracker" = "https://github.com/zmkfirmware/zmk_cli/issues/"
+"Source Code" = "https://github.com/joelspadin/zmk-cli/"
+"Issue Tracker" = "https://github.com/joelspadin/zmk-cli/issues/"
 Chat = "https://zmk.dev/community/discord/invite"
 
 [project.scripts]
