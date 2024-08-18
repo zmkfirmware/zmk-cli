@@ -19,13 +19,13 @@ jobs:
       - name: Build wheel and source tarball
         run: python3 -m build
       - name: Store distribution packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: python-package-distributions
           path: dist/
 
   publish-to-pypi:
-    name: Publish Python distribution to PyPI
+    name: Publish to PyPI
     needs:
       - build
     runs-on: ubuntu-latest
@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: python-package-distributions
           path: dist/
@@ -56,7 +56,7 @@ jobs:
 
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: python-package-distributions
           path: dist/
