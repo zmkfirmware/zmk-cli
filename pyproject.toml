@@ -28,8 +28,8 @@ dynamic = ["version"]
 
 [project.urls]
 Documentation = "https://zmk.dev/docs"
-"Source Code" = "https://github.com/joelspadin/zmk-cli/"
-"Issue Tracker" = "https://github.com/joelspadin/zmk-cli/issues/"
+"Source Code" = "https://github.com/zmkfirmware/zmk-cli/"
+"Issue Tracker" = "https://github.com/zmkfirmware/zmk-cli/issues/"
 Chat = "https://zmk.dev/community/discord/invite"
 
 [project.scripts]

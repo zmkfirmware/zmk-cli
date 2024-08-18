@@ -86,7 +86,7 @@ pipx ensurepath
 Next, run the following commands:
 
 ```sh
-pipx install git+https://github.com/joelspadin/zmk-cli.git
+pipx install zmk
 zmk --help
 ```
 
