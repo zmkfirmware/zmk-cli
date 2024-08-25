@@ -30,7 +30,7 @@ class Config:
     path: Path
     force_home: bool
 
-    def __init__(self, path: Path, force_home=False) -> None:
+    def __init__(self, path: Optional[Path], force_home=False) -> None:
         self.path = path or _default_config_path()
         self.force_home = force_home
 
@@ -117,6 +117,15 @@ class Config:
             raise FatalHomeMissing(home)
 
         return Repo(home)
+
+
+def get_config(ctx: typer.Context) -> Config:
+    """Get the Config object for the given context"""
+
+    cfg = ctx.find_object(Config)
+    if cfg is None:
+        raise RuntimeError("Could not find Config for current context")
+    return cfg
 
 
 def _default_config_path():

@@ -6,7 +6,7 @@ from typing import Annotated, Optional
 
 import typer
 
-from ..config import Config
+from ..config import get_config
 
 
 def west(ctx: typer.Context):
@@ -15,7 +15,7 @@ def west(ctx: typer.Context):
     Run [link=https://docs.zephyrproject.org/latest/develop/west/index.html]west[/link] in the config repo.
     """
 
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     # TODO: detect this better
@@ -37,7 +37,7 @@ def update(
 ):
     """Fetch the latest keyboard data."""
 
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     modules = modules or []

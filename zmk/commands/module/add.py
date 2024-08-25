@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.prompt import InvalidResponse, Prompt, PromptBase
 from west.manifest import ImportFlag, Manifest
 
-from ...config import Config
+from ...config import get_config
 from ...exceptions import FatalError
 from ...prompt import UrlPrompt
 from ...util import spinner
@@ -34,7 +34,7 @@ def module_add(
     ] = None,
 ):
     """Add a Zephyr module to the build."""
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     manifest = Manifest.from_topdir(
@@ -88,7 +88,7 @@ def _get_name_from_url(repo_url: str):
     return repo_url.split("/")[-1].removesuffix(".git")
 
 
-class NamePrompt(PromptBase):
+class NamePrompt(PromptBase[str]):
     """Prompt for a module name."""
 
     _manifest: Manifest
@@ -97,11 +97,12 @@ class NamePrompt(PromptBase):
         super().__init__("Enter a new name", console=console)
         self._manifest = manifest
 
-    # pylint: disable=arguments-renamed, arguments-differ
     @classmethod
-    def ask(cls, manifest: Manifest, *, console: Optional[Console] = None):
-        prompt = cls(manifest, console=console)
-        return prompt()
+    def ask(  # pyright: ignore[reportIncompatibleMethodOverride]
+        cls, prompt: Manifest, *, console: Optional[Console] = None
+    ):
+        subprompt = cls(prompt, console=console)
+        return subprompt()
 
     def process_response(self, value: str) -> str:
         value = value.strip()

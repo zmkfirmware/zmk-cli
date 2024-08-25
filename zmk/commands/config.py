@@ -8,7 +8,7 @@ import typer
 from rich.console import Console
 
 from .. import styles
-from ..config import Config
+from ..config import Config, get_config
 
 console = Console(
     highlighter=styles.KeyValueHighlighter(), theme=styles.KEY_VALUE_THEME
@@ -17,7 +17,7 @@ console = Console(
 
 def _path_callback(ctx: typer.Context, value: bool):
     if value:
-        cfg = ctx.find_object(Config)
+        cfg = get_config(ctx)
         print(cfg.path)
         raise typer.Exit()
 
@@ -51,7 +51,7 @@ def config(
 ):
     """Get and set ZMK CLI settings."""
 
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
 
     if name is None:
         _list_settings(cfg)

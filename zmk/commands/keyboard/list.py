@@ -12,10 +12,10 @@ from rich.table import Table
 
 from ...backports import StrEnum
 from ...build import BuildItem, BuildMatrix
+from ...config import get_config
 from ...exceptions import FatalError
 from ...hardware import Board, Hardware, Shield, get_hardware, is_compatible
 from ...util import spinner
-from ..config import Config
 
 # TODO: allow output as unformatted list
 # TODO: allow output as more detailed metadata
@@ -37,7 +37,7 @@ def _list_build_matrix(ctx: typer.Context, value: bool):
 
     console = rich.get_console()
 
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     matrix = BuildMatrix.from_repo(repo)
@@ -94,7 +94,7 @@ def keyboard_list(
             "-t",
             help="List only items of this type.",
         ),
-    ] = "all",
+    ] = ListType.ALL,
     board: Annotated[
         Optional[str],
         typer.Option(
@@ -133,7 +133,7 @@ def keyboard_list(
 
     console = rich.get_console()
 
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     with spinner("Finding hardware..."):
@@ -145,7 +145,11 @@ def keyboard_list(
         if item is None:
             raise FatalError(f'Could not find controller board "{board}".')
 
-        groups.keyboards = [kb for kb in groups.keyboards if is_compatible(item, kb)]
+        groups.keyboards = [
+            kb
+            for kb in groups.keyboards
+            if isinstance(kb, Shield) and is_compatible(item, kb)
+        ]
         list_type = ListType.KEYBOARD
 
     elif shield:
@@ -166,11 +170,13 @@ def keyboard_list(
         if item is None:
             raise FatalError(f'Could not find interconnect "{interconnect}".')
 
-        groups.controllers = [c for c in groups.controllers if item.id in c.exposes]
+        groups.controllers = [
+            c for c in groups.controllers if c.exposes and item.id in c.exposes
+        ]
         groups.keyboards = [
             kb
             for kb in groups.keyboards
-            if isinstance(kb, Shield) and item.id in kb.requires
+            if isinstance(kb, Shield) and kb.requires and item.id in kb.requires
         ]
         groups.interconnects = []
 

@@ -12,9 +12,8 @@ Templates will be provided the following parameters:
 """
 
 import re
-from itertools import pairwise
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any, Generator, cast
 
 from mako.lookup import TemplateLookup
 from mako.template import Template
@@ -43,8 +42,8 @@ def get_template_files(
         file_name = Template(text=file.name, strict_undefined=True)
 
         yield (
-            file_name.render_unicode(**data),
-            _ensure_trailing_newline(template.render_unicode(**data)),
+            cast(str, file_name.render_unicode(**data)),
+            _ensure_trailing_newline(cast(str, template.render_unicode(**data))),
         )
 
 

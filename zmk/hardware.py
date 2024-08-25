@@ -148,7 +148,7 @@ class GroupedHardware:
 def is_keyboard(hardware: Hardware) -> TypeGuard[Keyboard]:
     """Test whether an item is a keyboard (board or shield supporting keys)"""
     match hardware:
-        case Keyboard(features=feat) if "keys" in feat:
+        case Keyboard(features=feat) if feat and "keys" in feat:
             return True
 
         case _:
@@ -174,6 +174,9 @@ def is_compatible(base: Board | Shield | Iterable[Board | Shield], shield: Shiel
     not account for the fact that one of the items in "base" may already be using
     an interconnect provided by another item.
     """
+
+    if not shield.requires:
+        return True
 
     base = [base] if isinstance(base, Keyboard) else base
     exposed = flatten(b.exposes for b in base)

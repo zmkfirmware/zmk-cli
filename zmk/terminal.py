@@ -2,6 +2,12 @@
 Terminal utilities
 """
 
+# Ignore missing attributes for platform-specific modules
+# pyright: reportAttributeAccessIssue = false
+
+# Ignore alternative declarations of the same functions
+# pyright: reportRedeclaration = false
+
 import os
 import sys
 from contextlib import contextmanager

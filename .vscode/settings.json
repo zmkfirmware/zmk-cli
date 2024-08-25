@@ -21,5 +21,7 @@
     "**/templates/common/**": "mako"
   },
   "isort.check": true,
-  "isort.args": ["--profile", "black"]
+  "isort.args": ["--settings-path", "${workspaceFolder}"],
+  "python.analysis.importFormat": "relative",
+  "python.analysis.typeCheckingMode": "standard"
 }

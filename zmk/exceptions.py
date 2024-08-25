@@ -3,6 +3,7 @@ Exception types.
 """
 
 from pathlib import Path
+from typing import Optional, cast
 
 from click import ClickException
 from rich.highlighter import Highlighter, ReprHighlighter
@@ -18,12 +19,14 @@ class FatalError(ClickException):
 
     highlighter: Highlighter
 
-    def __init__(self, message: str, highlighter: Highlighter = None) -> None:
+    def __init__(self, message: str, highlighter: Optional[Highlighter] = None) -> None:
         self.highlighter = highlighter or ReprHighlighter()
         super().__init__(message)
 
     def format_message(self) -> str:
-        return self.highlighter(Text.from_markup(self.message))
+        # format_message() expects a str, but if we convert to a string here,
+        # we will lose any formatting.
+        return cast(str, self.highlighter(Text.from_markup(self.message)))
 
 
 class FatalHomeNotSet(FatalError):

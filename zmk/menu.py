@@ -180,7 +180,7 @@ class TerminalMenu(Generic[T], Highlighter):
             self.console.highlighter = old_highlighter
 
     def _apply_filter(self):
-        if self.has_filter:
+        if self._filter_func:
             try:
                 old_focus = self._filter_items[self._focus_index]
             except IndexError:
@@ -190,10 +190,11 @@ class TerminalMenu(Generic[T], Highlighter):
                 i for i in self.items if self._filter_func(i, self._filter_text)
             ]
 
-            try:
-                self._focus_index = self._filter_items.index(old_focus)
-            except ValueError:
-                pass
+            if old_focus is not None:
+                try:
+                    self._focus_index = self._filter_items.index(old_focus)
+                except ValueError:
+                    pass
         else:
             self._filter_items = self.items
 
@@ -246,7 +247,7 @@ class TerminalMenu(Generic[T], Highlighter):
             overflow="crop",
         )
 
-    def _print_item(self, item: T, focused: bool, show_more: bool):
+    def _print_item(self, item: T | str, focused: bool, show_more: bool):
         style = "ellipsis" if show_more else "focus" if focused else "unfocus"
 
         indent = "> " if focused else "  "

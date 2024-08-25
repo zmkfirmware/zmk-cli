@@ -7,7 +7,7 @@ import subprocess
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
-from typing import Any, Generator, Optional
+from typing import Any, Generator, Literal, Optional, overload
 
 from west.app.main import main as west_main
 
@@ -127,6 +127,15 @@ class Repo(Module):
         """Path to the west staging folder."""
         return self.path / _WEST_STAGING_PATH
 
+    @overload
+    def git(self, *args: str, capture_output: Literal[False] = False) -> None: ...
+
+    @overload
+    def git(self, *args: str, capture_output: Literal[True]) -> str: ...
+
+    @overload
+    def git(self, *args: str, capture_output: bool) -> str | None: ...
+
     def git(self, *args: str, capture_output: bool = False) -> str | None:
         """
         Run Git in the repo.
@@ -134,7 +143,7 @@ class Repo(Module):
         If capture_output is True, the command is run silently in the background
         and this returns the output as a string.
         """
-        args = ["git", *args]
+        args = ("git", *args)
 
         if capture_output:
             return subprocess.check_output(
@@ -144,7 +153,16 @@ class Repo(Module):
         subprocess.check_call(args, encoding="utf-8")
         return None
 
-    def run_west(self, *args: str, capture_output: bool = False) -> str | None:
+    @overload
+    def run_west(self, *args: str, capture_output: Literal[False] = False) -> None: ...
+
+    @overload
+    def run_west(self, *args: str, capture_output: Literal[True]) -> str: ...
+
+    @overload
+    def run_west(self, *args: str, capture_output: bool) -> str | None: ...
+
+    def run_west(self, *args: str, capture_output: bool = False):
         """
         Run west in the west staging folder.
 
@@ -171,6 +189,15 @@ class Repo(Module):
             self._init_west_app()
 
         self._west_ready = True
+
+    @overload
+    def _run_west(self, *args: str, capture_output: Literal[False] = False) -> None: ...
+
+    @overload
+    def _run_west(self, *args: str, capture_output: Literal[True]) -> str: ...
+
+    @overload
+    def _run_west(self, *args: str, capture_output: bool) -> str | None: ...
 
     def _run_west(self, *args: str, capture_output=False):
         if capture_output:

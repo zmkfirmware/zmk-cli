@@ -10,7 +10,7 @@ from pathlib import Path
 import shellingham
 import typer
 
-from ..config import Config
+from ..config import get_config
 from ..exceptions import FatalError, FatalHomeMissing, FatalHomeNotSet
 
 
@@ -22,7 +22,7 @@ def cd(ctx: typer.Context):
             'Use "cd $(zmk config user.home)" instead.'
         )
 
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     home = cfg.home_path
 
     if home is None:

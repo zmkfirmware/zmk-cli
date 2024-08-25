@@ -2,15 +2,17 @@
 Build matrix processing.
 """
 
-import collections.abc
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Optional, TypeVar, cast, overload
 
 import dacite
 
 from .repo import Repo
 from .yaml import YAML
+
+T = TypeVar("T")
 
 
 @dataclass
@@ -52,7 +54,7 @@ class BuildMatrix:
 
     _path: Path
     _yaml: YAML
-    _data: Any
+    _data: dict[str, Any] | None
 
     @classmethod
     def from_repo(cls, repo: Repo):
@@ -64,7 +66,7 @@ class BuildMatrix:
         self._yaml = YAML(typ="rt")
         self._yaml.indent(mapping=2, sequence=4, offset=2)
         try:
-            self._data = self._yaml.load(self._path)
+            self._data = cast(dict[str, Any], self._yaml.load(self._path))
         except FileNotFoundError:
             self._data = None
 
@@ -106,7 +108,7 @@ class BuildMatrix:
             return []
 
         if not self._data:
-            self._data = self._yaml.map()
+            self._data = cast(dict[str, Any], self._yaml.map())
 
         if "include" not in self._data:
             self._data["include"] = self._yaml.seq()
@@ -121,7 +123,7 @@ class BuildMatrix:
         :return: the items that were removed.
         """
         if not self._data or "include" not in self._data:
-            return False
+            return []
 
         removed = []
         items = [items] if isinstance(items, BuildItem) else items
@@ -138,7 +140,25 @@ class BuildMatrix:
         return removed
 
 
-def _keys_to_python(data: Any):
+@overload
+def _keys_to_python(data: str) -> str: ...
+
+
+@overload
+def _keys_to_python(
+    data: Sequence[T],
+) -> Sequence[T]: ...
+
+
+@overload
+def _keys_to_python(data: Mapping[str, T]) -> Mapping[str, T]: ...
+
+
+@overload
+def _keys_to_python(data: T) -> T: ...
+
+
+def _keys_to_python(data: Any) -> Any:
     """
     Fix any keys with hyphens to underscores so that dacite.from_dict() will
     work correctly.
@@ -151,10 +171,10 @@ def _keys_to_python(data: Any):
         case str():
             return data
 
-        case collections.abc.Sequence():
+        case Sequence():
             return [_keys_to_python(i) for i in data]
 
-        case collections.abc.Mapping():
+        case Mapping():
             return {fix_key(k): _keys_to_python(v) for k, v in data.items()}
 
         case _:

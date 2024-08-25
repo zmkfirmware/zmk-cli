@@ -45,7 +45,7 @@ def main(
             callback=_version_callback,
             is_eager=True,
         ),
-    ] = None,
+    ] = False,
 ):
     """
     ZMK Firmware command line tool

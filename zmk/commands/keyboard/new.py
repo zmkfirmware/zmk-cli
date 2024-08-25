@@ -11,10 +11,10 @@ import typer
 from rich.prompt import Confirm, InvalidResponse, PromptBase
 
 from ...backports import StrEnum
+from ...config import get_config
 from ...exceptions import FatalError
 from ...menu import detail_list, show_menu
 from ...templates import get_template_files
-from ..config import Config
 
 
 class KeyboardType(StrEnum):
@@ -135,10 +135,10 @@ def keyboard_new(
     ] = None,
     force: Annotated[
         bool, typer.Option("--force", "-f", help="Overwrite existing files.")
-    ] = None,
+    ] = False,
 ):
     """Create a new keyboard from a template."""
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     board_root = repo.board_root
@@ -155,7 +155,7 @@ def keyboard_new(
             short_name = ShortNamePrompt.ask()
 
     if not keyboard_id:
-        keyboard_id = IdPrompt.ask(name=short_name)
+        keyboard_id = IdPrompt.ask(prompt=short_name)
 
     if not keyboard_type:
         keyboard_type = _prompt_keyboard_type()
@@ -260,9 +260,8 @@ class NamePrompt(NamePromptBase):
     def validate(cls, value: str):
         _validate_name(value)
 
-    # pylint: disable=arguments-differ
     @classmethod
-    def ask(cls):
+    def ask(cls):  # pyright: ignore[reportIncompatibleMethodOverride]
         return super().ask("Enter the name of the keyboard")
 
 
@@ -273,9 +272,8 @@ class ShortNamePrompt(NamePromptBase):
     def validate(cls, value: str):
         _validate_short_name(value)
 
-    # pylint: disable=arguments-differ
     @classmethod
-    def ask(cls):
+    def ask(cls):  # pyright: ignore[reportIncompatibleMethodOverride]
         return super().ask(
             f"Enter an abbreviated name [dim](<= {MAX_NAME_LENGTH} chars)"
         )
@@ -288,12 +286,18 @@ class IdPrompt(NamePromptBase):
     def validate(cls, value: str):
         _validate_id(value)
 
-    # pylint: disable=arguments-differ
     @classmethod
-    def ask(cls, name: str):
-        return super().ask(
-            "Enter an ID for the keyboard", default=_get_default_id(name)
+    def ask(cls, prompt: str):  # pyright: ignore[reportIncompatibleMethodOverride]
+        result = super().ask(
+            "Enter an ID for the keyboard", default=_get_default_id(prompt)
         )
+
+        # rich uses ... to indicate no default, but passing ... to the "default"
+        # parameter causes it to add EllipsisType to the possible return types.
+        if result == ...:
+            raise TypeError("ask() returned ...")
+
+        return result
 
 
 _DEFAULT_ARCH = "arm"
@@ -315,7 +319,7 @@ def _get_template(
     template.data["name"] = keyboard_name
     template.data["shortname"] = short_name
     template.data["keyboard_type"] = str(keyboard_type)
-    template.data["arch"] = None
+    template.data["arch"] = ""
 
     match keyboard_type:
         case KeyboardType.SHIELD:

@@ -4,14 +4,14 @@
 
 import typer
 
-from ..config import Config
+from ..config import get_config
 from ..repo import Repo
 
 
 def download(ctx: typer.Context):
     """Open the web page to download firmware from GitHub."""
 
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     actions_url = _get_actions_url(repo)
