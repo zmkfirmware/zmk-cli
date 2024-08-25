@@ -26,6 +26,9 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+dev = ["pre-commit", "pylint", "pyright"]
+
 [project.urls]
 Documentation = "https://zmk.dev/docs"
 "Source Code" = "https://github.com/zmkfirmware/zmk-cli/"

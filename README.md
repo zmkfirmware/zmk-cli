@@ -239,3 +239,23 @@ For example, to point ZMK CLI to an existing repo at `~/Documents/zmk-config`, r
 ```sh
 zmk config user.home ~/Documents/zmk-config
 ```
+
+# Development
+
+If you would like to help improve ZMK CLI, you can clone this repo and install it in editable mode so your changes to the code apply when you run `zmk`. Open a terminal to the root directory of the repository and run:
+
+```sh
+pip install -e ".[dev]"
+pre-commit install
+```
+
+You may optionally run these commands inside a [virtual environment](https://docs.python.org/3/library/venv.html) if you don't want to install ZMK CLI's dependencies globally or if your OS disallows doing this.
+
+After running `pre-commit install`, your code will be checked when you make a commit, but there are some slower checks that do not run automatically. To run these additional checks, run these commands:
+
+```sh
+pyright .
+pylint zmk
+```
+
+Alternatively, you can just create a pull request and GitHub will run the checks and report any errors.
