@@ -129,7 +129,7 @@ def keyboard_list(
             "--standalone", help="List only keyboards with onboard controllers."
         ),
     ] = False,
-):
+) -> None:
     """List supported keyboards or keyboards in the build matrix."""
 
     console = rich.get_console()

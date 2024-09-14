@@ -7,7 +7,7 @@ import typer
 from . import cd, code, config, download, init, keyboard, module, west
 
 
-def register(app: typer.Typer):
+def register(app: typer.Typer) -> None:
     """Register all commands with the app"""
     app.command()(cd.cd)
     app.command()(code.code)

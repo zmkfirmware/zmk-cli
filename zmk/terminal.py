@@ -10,16 +10,17 @@ Terminal utilities
 
 import os
 import sys
+from collections.abc import Generator
 from contextlib import contextmanager
 
 
-def hide_cursor():
+def hide_cursor() -> None:
     """Hides the terminal cursor."""
     sys.stdout.write("\x1b[?25l")
     sys.stdout.flush()
 
 
-def show_cursor():
+def show_cursor() -> None:
     """Unhides the terminal cursor."""
     sys.stdout.write("\x1b[?25h")
     sys.stdout.flush()
@@ -68,7 +69,7 @@ try:
         83: DELETE,
     }
 
-    def read_key():
+    def read_key() -> bytes:
         """
         Waits for a key to be pressed and returns it.
 
@@ -89,7 +90,7 @@ try:
         return key
 
     @contextmanager
-    def enable_vt_mode():
+    def enable_vt_mode() -> Generator[None, None, None]:
         """
         Context manager which enables virtual terminal processing.
         """
@@ -108,7 +109,7 @@ try:
             kernel32.SetConsoleMode(stdout_handle, old_stdout_mode)
 
     @contextmanager
-    def disable_echo():
+    def disable_echo() -> Generator[None, None, None]:
         """
         Context manager which disables console echo
         """
@@ -128,7 +129,7 @@ except ImportError:
     import termios
 
     @contextmanager
-    def enable_vt_mode():
+    def enable_vt_mode() -> Generator[None, None, None]:
         """
         Context manager which enables virtual terminal processing.
         """
@@ -136,7 +137,7 @@ except ImportError:
         yield
 
     @contextmanager
-    def disable_echo():
+    def disable_echo() -> Generator[None, None, None]:
         """
         Context manager which disables console echo
         """
@@ -150,7 +151,7 @@ except ImportError:
         finally:
             termios.tcsetattr(sys.stdin, termios.TCSAFLUSH, oldattr)
 
-    def read_key():
+    def read_key() -> bytes:
         """
         Waits for a key to be pressed and returns it.
 
@@ -176,7 +177,7 @@ def get_cursor_pos() -> tuple[int, int]:
         return (int(row) - 1, int(col) - 1)
 
 
-def set_cursor_pos(row=0, col=0):
+def set_cursor_pos(row=0, col=0) -> None:
     """
     Sets the cursor to the given row and column. Positions are 0-based.
     """

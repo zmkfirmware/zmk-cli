@@ -27,7 +27,7 @@ def module_remove(
         str | None,
         typer.Argument(help="Name or URL of the module to remove.", show_default=False),
     ] = None,
-):
+) -> None:
     """Remove a Zephyr module from the build."""
     cfg = get_config(ctx)
     repo = cfg.get_repo()

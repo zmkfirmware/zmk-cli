@@ -48,7 +48,7 @@ def config(
             callback=_path_callback,
         ),
     ] = False,
-):
+) -> None:
     """Get and set ZMK CLI settings."""
 
     cfg = get_config(ctx)

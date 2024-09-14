@@ -9,7 +9,7 @@ import typer
 from ..config import get_config
 
 
-def west(ctx: typer.Context):
+def west(ctx: typer.Context) -> None:
     # pylint: disable=line-too-long
     """
     Run [link=https://docs.zephyrproject.org/latest/develop/west/index.html]west[/link] in the config repo.
@@ -34,7 +34,7 @@ def update(
             help="Names of modules to update. Updates all modules if omitted."
         ),
     ] = None,
-):
+) -> None:
     """Fetch the latest keyboard data."""
 
     cfg = get_config(ctx)

@@ -113,7 +113,7 @@ class TerminalMenu(Generic[T], Highlighter):
 
         self._apply_filter()
 
-    def show(self):
+    def show(self) -> T:
         """
         Displays the menu.
 
@@ -147,11 +147,11 @@ class TerminalMenu(Generic[T], Highlighter):
             self._erase_controls()
 
     @property
-    def has_filter(self):
+    def has_filter(self) -> bool:
         """Get whether a filter function is set"""
         return bool(self._filter_func)
 
-    def highlight(self, text: Text):
+    def highlight(self, text: Text) -> None:
         normfilter = self._filter_text.casefold().strip()
         if not normfilter:
             return
@@ -411,7 +411,7 @@ def show_menu(
     filter_func: Callable[[T, str], bool] | None = None,
     console: Console | None = None,
     theme: Theme | None = None,
-):
+) -> T:
     """
     Displays an interactive menu.
 
@@ -459,7 +459,9 @@ class Detail(Generic[T]):
 
     # pylint: disable=protected-access
     @classmethod
-    def align(cls, items: Iterable["Detail[T]"], console: Console | None = None):
+    def align(
+        cls, items: Iterable["Detail[T]"], console: Console | None = None
+    ) -> list["Detail[T]"]:
         """Set the padding for each item in the list to align the detail strings."""
         items = list(items)
         console = console or rich.get_console()

@@ -8,7 +8,7 @@ from ..config import get_config
 from ..repo import Repo
 
 
-def download(ctx: typer.Context):
+def download(ctx: typer.Context) -> None:
     """Open the web page to download firmware from GitHub."""
 
     cfg = get_config(ctx)

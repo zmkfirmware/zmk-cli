@@ -15,5 +15,5 @@ app.command(name="remove")(module_remove)
 
 
 @app.callback()
-def keyboard():
+def keyboard() -> None:
     """Add or remove Zephyr modules from the build."""

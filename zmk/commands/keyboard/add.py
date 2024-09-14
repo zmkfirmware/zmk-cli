@@ -40,7 +40,7 @@ def keyboard_add(
             help="ID of the keyboard board/shield to add.",
         ),
     ] = None,
-):
+) -> None:
     """Add configuration for a keyboard and add it to the build."""
 
     console = rich.get_console()

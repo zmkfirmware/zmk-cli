@@ -32,7 +32,7 @@ def module_add(
         str | None,
         typer.Option("--name", "-n", help="Name of the module.", show_default=False),
     ] = None,
-):
+) -> None:
     """Add a Zephyr module to the build."""
     cfg = get_config(ctx)
     repo = cfg.get_repo()

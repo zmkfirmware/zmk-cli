@@ -5,7 +5,7 @@ General utilities.
 import functools
 import operator
 import os
-from collections.abc import Iterable
+from collections.abc import Generator, Iterable
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TypeVar
@@ -30,7 +30,7 @@ def splice(text: str, index: int, count: int = 0, insert_text: str = ""):
 
 
 @contextmanager
-def set_directory(path: Path):
+def set_directory(path: Path) -> Generator[None, None, None]:
     """Context manager to temporarily change the working directory"""
     original = Path().absolute()
 

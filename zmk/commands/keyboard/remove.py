@@ -11,7 +11,7 @@ from ...menu import show_menu
 
 
 # TODO: add options to select items from command line
-def keyboard_remove(ctx: typer.Context):
+def keyboard_remove(ctx: typer.Context) -> None:
     """Remove a keyboard from the build."""
     cfg = get_config(ctx)
     repo = cfg.get_repo()

@@ -17,5 +17,5 @@ app.command(name="remove")(keyboard_remove)
 
 
 @app.callback()
-def keyboard():
+def keyboard() -> None:
     """Add or remove keyboards from the build."""

@@ -6,7 +6,7 @@ from collections.abc import Generator, Iterable
 from dataclasses import dataclass, field
 from functools import reduce
 from pathlib import Path
-from typing import Any, Literal, TypeAlias, TypeGuard
+from typing import Any, Literal, Self, TypeAlias, TypeGuard
 
 import dacite
 
@@ -47,7 +47,7 @@ class Hardware:
         return f"{self.id}  [dim]{self.name}"
 
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data) -> Self:
         """Read a hardware description from a dict"""
         return dacite.from_dict(cls, data)
 
@@ -79,12 +79,12 @@ class Keyboard(Hardware):
         self.variants = self.variants or []
 
     @property
-    def config_path(self):
+    def config_path(self) -> Path:
         """Path to the .conf file for this keyboard"""
         return self.directory / f"{self.id}.conf"
 
     @property
-    def keymap_path(self):
+    def keymap_path(self) -> Path:
         """Path to the .keymap file for this keyboard"""
         return self.directory / f"{self.id}.keymap"
 
@@ -127,17 +127,17 @@ class GroupedHardware:
 
     # TODO: add displays and other peripherals?
 
-    def find_keyboard(self, item_id: str):
+    def find_keyboard(self, item_id: str) -> Keyboard | None:
         """Find a keyboard by ID"""
         item_id = item_id.casefold()
         return next((i for i in self.keyboards if i.id.casefold() == item_id), None)
 
-    def find_controller(self, item_id: str):
+    def find_controller(self, item_id: str) -> Board | None:
         """Find a controller by ID"""
         item_id = item_id.casefold()
         return next((i for i in self.controllers if i.id.casefold() == item_id), None)
 
-    def find_interconnect(self, item_id: str):
+    def find_interconnect(self, item_id: str) -> Interconnect | None:
         """Find an interconnect by ID"""
         item_id = item_id.casefold()
         return next(
@@ -166,7 +166,9 @@ def is_interconnect(hardware: Hardware) -> TypeGuard[Interconnect]:
     return isinstance(hardware, Interconnect)
 
 
-def is_compatible(base: Board | Shield | Iterable[Board | Shield], shield: Shield):
+def is_compatible(
+    base: Board | Shield | Iterable[Board | Shield], shield: Shield
+) -> bool:
     """
     Get whether a shield can be attached to the given hardware.
 

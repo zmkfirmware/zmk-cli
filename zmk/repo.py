@@ -175,7 +175,7 @@ class Repo(Module):
         self.ensure_west_ready()
         return self._run_west(*args, capture_output=capture_output)
 
-    def ensure_west_ready(self):
+    def ensure_west_ready(self) -> None:
         """
         Ensures the west application is correctly initialized.
         """

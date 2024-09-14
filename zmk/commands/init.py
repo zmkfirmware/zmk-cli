@@ -25,7 +25,7 @@ TEMPLATE_URL = (
 TEXT_WIDTH = 80
 
 
-def init(ctx: typer.Context):
+def init(ctx: typer.Context) -> None:
     """Create a new ZMK config repo or clone an existing one."""
 
     console = rich.get_console()

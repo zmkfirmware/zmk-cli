@@ -40,7 +40,7 @@ def code(
             "--build", "-b", help="Open the build matrix instead of a keymap."
         ),
     ] = False,
-):
+) -> None:
     """Open the repo or a .keymap or .conf file in a text editor."""
 
     cfg = get_config(ctx)
@@ -110,7 +110,7 @@ class Editor:
     def __rich__(self):
         return self.name
 
-    def get_command(self):
+    def get_command(self) -> str | None:
         """Get the command to execute the tool, or None if it is not installed"""
         if self.test and self.test():
             return self.cmd

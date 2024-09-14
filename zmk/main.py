@@ -46,7 +46,7 @@ def main(
             is_eager=True,
         ),
     ] = False,
-):
+) -> None:
     """
     ZMK Firmware command line tool
 

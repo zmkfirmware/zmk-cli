@@ -19,7 +19,7 @@ class FatalError(ClickException):
 
     highlighter: Highlighter
 
-    def __init__(self, message: str, highlighter: Highlighter | None = None) -> None:
+    def __init__(self, message: str, highlighter: Highlighter | None = None):
         self.highlighter = highlighter or ReprHighlighter()
         super().__init__(message)
 

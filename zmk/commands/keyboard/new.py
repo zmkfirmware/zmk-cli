@@ -136,7 +136,7 @@ def keyboard_new(
     force: Annotated[
         bool, typer.Option("--force", "-f", help="Overwrite existing files.")
     ] = False,
-):
+) -> None:
     """Create a new keyboard from a template."""
     cfg = get_config(ctx)
     repo = cfg.get_repo()
@@ -257,11 +257,11 @@ class NamePrompt(NamePromptBase):
     """Prompt for a keyboard name."""
 
     @classmethod
-    def validate(cls, value: str):
+    def validate(cls, value: str) -> None:
         _validate_name(value)
 
     @classmethod
-    def ask(cls):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def ask(cls) -> str:  # pyright: ignore[reportIncompatibleMethodOverride]
         return super().ask("Enter the name of the keyboard")
 
 
@@ -269,11 +269,11 @@ class ShortNamePrompt(NamePromptBase):
     """Prompt for an abbreviated keyboard name."""
 
     @classmethod
-    def validate(cls, value: str):
+    def validate(cls, value: str) -> None:
         _validate_short_name(value)
 
     @classmethod
-    def ask(cls):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def ask(cls) -> str:  # pyright: ignore[reportIncompatibleMethodOverride]
         return super().ask(
             f"Enter an abbreviated name [dim](<= {MAX_NAME_LENGTH} chars)"
         )
@@ -283,11 +283,13 @@ class IdPrompt(NamePromptBase):
     """Prompt for a keyboard identifier."""
 
     @classmethod
-    def validate(cls, value: str):
+    def validate(cls, value: str) -> None:
         _validate_id(value)
 
     @classmethod
-    def ask(cls, prompt: str):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def ask(  # pyright: ignore[reportIncompatibleMethodOverride]
+        cls, prompt: str
+    ) -> str:
         result = super().ask(
             "Enter an ID for the keyboard", default=_get_default_id(prompt)
         )
