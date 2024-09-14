@@ -7,7 +7,7 @@ import shutil
 import stat
 import subprocess
 from dataclasses import dataclass
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any
 
 import rich
 import typer
@@ -24,7 +24,7 @@ from ...yaml import YAML
 def module_remove(
     ctx: typer.Context,
     module: Annotated[
-        Optional[str],
+        str | None,
         typer.Argument(help="Name or URL of the module to remove.", show_default=False),
     ] = None,
 ):

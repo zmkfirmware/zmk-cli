@@ -2,10 +2,11 @@
 Hardware metadata discovery and processing.
 """
 
+from collections.abc import Generator, Iterable
 from dataclasses import dataclass, field
 from functools import reduce
 from pathlib import Path
-from typing import Any, Generator, Iterable, Literal, Optional, TypeAlias, TypeGuard
+from typing import Any, Literal, TypeAlias, TypeGuard
 
 import dacite
 
@@ -33,11 +34,11 @@ class Hardware:
     id: str
     name: str
 
-    file_format: Optional[str] = None
-    url: Optional[str] = None
-    description: Optional[str] = None
-    manufacturer: Optional[str] = None
-    version: Optional[str] = None
+    file_format: str | None = None
+    url: str | None = None
+    description: str | None = None
+    manufacturer: str | None = None
+    version: str | None = None
 
     def __str__(self) -> str:
         return self.id
@@ -56,20 +57,20 @@ class Interconnect(Hardware):
     """Description of the connection between two pieces of hardware"""
 
     node_labels: dict[str, str] = field(default_factory=dict)
-    design_guideline: Optional[str] = None
+    design_guideline: str | None = None
 
 
 @dataclass
 class Keyboard(Hardware):
     """Base class for hardware that forms a keyboard"""
 
-    siblings: Optional[list[str]] = field(default_factory=list)
+    siblings: list[str] | None = field(default_factory=list)
     """List of board/shield IDs for a split keyboard"""
-    exposes: Optional[list[str]] = field(default_factory=list)
+    exposes: list[str] | None = field(default_factory=list)
     """List of interconnect IDs this board/shield provides"""
-    features: Optional[list[Feature]] = field(default_factory=list)
+    features: list[Feature] | None = field(default_factory=list)
     """List of features this board/shield supports"""
-    variants: Optional[list[Variant]] = field(default_factory=list)
+    variants: list[Variant] | None = field(default_factory=list)
 
     def __post_init__(self):
         self.siblings = self.siblings or []
@@ -92,7 +93,7 @@ class Keyboard(Hardware):
 class Board(Keyboard):
     """Hardware with a processor. May be a keyboard or a controller."""
 
-    arch: Optional[str] = None
+    arch: str | None = None
     outputs: list[Output] = field(default_factory=list)
     """List of methods by which this board supports sending HID data"""
 
@@ -105,7 +106,7 @@ class Board(Keyboard):
 class Shield(Keyboard):
     """Hardware that attaches to a board. May be a keyboard or a peripheral."""
 
-    requires: Optional[list[str]] = field(default_factory=list)
+    requires: list[str] | None = field(default_factory=list)
     """List of interconnects to which this shield attaches"""
 
     def __post_init__(self):

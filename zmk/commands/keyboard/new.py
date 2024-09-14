@@ -4,7 +4,7 @@
 
 import re
 from dataclasses import dataclass, field
-from typing import Annotated, Optional
+from typing import Annotated
 
 import rich
 import typer
@@ -76,19 +76,19 @@ def _validate_short_name(name: str):
         raise typer.BadParameter(f"Name must be <= {MAX_NAME_LENGTH} characters.")
 
 
-def _id_callback(value: Optional[str]):
+def _id_callback(value: str | None):
     if value is not None:
         _validate_id(value)
     return value
 
 
-def _name_callback(name: Optional[str]):
+def _name_callback(name: str | None):
     if name is not None:
         _validate_name(name)
     return name
 
 
-def _short_name_callback(name: Optional[str]):
+def _short_name_callback(name: str | None):
     if name is not None:
         _validate_short_name(name)
     return name
@@ -97,15 +97,15 @@ def _short_name_callback(name: Optional[str]):
 def keyboard_new(
     ctx: typer.Context,
     keyboard_id: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--id", "-i", help="Board/shield ID.", callback=_id_callback),
     ] = None,
     keyboard_name: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--name", "-n", help="Keyboard name.", callback=_name_callback),
     ] = None,
     short_name: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--shortname",
             "-s",
@@ -114,7 +114,7 @@ def keyboard_new(
         ),
     ] = None,
     keyboard_type: Annotated[
-        Optional[KeyboardType],
+        KeyboardType | None,
         typer.Option(
             "--type",
             "-t",
@@ -122,7 +122,7 @@ def keyboard_new(
         ),
     ] = None,
     keyboard_platform: Annotated[
-        Optional[KeyboardPlatform],
+        KeyboardPlatform | None,
         typer.Option(
             "--platform",
             "-p",
@@ -130,7 +130,7 @@ def keyboard_new(
         ),
     ] = None,
     keyboard_layout: Annotated[
-        Optional[KeyboardLayout],
+        KeyboardLayout | None,
         typer.Option("--layout", "-l", help="Keyboard hardware layout."),
     ] = None,
     force: Annotated[

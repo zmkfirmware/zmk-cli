@@ -5,7 +5,7 @@
 import itertools
 import shutil
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import rich
 import typer
@@ -22,7 +22,7 @@ from ...util import spinner
 def keyboard_add(
     ctx: typer.Context,
     controller_id: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--controller",
             "-c",
@@ -31,7 +31,7 @@ def keyboard_add(
         ),
     ] = None,
     keyboard_id: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--keyboard",
             "--kb",
@@ -141,7 +141,7 @@ def _copy_keyboard_file(repo: Repo, path: Path):
         shutil.copy2(path, dest_path)
 
 
-def _get_build_items(keyboard: Keyboard, controller: Optional[Board]):
+def _get_build_items(keyboard: Keyboard, controller: Board | None):
     boards = []
     shields = []
 
@@ -162,7 +162,7 @@ def _get_build_items(keyboard: Keyboard, controller: Optional[Board]):
     return [BuildItem(board=b, shield=s) for b, s in itertools.product(boards, shields)]
 
 
-def _add_keyboard(repo: Repo, keyboard: Keyboard, controller: Optional[Board]):
+def _add_keyboard(repo: Repo, keyboard: Keyboard, controller: Board | None):
     _copy_keyboard_file(repo, keyboard.keymap_path)
     _copy_keyboard_file(repo, keyboard.config_path)
 

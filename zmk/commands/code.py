@@ -6,10 +6,11 @@ import platform
 import shlex
 import shutil
 import subprocess
+from collections.abc import Callable
 from configparser import NoOptionError
 from dataclasses import dataclass, field
 from enum import Flag, auto
-from typing import Annotated, Callable, Optional
+from typing import Annotated
 
 import rich
 import typer
@@ -24,7 +25,7 @@ from ..repo import Repo
 def code(
     ctx: typer.Context,
     keyboard: Annotated[
-        Optional[str],
+        str | None,
         typer.Argument(
             help="Name of the keyboard to edit. If omitted, opens the repo directory.",
         ),
@@ -56,7 +57,7 @@ def code(
     subprocess.call(cmd, shell=True)
 
 
-def _get_file(repo: Repo, keyboard: Optional[str], open_conf: bool):
+def _get_file(repo: Repo, keyboard: str | None, open_conf: bool):
     if not keyboard:
         return repo.path
 

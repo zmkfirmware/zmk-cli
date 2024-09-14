@@ -3,7 +3,7 @@ Exception types.
 """
 
 from pathlib import Path
-from typing import Optional, cast
+from typing import cast
 
 from click import ClickException
 from rich.highlighter import Highlighter, ReprHighlighter
@@ -19,7 +19,7 @@ class FatalError(ClickException):
 
     highlighter: Highlighter
 
-    def __init__(self, message: str, highlighter: Optional[Highlighter] = None) -> None:
+    def __init__(self, message: str, highlighter: Highlighter | None = None) -> None:
         self.highlighter = highlighter or ReprHighlighter()
         super().__init__(message)
 

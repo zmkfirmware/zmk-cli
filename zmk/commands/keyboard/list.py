@@ -2,7 +2,8 @@
 "zmk keyboard list" command.
 """
 
-from typing import Annotated, Iterable, Optional
+from collections.abc import Iterable
+from typing import Annotated
 
 import rich
 import typer
@@ -79,7 +80,7 @@ def _list_build_matrix(ctx: typer.Context, value: bool):
 def keyboard_list(
     ctx: typer.Context,
     _: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option(
             "--build",
             help="Show the build matrix.",
@@ -96,7 +97,7 @@ def keyboard_list(
         ),
     ] = ListType.ALL,
     board: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--board",
             "-b",
@@ -105,7 +106,7 @@ def keyboard_list(
         ),
     ] = None,
     shield: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--shield",
             "-s",
@@ -114,7 +115,7 @@ def keyboard_list(
         ),
     ] = None,
     interconnect: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--interconnect",
             "-i",

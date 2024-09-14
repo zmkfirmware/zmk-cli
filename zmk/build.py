@@ -2,10 +2,10 @@
 Build matrix processing.
 """
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Optional, TypeVar, cast, overload
+from typing import Any, TypeVar, cast, overload
 
 import dacite
 
@@ -20,10 +20,10 @@ class BuildItem:
     """An item in the build matrix"""
 
     board: str
-    shield: Optional[str] = None
-    snippet: Optional[str] = None
-    cmake_args: Optional[str] = None
-    artifact_name: Optional[str] = None
+    shield: str | None = None
+    snippet: str | None = None
+    cmake_args: str | None = None
+    artifact_name: str | None = None
 
     def __rich__(self):
         parts = []

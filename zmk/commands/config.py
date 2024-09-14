@@ -2,7 +2,7 @@
 "zmk config" command.
 """
 
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -25,13 +25,13 @@ def _path_callback(ctx: typer.Context, value: bool):
 def config(
     ctx: typer.Context,
     name: Annotated[
-        Optional[str],
+        str | None,
         typer.Argument(
             help="Setting name. Prints all setting values if omitted.",
         ),
     ] = None,
     value: Annotated[
-        Optional[str],
+        str | None,
         typer.Argument(help="New setting value. Prints the current value if omitted."),
     ] = None,
     unset: Annotated[
@@ -39,7 +39,7 @@ def config(
         typer.Option("--unset", "-u", help="Remove the setting with the given name."),
     ] = False,
     _: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option(
             "--path",
             "-p",

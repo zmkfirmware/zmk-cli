@@ -12,8 +12,9 @@ Templates will be provided the following parameters:
 """
 
 import re
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Generator, cast
+from typing import Any, cast
 
 from mako.lookup import TemplateLookup
 from mako.template import Template

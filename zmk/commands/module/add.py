@@ -3,7 +3,7 @@
 """
 
 import subprocess
-from typing import Annotated, Optional
+from typing import Annotated
 
 import rich
 import typer
@@ -21,15 +21,15 @@ from ...yaml import YAML
 def module_add(
     ctx: typer.Context,
     url: Annotated[
-        Optional[str],
+        str | None,
         typer.Argument(help="URL of the Git repository to add.", show_default=False),
     ] = None,
     revision: Annotated[
-        Optional[str],
+        str | None,
         typer.Argument(help="Revision to track.", show_default="main"),
     ] = None,
     name: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--name", "-n", help="Name of the module.", show_default=False),
     ] = None,
 ):
@@ -93,13 +93,13 @@ class NamePrompt(PromptBase[str]):
 
     _manifest: Manifest
 
-    def __init__(self, manifest: Manifest, *, console: Optional[Console] = None):
+    def __init__(self, manifest: Manifest, *, console: Console | None = None):
         super().__init__("Enter a new name", console=console)
         self._manifest = manifest
 
     @classmethod
     def ask(  # pyright: ignore[reportIncompatibleMethodOverride]
-        cls, prompt: Manifest, *, console: Optional[Console] = None
+        cls, prompt: Manifest, *, console: Console | None = None
     ):
         subprompt = cls(prompt, console=console)
         return subprompt()

@@ -4,10 +4,11 @@ Config repo and Zephyr module utilities.
 
 import shutil
 import subprocess
+from collections.abc import Generator
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
-from typing import Any, Generator, Literal, Optional, overload
+from typing import Any, Literal, overload
 
 from west.app.main import main as west_main
 
@@ -28,7 +29,7 @@ def is_repo(path: Path) -> bool:
     return (path / _PROJECT_MANIFEST_PATH).is_file()
 
 
-def find_containing_repo(path: Optional[Path] = None) -> Optional[Path]:
+def find_containing_repo(path: Path | None = None) -> Path | None:
     """Search upwards from the given path for a ZMK config repo."""
     path = path or Path()
     path = path.absolute()
@@ -52,7 +53,7 @@ class Module:
         return self.path / _MODULE_MANIFEST_PATH
 
     @property
-    def board_root(self) -> Optional[Path]:
+    def board_root(self) -> Path | None:
         """Path to the "boards" folder."""
 
         # Check for board_root from module manifest
@@ -93,7 +94,7 @@ class Repo(Module):
         return self.path / _PROJECT_MANIFEST_PATH
 
     @property
-    def board_root(self) -> Optional[Path]:
+    def board_root(self) -> Path | None:
         if root := super().board_root:
             return root
 
