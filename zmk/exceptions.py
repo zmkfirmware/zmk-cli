@@ -50,6 +50,6 @@ class FatalHomeMissing(FatalError):
     def __init__(self, path: Path):
         super().__init__(
             f'Home directory "{path}" is missing.\n'
-            'Run "zmk config user.home=/path/to/zmk-config" if you moved it, '
+            'Run "zmk config user.home /path/to/zmk-config" if you moved it, '
             'or run "zmk init" to create a new config repo.'
         )
