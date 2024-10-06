@@ -50,13 +50,14 @@ ignore = "_version.py"
 
 [tool.pylint."MESSAGES CONTROL"]
 disable = [
-    "arguments-differ",             # Covered by pyright
+    "arguments-differ",              # Covered by pyright
     "fixme",
     "too-few-public-methods",
     "too-many-arguments",
     "too-many-branches",
     "too-many-instance-attributes",
     "too-many-locals",
+    "too-many-positional-arguments",
 ]
 
 [tool.setuptools]
