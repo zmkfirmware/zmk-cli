@@ -6,16 +6,17 @@ import platform
 import shlex
 import shutil
 import subprocess
+from collections.abc import Callable
 from configparser import NoOptionError
 from dataclasses import dataclass, field
 from enum import Flag, auto
-from typing import Annotated, Callable, Optional
+from typing import Annotated
 
 import rich
 import typer
 from rich.markdown import Markdown
 
-from ..config import Config, Settings
+from ..config import Config, Settings, get_config
 from ..exceptions import FatalError
 from ..menu import show_menu
 from ..repo import Repo
@@ -24,7 +25,7 @@ from ..repo import Repo
 def code(
     ctx: typer.Context,
     keyboard: Annotated[
-        Optional[str],
+        str | None,
         typer.Argument(
             help="Name of the keyboard to edit. If omitted, opens the repo directory.",
         ),
@@ -39,10 +40,10 @@ def code(
             "--build", "-b", help="Open the build matrix instead of a keymap."
         ),
     ] = False,
-):
+) -> None:
     """Open the repo or a .keymap or .conf file in a text editor."""
 
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     if open_build_matrix:
@@ -56,7 +57,7 @@ def code(
     subprocess.call(cmd, shell=True)
 
 
-def _get_file(repo: Repo, keyboard: str, open_conf: bool):
+def _get_file(repo: Repo, keyboard: str | None, open_conf: bool):
     if not keyboard:
         return repo.path
 
@@ -98,7 +99,7 @@ class Editor:
     "Executable name or command line to execute this tool"
     support: Support = Support.FILE
     "Types of files this tool supports editing"
-    test: Callable[[], bool] = None
+    test: Callable[[], bool] | None = None
     """
     Function that returns true if the tool is installed.
     Defaults to `which {self.cmd}`.
@@ -109,7 +110,7 @@ class Editor:
     def __rich__(self):
         return self.name
 
-    def get_command(self):
+    def get_command(self) -> str | None:
         """Get the command to execute the tool, or None if it is not installed"""
         if self.test and self.test():
             return self.cmd
@@ -169,7 +170,11 @@ def _select_editor(cfg: Config):
         )
 
     editor = show_menu("Select a text editor:", file_editors, filter_func=_filter)
-    cfg.set(Settings.CORE_EDITOR, editor.get_command())
+    editor_command = editor.get_command()
+    if not editor_command:
+        raise TypeError(f"Invalid editor {editor.name}")
+
+    cfg.set(Settings.CORE_EDITOR, editor_command)
 
     explorer = None
     if editor.support & Support.DIR:
@@ -181,7 +186,11 @@ def _select_editor(cfg: Config):
             dir_editors,
             filter_func=_filter,
         )
-        cfg.set(Settings.CORE_EXPLORER, explorer.get_command())
+        explorer_command = explorer.get_command()
+        if not explorer_command:
+            raise TypeError(f"Invalid explorer {editor.name}")
+
+        cfg.set(Settings.CORE_EXPLORER, explorer_command)
 
     cfg.write()
 

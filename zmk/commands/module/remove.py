@@ -7,13 +7,13 @@ import shutil
 import stat
 import subprocess
 from dataclasses import dataclass
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any
 
 import rich
 import typer
 from west.manifest import ImportFlag, Manifest, Project
 
-from ...config import Config
+from ...config import get_config
 from ...exceptions import FatalError
 from ...menu import Detail, detail_list, show_menu
 from ...repo import Repo
@@ -24,12 +24,12 @@ from ...yaml import YAML
 def module_remove(
     ctx: typer.Context,
     module: Annotated[
-        Optional[str],
+        str | None,
         typer.Argument(help="Name or URL of the module to remove.", show_default=False),
     ] = None,
-):
+) -> None:
     """Remove a Zephyr module from the build."""
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     manifest = Manifest.from_topdir(

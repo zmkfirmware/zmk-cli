@@ -5,9 +5,10 @@ General utilities.
 import functools
 import operator
 import os
+from collections.abc import Generator, Iterable
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterable, Optional, TypeVar
+from typing import TypeVar
 
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -29,7 +30,7 @@ def splice(text: str, index: int, count: int = 0, insert_text: str = ""):
 
 
 @contextmanager
-def set_directory(path: Path):
+def set_directory(path: Path) -> Generator[None, None, None]:
     """Context manager to temporarily change the working directory"""
     original = Path().absolute()
 
@@ -41,7 +42,7 @@ def set_directory(path: Path):
 
 
 @contextmanager
-def spinner(message: str, console: Optional[Console] = None, transient: bool = True):
+def spinner(message: str, console: Console | None = None, transient: bool = True):
     """Context manager which displays a loading spinner for its duration"""
     with Progress(
         SpinnerColumn(),

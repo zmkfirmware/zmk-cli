@@ -2,20 +2,20 @@
 "zmk west" command.
 """
 
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 
-from ..config import Config
+from ..config import get_config
 
 
-def west(ctx: typer.Context):
+def west(ctx: typer.Context) -> None:
     # pylint: disable=line-too-long
     """
     Run [link=https://docs.zephyrproject.org/latest/develop/west/index.html]west[/link] in the config repo.
     """
 
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     # TODO: detect this better
@@ -29,15 +29,15 @@ def west(ctx: typer.Context):
 def update(
     ctx: typer.Context,
     modules: Annotated[
-        Optional[list[str]],
+        list[str] | None,
         typer.Argument(
             help="Names of modules to update. Updates all modules if omitted."
         ),
     ] = None,
-):
+) -> None:
     """Fetch the latest keyboard data."""
 
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     modules = modules or []

@@ -13,7 +13,7 @@ import typer
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from ..config import Config
+from ..config import Config, get_config
 from ..exceptions import FatalError
 from ..prompt import UrlPrompt
 from ..repo import Repo, find_containing_repo, is_repo
@@ -25,11 +25,11 @@ TEMPLATE_URL = (
 TEXT_WIDTH = 80
 
 
-def init(ctx: typer.Context):
+def init(ctx: typer.Context) -> None:
     """Create a new ZMK config repo or clone an existing one."""
 
     console = rich.get_console()
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
 
     _check_dependencies()
     _check_for_existing_repo(cfg)

@@ -4,17 +4,17 @@
 
 import re
 from dataclasses import dataclass, field
-from typing import Annotated, Optional
+from typing import Annotated
 
 import rich
 import typer
 from rich.prompt import Confirm, InvalidResponse, PromptBase
 
 from ...backports import StrEnum
+from ...config import get_config
 from ...exceptions import FatalError
 from ...menu import detail_list, show_menu
 from ...templates import get_template_files
-from ..config import Config
 
 
 class KeyboardType(StrEnum):
@@ -76,19 +76,19 @@ def _validate_short_name(name: str):
         raise typer.BadParameter(f"Name must be <= {MAX_NAME_LENGTH} characters.")
 
 
-def _id_callback(value: Optional[str]):
+def _id_callback(value: str | None):
     if value is not None:
         _validate_id(value)
     return value
 
 
-def _name_callback(name: Optional[str]):
+def _name_callback(name: str | None):
     if name is not None:
         _validate_name(name)
     return name
 
 
-def _short_name_callback(name: Optional[str]):
+def _short_name_callback(name: str | None):
     if name is not None:
         _validate_short_name(name)
     return name
@@ -97,15 +97,15 @@ def _short_name_callback(name: Optional[str]):
 def keyboard_new(
     ctx: typer.Context,
     keyboard_id: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--id", "-i", help="Board/shield ID.", callback=_id_callback),
     ] = None,
     keyboard_name: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--name", "-n", help="Keyboard name.", callback=_name_callback),
     ] = None,
     short_name: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--shortname",
             "-s",
@@ -114,7 +114,7 @@ def keyboard_new(
         ),
     ] = None,
     keyboard_type: Annotated[
-        Optional[KeyboardType],
+        KeyboardType | None,
         typer.Option(
             "--type",
             "-t",
@@ -122,7 +122,7 @@ def keyboard_new(
         ),
     ] = None,
     keyboard_platform: Annotated[
-        Optional[KeyboardPlatform],
+        KeyboardPlatform | None,
         typer.Option(
             "--platform",
             "-p",
@@ -130,15 +130,15 @@ def keyboard_new(
         ),
     ] = None,
     keyboard_layout: Annotated[
-        Optional[KeyboardLayout],
+        KeyboardLayout | None,
         typer.Option("--layout", "-l", help="Keyboard hardware layout."),
     ] = None,
     force: Annotated[
         bool, typer.Option("--force", "-f", help="Overwrite existing files.")
-    ] = None,
-):
+    ] = False,
+) -> None:
     """Create a new keyboard from a template."""
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     board_root = repo.board_root
@@ -155,7 +155,7 @@ def keyboard_new(
             short_name = ShortNamePrompt.ask()
 
     if not keyboard_id:
-        keyboard_id = IdPrompt.ask(name=short_name)
+        keyboard_id = IdPrompt.ask(prompt=short_name)
 
     if not keyboard_type:
         keyboard_type = _prompt_keyboard_type()
@@ -257,12 +257,11 @@ class NamePrompt(NamePromptBase):
     """Prompt for a keyboard name."""
 
     @classmethod
-    def validate(cls, value: str):
+    def validate(cls, value: str) -> None:
         _validate_name(value)
 
-    # pylint: disable=arguments-differ
     @classmethod
-    def ask(cls):
+    def ask(cls) -> str:  # pyright: ignore[reportIncompatibleMethodOverride]
         return super().ask("Enter the name of the keyboard")
 
 
@@ -270,12 +269,11 @@ class ShortNamePrompt(NamePromptBase):
     """Prompt for an abbreviated keyboard name."""
 
     @classmethod
-    def validate(cls, value: str):
+    def validate(cls, value: str) -> None:
         _validate_short_name(value)
 
-    # pylint: disable=arguments-differ
     @classmethod
-    def ask(cls):
+    def ask(cls) -> str:  # pyright: ignore[reportIncompatibleMethodOverride]
         return super().ask(
             f"Enter an abbreviated name [dim](<= {MAX_NAME_LENGTH} chars)"
         )
@@ -285,15 +283,23 @@ class IdPrompt(NamePromptBase):
     """Prompt for a keyboard identifier."""
 
     @classmethod
-    def validate(cls, value: str):
+    def validate(cls, value: str) -> None:
         _validate_id(value)
 
-    # pylint: disable=arguments-differ
     @classmethod
-    def ask(cls, name: str):
-        return super().ask(
-            "Enter an ID for the keyboard", default=_get_default_id(name)
+    def ask(  # pyright: ignore[reportIncompatibleMethodOverride]
+        cls, prompt: str
+    ) -> str:
+        result = super().ask(
+            "Enter an ID for the keyboard", default=_get_default_id(prompt)
         )
+
+        # rich uses ... to indicate no default, but passing ... to the "default"
+        # parameter causes it to add EllipsisType to the possible return types.
+        if result == ...:
+            raise TypeError("ask() returned ...")
+
+        return result
 
 
 _DEFAULT_ARCH = "arm"
@@ -315,7 +321,7 @@ def _get_template(
     template.data["name"] = keyboard_name
     template.data["shortname"] = short_name
     template.data["keyboard_type"] = str(keyboard_type)
-    template.data["arch"] = None
+    template.data["arch"] = ""
 
     match keyboard_type:
         case KeyboardType.SHIELD:

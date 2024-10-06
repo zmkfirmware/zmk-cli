@@ -2,15 +2,17 @@
 Build matrix processing.
 """
 
-import collections.abc
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Self, TypeVar, cast, overload
 
 import dacite
 
 from .repo import Repo
 from .yaml import YAML
+
+T = TypeVar("T")
 
 
 @dataclass
@@ -18,12 +20,12 @@ class BuildItem:
     """An item in the build matrix"""
 
     board: str
-    shield: Optional[str] = None
-    snippet: Optional[str] = None
-    cmake_args: Optional[str] = None
-    artifact_name: Optional[str] = None
+    shield: str | None = None
+    snippet: str | None = None
+    cmake_args: str | None = None
+    artifact_name: str | None = None
 
-    def __rich__(self):
+    def __rich__(self) -> str:
         parts = []
         parts.append(self.board)
 
@@ -52,28 +54,28 @@ class BuildMatrix:
 
     _path: Path
     _yaml: YAML
-    _data: Any
+    _data: dict[str, Any] | None
 
     @classmethod
-    def from_repo(cls, repo: Repo):
+    def from_repo(cls, repo: Repo) -> Self:
         """Get the build matrix for a repo"""
         return cls(repo.build_matrix_path)
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path):
         self._path = path
         self._yaml = YAML(typ="rt")
         self._yaml.indent(mapping=2, sequence=4, offset=2)
         try:
-            self._data = self._yaml.load(self._path)
+            self._data = cast(dict[str, Any], self._yaml.load(self._path))
         except FileNotFoundError:
             self._data = None
 
-    def write(self):
+    def write(self) -> None:
         """Updated the YAML file, creating it if necessary"""
         self._yaml.dump(self._data, self._path)
 
     @property
-    def path(self):
+    def path(self) -> Path:
         """Path to the matrix's YAML file"""
         return self._path
 
@@ -87,7 +89,7 @@ class BuildMatrix:
         wrapper = dacite.from_dict(_BuildMatrixWrapper, normalized)
         return wrapper.include
 
-    def has_item(self, item: BuildItem):
+    def has_item(self, item: BuildItem) -> bool:
         """Get whether the matrix has a build item"""
         return item in self.include
 
@@ -106,7 +108,7 @@ class BuildMatrix:
             return []
 
         if not self._data:
-            self._data = self._yaml.map()
+            self._data = cast(dict[str, Any], self._yaml.map())
 
         if "include" not in self._data:
             self._data["include"] = self._yaml.seq()
@@ -121,7 +123,7 @@ class BuildMatrix:
         :return: the items that were removed.
         """
         if not self._data or "include" not in self._data:
-            return False
+            return []
 
         removed = []
         items = [items] if isinstance(items, BuildItem) else items
@@ -138,7 +140,25 @@ class BuildMatrix:
         return removed
 
 
-def _keys_to_python(data: Any):
+@overload
+def _keys_to_python(data: str) -> str: ...
+
+
+@overload
+def _keys_to_python(
+    data: Sequence[T],
+) -> Sequence[T]: ...
+
+
+@overload
+def _keys_to_python(data: Mapping[str, T]) -> Mapping[str, T]: ...
+
+
+@overload
+def _keys_to_python(data: T) -> T: ...
+
+
+def _keys_to_python(data: Any) -> Any:
     """
     Fix any keys with hyphens to underscores so that dacite.from_dict() will
     work correctly.
@@ -151,10 +171,10 @@ def _keys_to_python(data: Any):
         case str():
             return data
 
-        case collections.abc.Sequence():
+        case Sequence():
             return [_keys_to_python(i) for i in data]
 
-        case collections.abc.Mapping():
+        case Mapping():
             return {fix_key(k): _keys_to_python(v) for k, v in data.items()}
 
         case _:

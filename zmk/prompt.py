@@ -5,7 +5,7 @@ Prompt classes.
 from rich.prompt import InvalidResponse, PromptBase
 
 
-class UrlPrompt(PromptBase):
+class UrlPrompt(PromptBase[str]):
     """Prompt for a URL."""
 
     def process_response(self, value: str) -> str:

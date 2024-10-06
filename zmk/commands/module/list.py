@@ -8,17 +8,15 @@ from rich import box
 from rich.table import Table
 from west.manifest import ImportFlag, Manifest
 
-from ...config import Config
+from ...config import get_config
 
 
-def module_list(
-    ctx: typer.Context,
-):
+def module_list(ctx: typer.Context) -> None:
     """Print a list of installed Zephyr modules."""
 
     console = rich.get_console()
 
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     manifest = Manifest.from_topdir(

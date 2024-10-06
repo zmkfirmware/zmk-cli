@@ -3,7 +3,7 @@
 """
 
 import subprocess
-from typing import Annotated, Optional
+from typing import Annotated
 
 import rich
 import typer
@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.prompt import InvalidResponse, Prompt, PromptBase
 from west.manifest import ImportFlag, Manifest
 
-from ...config import Config
+from ...config import get_config
 from ...exceptions import FatalError
 from ...prompt import UrlPrompt
 from ...util import spinner
@@ -21,20 +21,20 @@ from ...yaml import YAML
 def module_add(
     ctx: typer.Context,
     url: Annotated[
-        Optional[str],
+        str | None,
         typer.Argument(help="URL of the Git repository to add.", show_default=False),
     ] = None,
     revision: Annotated[
-        Optional[str],
+        str | None,
         typer.Argument(help="Revision to track.", show_default="main"),
     ] = None,
     name: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--name", "-n", help="Name of the module.", show_default=False),
     ] = None,
-):
+) -> None:
     """Add a Zephyr module to the build."""
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     manifest = Manifest.from_topdir(
@@ -88,20 +88,21 @@ def _get_name_from_url(repo_url: str):
     return repo_url.split("/")[-1].removesuffix(".git")
 
 
-class NamePrompt(PromptBase):
+class NamePrompt(PromptBase[str]):
     """Prompt for a module name."""
 
     _manifest: Manifest
 
-    def __init__(self, manifest: Manifest, *, console: Optional[Console] = None):
+    def __init__(self, manifest: Manifest, *, console: Console | None = None):
         super().__init__("Enter a new name", console=console)
         self._manifest = manifest
 
-    # pylint: disable=arguments-renamed, arguments-differ
     @classmethod
-    def ask(cls, manifest: Manifest, *, console: Optional[Console] = None):
-        prompt = cls(manifest, console=console)
-        return prompt()
+    def ask(  # pyright: ignore[reportIncompatibleMethodOverride]
+        cls, prompt: Manifest, *, console: Console | None = None
+    ):
+        subprompt = cls(prompt, console=console)
+        return subprompt()
 
     def process_response(self, value: str) -> str:
         value = value.strip()

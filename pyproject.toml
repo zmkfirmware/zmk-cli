@@ -26,6 +26,9 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+dev = ["pre-commit", "pylint", "pyright"]
+
 [project.urls]
 Documentation = "https://zmk.dev/docs"
 "Source Code" = "https://github.com/zmkfirmware/zmk-cli/"
@@ -41,6 +44,20 @@ build-backend = "setuptools.build_meta"
 
 [tool.isort]
 profile = "black"
+
+[tool.pylint.MAIN]
+ignore = "_version.py"
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = [
+    "arguments-differ",             # Covered by pyright
+    "fixme",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-branches",
+    "too-many-instance-attributes",
+    "too-many-locals",
+]
 
 [tool.setuptools]
 packages = ["zmk"]

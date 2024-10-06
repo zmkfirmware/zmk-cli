@@ -2,8 +2,9 @@
 Terminal menus
 """
 
+from collections.abc import Callable, Iterable
 from contextlib import contextmanager
-from typing import Any, Callable, Generic, Iterable, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 
 import rich
 from rich.console import Console
@@ -53,7 +54,7 @@ class TerminalMenu(Generic[T], Highlighter):
     items: list[T]
     default_index: int
 
-    _filter_func: Optional[Callable[[T, str], bool]]
+    _filter_func: Callable[[T, str], bool] | None
     _filter_text: str
     _filter_items: list[T]
     _cursor_index: int
@@ -70,9 +71,9 @@ class TerminalMenu(Generic[T], Highlighter):
         items: Iterable[T],
         *,
         default_index=0,
-        filter_func: Optional[Callable[[T, str], bool]] = None,
-        console: Optional[Console] = None,
-        theme: Optional[Theme] = None,
+        filter_func: Callable[[T, str], bool] | None = None,
+        console: Console | None = None,
+        theme: Theme | None = None,
     ):
         """
         An interactive terminal menu.
@@ -112,7 +113,7 @@ class TerminalMenu(Generic[T], Highlighter):
 
         self._apply_filter()
 
-    def show(self):
+    def show(self) -> T:
         """
         Displays the menu.
 
@@ -146,11 +147,11 @@ class TerminalMenu(Generic[T], Highlighter):
             self._erase_controls()
 
     @property
-    def has_filter(self):
+    def has_filter(self) -> bool:
         """Get whether a filter function is set"""
         return bool(self._filter_func)
 
-    def highlight(self, text: Text):
+    def highlight(self, text: Text) -> None:
         normfilter = self._filter_text.casefold().strip()
         if not normfilter:
             return
@@ -180,7 +181,7 @@ class TerminalMenu(Generic[T], Highlighter):
             self.console.highlighter = old_highlighter
 
     def _apply_filter(self):
-        if self.has_filter:
+        if self._filter_func:
             try:
                 old_focus = self._filter_items[self._focus_index]
             except IndexError:
@@ -190,10 +191,11 @@ class TerminalMenu(Generic[T], Highlighter):
                 i for i in self.items if self._filter_func(i, self._filter_text)
             ]
 
-            try:
-                self._focus_index = self._filter_items.index(old_focus)
-            except ValueError:
-                pass
+            if old_focus is not None:
+                try:
+                    self._focus_index = self._filter_items.index(old_focus)
+                except ValueError:
+                    pass
         else:
             self._filter_items = self.items
 
@@ -246,7 +248,7 @@ class TerminalMenu(Generic[T], Highlighter):
             overflow="crop",
         )
 
-    def _print_item(self, item: T, focused: bool, show_more: bool):
+    def _print_item(self, item: T | str, focused: bool, show_more: bool):
         style = "ellipsis" if show_more else "focus" if focused else "unfocus"
 
         indent = "> " if focused else "  "
@@ -406,10 +408,10 @@ def show_menu(
     items: Iterable[T],
     *,
     default_index=0,
-    filter_func: Optional[Callable[[T, str], bool]] = None,
-    console: Optional[Console] = None,
-    theme: Optional[Theme] = None,
-):
+    filter_func: Callable[[T, str], bool] | None = None,
+    console: Console | None = None,
+    theme: Theme | None = None,
+) -> T:
     """
     Displays an interactive menu.
 
@@ -457,7 +459,9 @@ class Detail(Generic[T]):
 
     # pylint: disable=protected-access
     @classmethod
-    def align(cls, items: Iterable["Detail[T]"], console: Optional[Console] = None):
+    def align(
+        cls, items: Iterable["Detail[T]"], console: Console | None = None
+    ) -> list["Detail[T]"]:
         """Set the padding for each item in the list to align the detail strings."""
         items = list(items)
         console = console or rich.get_console()
@@ -474,7 +478,7 @@ class Detail(Generic[T]):
 
 
 def detail_list(
-    items: Iterable[tuple[T, str]], console: Optional[Console] = None
+    items: Iterable[tuple[T, str]], console: Console | None = None
 ) -> list[Detail[T]]:
     """
     Create a list of menu items with a description appended to each item.

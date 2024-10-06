@@ -4,10 +4,11 @@ Config repo and Zephyr module utilities.
 
 import shutil
 import subprocess
+from collections.abc import Generator
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
-from typing import Any, Generator, Optional
+from typing import Any, Literal, overload
 
 from west.app.main import main as west_main
 
@@ -28,7 +29,7 @@ def is_repo(path: Path) -> bool:
     return (path / _PROJECT_MANIFEST_PATH).is_file()
 
 
-def find_containing_repo(path: Optional[Path] = None) -> Optional[Path]:
+def find_containing_repo(path: Path | None = None) -> Path | None:
     """Search upwards from the given path for a ZMK config repo."""
     path = path or Path()
     path = path.absolute()
@@ -52,7 +53,7 @@ class Module:
         return self.path / _MODULE_MANIFEST_PATH
 
     @property
-    def board_root(self) -> Optional[Path]:
+    def board_root(self) -> Path | None:
         """Path to the "boards" folder."""
 
         # Check for board_root from module manifest
@@ -93,7 +94,7 @@ class Repo(Module):
         return self.path / _PROJECT_MANIFEST_PATH
 
     @property
-    def board_root(self) -> Optional[Path]:
+    def board_root(self) -> Path | None:
         if root := super().board_root:
             return root
 
@@ -127,6 +128,15 @@ class Repo(Module):
         """Path to the west staging folder."""
         return self.path / _WEST_STAGING_PATH
 
+    @overload
+    def git(self, *args: str, capture_output: Literal[False] = False) -> None: ...
+
+    @overload
+    def git(self, *args: str, capture_output: Literal[True]) -> str: ...
+
+    @overload
+    def git(self, *args: str, capture_output: bool) -> str | None: ...
+
     def git(self, *args: str, capture_output: bool = False) -> str | None:
         """
         Run Git in the repo.
@@ -134,7 +144,7 @@ class Repo(Module):
         If capture_output is True, the command is run silently in the background
         and this returns the output as a string.
         """
-        args = ["git", *args]
+        args = ("git", *args)
 
         if capture_output:
             return subprocess.check_output(
@@ -144,7 +154,16 @@ class Repo(Module):
         subprocess.check_call(args, encoding="utf-8")
         return None
 
-    def run_west(self, *args: str, capture_output: bool = False) -> str | None:
+    @overload
+    def run_west(self, *args: str, capture_output: Literal[False] = False) -> None: ...
+
+    @overload
+    def run_west(self, *args: str, capture_output: Literal[True]) -> str: ...
+
+    @overload
+    def run_west(self, *args: str, capture_output: bool) -> str | None: ...
+
+    def run_west(self, *args: str, capture_output: bool = False):
         """
         Run west in the west staging folder.
 
@@ -156,7 +175,7 @@ class Repo(Module):
         self.ensure_west_ready()
         return self._run_west(*args, capture_output=capture_output)
 
-    def ensure_west_ready(self):
+    def ensure_west_ready(self) -> None:
         """
         Ensures the west application is correctly initialized.
         """
@@ -171,6 +190,15 @@ class Repo(Module):
             self._init_west_app()
 
         self._west_ready = True
+
+    @overload
+    def _run_west(self, *args: str, capture_output: Literal[False] = False) -> None: ...
+
+    @overload
+    def _run_west(self, *args: str, capture_output: Literal[True]) -> str: ...
+
+    @overload
+    def _run_west(self, *args: str, capture_output: bool) -> str | None: ...
 
     def _run_west(self, *args: str, capture_output=False):
         if capture_output:

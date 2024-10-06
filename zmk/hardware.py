@@ -2,10 +2,11 @@
 Hardware metadata discovery and processing.
 """
 
+from collections.abc import Generator, Iterable
 from dataclasses import dataclass, field
 from functools import reduce
 from pathlib import Path
-from typing import Any, Generator, Iterable, Literal, Optional, TypeAlias, TypeGuard
+from typing import Any, Literal, Self, TypeAlias, TypeGuard
 
 import dacite
 
@@ -33,11 +34,11 @@ class Hardware:
     id: str
     name: str
 
-    file_format: Optional[str] = None
-    url: Optional[str] = None
-    description: Optional[str] = None
-    manufacturer: Optional[str] = None
-    version: Optional[str] = None
+    file_format: str | None = None
+    url: str | None = None
+    description: str | None = None
+    manufacturer: str | None = None
+    version: str | None = None
 
     def __str__(self) -> str:
         return self.id
@@ -46,7 +47,7 @@ class Hardware:
         return f"{self.id}  [dim]{self.name}"
 
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data) -> Self:
         """Read a hardware description from a dict"""
         return dacite.from_dict(cls, data)
 
@@ -56,20 +57,20 @@ class Interconnect(Hardware):
     """Description of the connection between two pieces of hardware"""
 
     node_labels: dict[str, str] = field(default_factory=dict)
-    design_guideline: Optional[str] = None
+    design_guideline: str | None = None
 
 
 @dataclass
 class Keyboard(Hardware):
     """Base class for hardware that forms a keyboard"""
 
-    siblings: Optional[list[str]] = field(default_factory=list)
+    siblings: list[str] | None = field(default_factory=list)
     """List of board/shield IDs for a split keyboard"""
-    exposes: Optional[list[str]] = field(default_factory=list)
+    exposes: list[str] | None = field(default_factory=list)
     """List of interconnect IDs this board/shield provides"""
-    features: Optional[list[Feature]] = field(default_factory=list)
+    features: list[Feature] | None = field(default_factory=list)
     """List of features this board/shield supports"""
-    variants: Optional[list[Variant]] = field(default_factory=list)
+    variants: list[Variant] | None = field(default_factory=list)
 
     def __post_init__(self):
         self.siblings = self.siblings or []
@@ -78,12 +79,12 @@ class Keyboard(Hardware):
         self.variants = self.variants or []
 
     @property
-    def config_path(self):
+    def config_path(self) -> Path:
         """Path to the .conf file for this keyboard"""
         return self.directory / f"{self.id}.conf"
 
     @property
-    def keymap_path(self):
+    def keymap_path(self) -> Path:
         """Path to the .keymap file for this keyboard"""
         return self.directory / f"{self.id}.keymap"
 
@@ -92,7 +93,7 @@ class Keyboard(Hardware):
 class Board(Keyboard):
     """Hardware with a processor. May be a keyboard or a controller."""
 
-    arch: Optional[str] = None
+    arch: str | None = None
     outputs: list[Output] = field(default_factory=list)
     """List of methods by which this board supports sending HID data"""
 
@@ -105,7 +106,7 @@ class Board(Keyboard):
 class Shield(Keyboard):
     """Hardware that attaches to a board. May be a keyboard or a peripheral."""
 
-    requires: Optional[list[str]] = field(default_factory=list)
+    requires: list[str] | None = field(default_factory=list)
     """List of interconnects to which this shield attaches"""
 
     def __post_init__(self):
@@ -126,17 +127,17 @@ class GroupedHardware:
 
     # TODO: add displays and other peripherals?
 
-    def find_keyboard(self, item_id: str):
+    def find_keyboard(self, item_id: str) -> Keyboard | None:
         """Find a keyboard by ID"""
         item_id = item_id.casefold()
         return next((i for i in self.keyboards if i.id.casefold() == item_id), None)
 
-    def find_controller(self, item_id: str):
+    def find_controller(self, item_id: str) -> Board | None:
         """Find a controller by ID"""
         item_id = item_id.casefold()
         return next((i for i in self.controllers if i.id.casefold() == item_id), None)
 
-    def find_interconnect(self, item_id: str):
+    def find_interconnect(self, item_id: str) -> Interconnect | None:
         """Find an interconnect by ID"""
         item_id = item_id.casefold()
         return next(
@@ -148,7 +149,7 @@ class GroupedHardware:
 def is_keyboard(hardware: Hardware) -> TypeGuard[Keyboard]:
     """Test whether an item is a keyboard (board or shield supporting keys)"""
     match hardware:
-        case Keyboard(features=feat) if "keys" in feat:
+        case Keyboard(features=feat) if feat and "keys" in feat:
             return True
 
         case _:
@@ -165,7 +166,9 @@ def is_interconnect(hardware: Hardware) -> TypeGuard[Interconnect]:
     return isinstance(hardware, Interconnect)
 
 
-def is_compatible(base: Board | Shield | Iterable[Board | Shield], shield: Shield):
+def is_compatible(
+    base: Board | Shield | Iterable[Board | Shield], shield: Shield
+) -> bool:
     """
     Get whether a shield can be attached to the given hardware.
 
@@ -174,6 +177,9 @@ def is_compatible(base: Board | Shield | Iterable[Board | Shield], shield: Shiel
     not account for the fact that one of the items in "base" may already be using
     an interconnect provided by another item.
     """
+
+    if not shield.requires:
+        return True
 
     base = [base] if isinstance(base, Keyboard) else base
     exposed = flatten(b.exposes for b in base)

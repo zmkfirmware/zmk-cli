@@ -2,7 +2,8 @@
 "zmk keyboard list" command.
 """
 
-from typing import Annotated, Iterable, Optional
+from collections.abc import Iterable
+from typing import Annotated
 
 import rich
 import typer
@@ -12,10 +13,10 @@ from rich.table import Table
 
 from ...backports import StrEnum
 from ...build import BuildItem, BuildMatrix
+from ...config import get_config
 from ...exceptions import FatalError
 from ...hardware import Board, Hardware, Shield, get_hardware, is_compatible
 from ...util import spinner
-from ..config import Config
 
 # TODO: allow output as unformatted list
 # TODO: allow output as more detailed metadata
@@ -37,7 +38,7 @@ def _list_build_matrix(ctx: typer.Context, value: bool):
 
     console = rich.get_console()
 
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     matrix = BuildMatrix.from_repo(repo)
@@ -79,7 +80,7 @@ def _list_build_matrix(ctx: typer.Context, value: bool):
 def keyboard_list(
     ctx: typer.Context,
     _: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option(
             "--build",
             help="Show the build matrix.",
@@ -94,9 +95,9 @@ def keyboard_list(
             "-t",
             help="List only items of this type.",
         ),
-    ] = "all",
+    ] = ListType.ALL,
     board: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--board",
             "-b",
@@ -105,7 +106,7 @@ def keyboard_list(
         ),
     ] = None,
     shield: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--shield",
             "-s",
@@ -114,7 +115,7 @@ def keyboard_list(
         ),
     ] = None,
     interconnect: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--interconnect",
             "-i",
@@ -128,12 +129,12 @@ def keyboard_list(
             "--standalone", help="List only keyboards with onboard controllers."
         ),
     ] = False,
-):
+) -> None:
     """List supported keyboards or keyboards in the build matrix."""
 
     console = rich.get_console()
 
-    cfg = ctx.find_object(Config)
+    cfg = get_config(ctx)
     repo = cfg.get_repo()
 
     with spinner("Finding hardware..."):
@@ -145,7 +146,11 @@ def keyboard_list(
         if item is None:
             raise FatalError(f'Could not find controller board "{board}".')
 
-        groups.keyboards = [kb for kb in groups.keyboards if is_compatible(item, kb)]
+        groups.keyboards = [
+            kb
+            for kb in groups.keyboards
+            if isinstance(kb, Shield) and is_compatible(item, kb)
+        ]
         list_type = ListType.KEYBOARD
 
     elif shield:
@@ -166,11 +171,13 @@ def keyboard_list(
         if item is None:
             raise FatalError(f'Could not find interconnect "{interconnect}".')
 
-        groups.controllers = [c for c in groups.controllers if item.id in c.exposes]
+        groups.controllers = [
+            c for c in groups.controllers if c.exposes and item.id in c.exposes
+        ]
         groups.keyboards = [
             kb
             for kb in groups.keyboards
-            if isinstance(kb, Shield) and item.id in kb.requires
+            if isinstance(kb, Shield) and kb.requires and item.id in kb.requires
         ]
         groups.interconnects = []
 
