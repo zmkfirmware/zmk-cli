@@ -1,1 +1,1 @@
-<%inherit file="board/other/board.cmake" />
+<%inherit file="/board/other/board.cmake" />

@@ -1,1 +1,1 @@
-<%inherit file="common/keymap.dtsi" />
+<%inherit file="/common/keymap.dtsi" />

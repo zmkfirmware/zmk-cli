@@ -1,4 +1,4 @@
-<%inherit file="board/nrf52840/Kconfig.defconfig" />
+<%inherit file="/board/nrf52840/Kconfig.defconfig" />
 
 <%def name="guard()">BOARD_${id.upper()}</%def>
 

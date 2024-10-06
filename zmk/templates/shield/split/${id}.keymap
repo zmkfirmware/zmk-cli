@@ -1,1 +1,1 @@
-<%inherit file="common/keymap_split.dtsi" />
+<%inherit file="/common/keymap_split.dtsi" />

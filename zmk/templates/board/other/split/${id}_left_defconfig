@@ -1,1 +1,1 @@
-<%inherit file="board/other/board_defconfig" />
+<%inherit file="/board/other/board_defconfig" />
