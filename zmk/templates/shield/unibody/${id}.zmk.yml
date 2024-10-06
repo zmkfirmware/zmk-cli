@@ -1,4 +1,4 @@
-<%inherit file="common/hardware.zmk.yml" />
+<%inherit file="/common/hardware.zmk.yml" />
 # Set this to the interconnect the shield uses.
 # Run "zmk keyboard list --type interconnect" to get the possible values.
 requires:

@@ -1,1 +1,1 @@
-<%inherit file="board/nrf52840/board_defconfig" />
+<%inherit file="/board/nrf52840/board_defconfig" />

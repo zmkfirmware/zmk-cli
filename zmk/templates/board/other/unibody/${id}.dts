@@ -1,4 +1,4 @@
-<%inherit file="common/board.dts" />
+<%inherit file="/common/board.dts" />
 <%block name="includes">
 #include "${id}-pinctrl.dtsi"
 

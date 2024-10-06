@@ -1,1 +1,1 @@
-<%inherit file="common/board_right.dts" />
+<%inherit file="/common/board_right.dts" />

@@ -1,4 +1,4 @@
-<%inherit file="common/board.dts" />
+<%inherit file="/common/board.dts" />
 <%block name="system_includes">
 #include <nordic/nrf52840_qiaa.dtsi>
 </%block>
@@ -15,12 +15,12 @@
     };
 </%block>
 <%block name="kscan">
-<%include file="common/kscan_split_common.dtsi" />
+<%include file="/common/kscan_split_common.dtsi" />
 </%block>
 <%block name="matrix_transform">
-<%include file="common/matrix_transform_split.dtsi" />
+<%include file="/common/matrix_transform_split.dtsi" />
 </%block>
 <%block name="nodes">
-<%include file="board/nrf52840/common_inner.dtsi" />
+<%include file="/board/nrf52840/common_inner.dtsi" />
 </%block>
-<%include file="board/nrf52840/common_outer.dtsi" />
+<%include file="/board/nrf52840/common_outer.dtsi" />

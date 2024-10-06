@@ -1,1 +1,1 @@
-<%inherit file="board/nrf52840/board.yaml" />
+<%inherit file="/board/nrf52840/board.yaml" />

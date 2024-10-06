@@ -1,4 +1,4 @@
-<%inherit file="board/other/Kconfig.defconfig" />
+<%inherit file="/board/other/Kconfig.defconfig" />
 
 <%def name="guard()">BOARD_${id.upper()}_LEFT || BOARD_${id.upper()}_RIGHT</%def>
 

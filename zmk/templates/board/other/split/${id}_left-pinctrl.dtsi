@@ -1,1 +1,1 @@
-<%inherit file="board/other/pinctrl.dtsi" />
+<%inherit file="/board/other/pinctrl.dtsi" />

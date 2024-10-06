@@ -1,4 +1,4 @@
-<%inherit file="common/hardware.zmk.yml" />
+<%inherit file="/common/hardware.zmk.yml" />
 outputs:
   - usb
   - ble
