@@ -6,7 +6,7 @@ from collections.abc import Generator, Iterable
 from dataclasses import dataclass, field
 from functools import reduce
 from pathlib import Path
-from typing import Any, Literal, Self, TypeAlias, TypeGuard
+from typing import Any, Literal, Type, TypeAlias, TypeGuard, TypeVar
 
 import dacite
 
@@ -21,6 +21,9 @@ Output: TypeAlias = Literal["usb", "ble"]
 
 # TODO: dict should match { id: str, features: list[Feature] }
 Variant: TypeAlias = str | dict[str, str]
+
+# TODO: replace with typing.Self once minimum Python version is >= 3.11
+_Self = TypeVar("_Self", bound="Hardware")
 
 
 @dataclass
@@ -47,7 +50,7 @@ class Hardware:
         return f"{self.id}  [dim]{self.name}"
 
     @classmethod
-    def from_dict(cls, data) -> Self:
+    def from_dict(cls: "Type[_Self]", data) -> _Self:
         """Read a hardware description from a dict"""
         return dacite.from_dict(cls, data)
 

@@ -5,7 +5,7 @@ Build matrix processing.
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Self, TypeVar, cast, overload
+from typing import Any, TypeVar, cast, overload
 
 import dacite
 
@@ -57,7 +57,7 @@ class BuildMatrix:
     _data: dict[str, Any] | None
 
     @classmethod
-    def from_repo(cls, repo: Repo) -> Self:
+    def from_repo(cls, repo: Repo) -> "BuildMatrix":
         """Get the build matrix for a repo"""
         return cls(repo.build_matrix_path)
 
