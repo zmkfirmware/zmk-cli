@@ -197,7 +197,9 @@ def keyboard_new(
     rich.print(
         "Open this folder and edit the files to finish setting up the new keyboard."
     )
-    rich.print("See https://zmk.dev/docs/development/new-shield for help.")
+    rich.print(
+        "See https://zmk.dev/docs/development/hardware-integration/new-shield for help."
+    )
 
 
 def _prompt_keyboard_type():

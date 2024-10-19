@@ -1,6 +1,6 @@
 // This file was generated from a template. Edit it to match your keyboard.
-// See https://docs.zephyrproject.org/3.6.0/hardware/porting/board_porting.html
-// and https://docs.zephyrproject.org/3.6.0/hardware/pinctrl/index.html for
+// See https://docs.zephyrproject.org/3.5.0/hardware/porting/board_porting.html
+// and https://docs.zephyrproject.org/3.5.0/hardware/pinctrl/index.html for
 // more instructions.
 
 #include <dt-bindings/pinctrl/nrf-pinctrl.h>

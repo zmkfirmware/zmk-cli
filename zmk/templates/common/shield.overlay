@@ -1,15 +1,17 @@
 // This file was generated from a template. Edit it to match your keyboard.
-// See https://zmk.dev/docs/development/new-shield for more instructions.
+// See https://zmk.dev/docs/development/hardware-integration/new-shield for more
+// instructions.
 
 <%block name="system_includes" />
 #include <dt-bindings/zmk/matrix_transform.h>
+
 <%block name="includes" />
+#include "${id}-layouts.dtsi"
 
 / {
 <%block name="chosen">
     chosen {
-        zmk,kscan = &kscan;
-        zmk,matrix_transform = &default_transform;
+        zmk,physical-layout = &default_layout;
     };
 </%block>
 
