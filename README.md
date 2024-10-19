@@ -147,11 +147,11 @@ Run `zmk keyboard list` to print a list of supported keyboard hardware.
 
 If ZMK doesn't support your keyboard yet, you can run `zmk keyboard new` to create a new keyboard from a template.
 
-This won't walk you through all of the details of adding support for a new keyboard, but it will generate most of the boilerplate for you. See the [New Keyboard Shield](https://zmk.dev/docs/development/new-shield) guide for how to finish writing the keyboard files.
+This won't walk you through all of the details of adding support for a new keyboard, but it will generate most of the boilerplate for you. See the [New Keyboard Shield](https://zmk.dev/docs/development/hardware-integration/new-shield) guide for how to finish writing the keyboard files.
 
 ## Module Management
 
-[Zephyr modules](https://docs.zephyrproject.org/3.6.0/develop/modules.html) can add support for new keyboards, behaviors, and other features to ZMK. Use the `zmk module` command to install modules into your repo:
+[Zephyr modules](https://docs.zephyrproject.org/3.5.0/develop/modules.html) can add support for new keyboards, behaviors, and other features to ZMK. Use the `zmk module` command to install modules into your repo:
 
 ```sh
 zmk module add     # Add a module

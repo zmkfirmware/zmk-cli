@@ -1,5 +1,5 @@
     default_transform: default_transform {
-        // See https://zmk.dev/docs/development/new-shield#optional-matrix-transform
+        // See https://zmk.dev/docs/development/hardware-integration/new-shield#matrix-transform
         // for how to configure this
         compatible = "zmk,matrix-transform";
         columns = <2>;

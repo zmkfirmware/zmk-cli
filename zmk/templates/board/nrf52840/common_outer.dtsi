@@ -14,46 +14,50 @@
     status = "okay";
 };
 
-&usbd {
-    status = "okay";
+&uart0 {
+    compatible = "nordic,nrf-uarte";
+    current-speed = <115200>;
+    pinctrl-0 = <&uart0_default>;
+    pinctrl-1 = <&uart0_sleep>;
+    pinctrl-names = "default", "sleep";
+};
 
-    cdc_acm_uart: cdc_acm_uart {
-        compatible = "zephyr,cdc-acm-uart";
-    };
+zephyr_udc0: &usbd {
+    status = "okay";
 };
 
 &flash0 {
     // Adjust this flash map as is necessary for your board. For more information, see
-    // https://docs.zephyrproject.org/latest/reference/storage/flash_map/flash_map.html
+    // https://docs.zephyrproject.org/3.5.0/services/storage/flash_map/flash_map.html#relationship-with-devicetree
     partitions {
         compatible = "fixed-partitions";
         #address-cells = <1>;
         #size-cells = <1>;
 
         code_partition: partition@1000 {
-            reg = <0x00001000 0x000d3000>;
+            reg = <DT_SIZE_K(4) DT_SIZE_K(844)>;
         };
 
         // If using a bootloader with SoftDevice included, replace the code_partition
         // node above with the following. If using SoftDevice v7, change 26000 to 27000.
 
         // sd_partition: partition@0 {
-        //     reg = <0x00000000 0x00026000>;
+        //     reg = <0x0 <DT_SIZE_K(4)>;
         // };
         // code_partition: partition@26000 {
-        //     reg = <0x00026000 0x000c6000>;
+        //     reg = <DT_SIZE_K(152) DT_SIZE_K(792)>;
         // };
 
         // The flash starting at 0x000d4000 and ending at
         // 0x000f3fff is reserved for use by the application.
 
-        // Storage partition will be used by FCB/LittleFS/NVS if enabled.
+        // Storage partition will be used by NVS if enabled.
         storage_partition: partition@d4000 {
-            reg = <0x000d4000 0x00020000>;
+            reg = <DT_SIZE_K(848) DT_SIZE_K(128)>;
         };
 
         boot_partition: partition@f4000 {
-            reg = <0x000f4000 0x0000c000>;
+            reg = <DT_SIZE_K(976) DT_SIZE_K(48)>;
         };
     };
 };

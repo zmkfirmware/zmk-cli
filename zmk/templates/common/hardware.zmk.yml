@@ -1,5 +1,6 @@
 # This file was generated from a template. Edit it to match your keyboard.
-# See https://zmk.dev/docs/development/hardware-metadata-files for instructions.
+# See https://zmk.dev/docs/development/hardware-integration/hardware-metadata-files
+# for instructions.
 
 file_format: "1"
 id: ${id}
@@ -13,7 +14,8 @@ arch: ${arch}
 url: https://example.com
 
 # Add any features your keyboard supports here.
-# See https://zmk.dev/docs/development/hardware-metadata-files#features.
+# See https://zmk.dev/docs/development/hardware-integration/hardware-metadata-files#features
 features:
   - keys
+  - studio  # Remove this line if your keyboard will not support ZMK Studio
 ${self.body()}
