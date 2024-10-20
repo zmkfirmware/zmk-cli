@@ -1,4 +1,4 @@
 <%inherit file="/common/shield.overlay" />
 <%block name="kscan">
-<%include file="/common/kscan.dtsi" args="node = '&pro_micro'" />
+<%include file="/common/kscan.dtsi" />
 </%block>

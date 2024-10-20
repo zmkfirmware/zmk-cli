@@ -4,4 +4,4 @@
 
 #include "${id}.dtsi"
 
-<%include file="kscan_split_left.dtsi" args="node = '&pro_micro'" />
+<%include file="kscan_split_left.dtsi" />

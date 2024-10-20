@@ -13,8 +13,11 @@ from rich.prompt import Confirm, InvalidResponse, PromptBase
 from ...backports import StrEnum
 from ...config import get_config
 from ...exceptions import FatalError
+from ...hardware import Interconnect, get_hardware, show_hardware_menu
 from ...menu import detail_list, show_menu
+from ...repo import Repo
 from ...templates import get_template_files
+from ...util import spinner
 
 
 class KeyboardType(StrEnum):
@@ -49,6 +52,7 @@ class TemplateData:
 
 ID_PATTERN = re.compile(r"[a-z_]\w*")
 MAX_NAME_LENGTH = 16
+DEFAULT_INTERCONNECT = "pro_micro"
 
 
 def _validate_id(value: str):
@@ -133,6 +137,13 @@ def keyboard_new(
         KeyboardLayout | None,
         typer.Option("--layout", "-l", help="Keyboard hardware layout."),
     ] = None,
+    interconnect_id: Annotated[
+        str | None,
+        typer.Option(
+            "--interconnect",
+            help="If creating a shield, the interconnect ID for the controller board.",
+        ),
+    ] = None,
     force: Annotated[
         bool, typer.Option("--force", "-f", help="Overwrite existing files.")
     ] = False,
@@ -160,6 +171,11 @@ def keyboard_new(
     if not keyboard_type:
         keyboard_type = _prompt_keyboard_type()
 
+    if not interconnect_id and keyboard_type == KeyboardType.SHIELD:
+        interconnect = _prompt_interconnect(repo)
+    else:
+        interconnect = _get_interconnect(repo, interconnect_id)
+
     if not keyboard_platform:
         if keyboard_type == KeyboardType.BOARD:
             keyboard_platform = _prompt_keyboard_platform()
@@ -176,6 +192,7 @@ def keyboard_new(
         keyboard_name=keyboard_name,
         short_name=short_name,
         keyboard_id=keyboard_id,
+        interconnect=interconnect,
     )
 
     dest = board_root / template.dest
@@ -212,6 +229,42 @@ def _prompt_keyboard_type():
 
     result = show_menu("Select a keyboard type:", items)
     return result.data
+
+
+def _prompt_interconnect(repo: Repo):
+    with spinner("Finding interconnects..."):
+        hardware = get_hardware(repo)
+
+    default_index = next(
+        (
+            i
+            for i, interconnect in enumerate(hardware.interconnects)
+            if interconnect.id == DEFAULT_INTERCONNECT
+        ),
+        0,
+    )
+
+    return show_hardware_menu(
+        "Select the interconnect for the controller board:",
+        hardware.interconnects,
+        default_index=default_index,
+    )
+
+
+def _get_interconnect(repo: Repo, interconnect_id: str | None):
+    if not interconnect_id:
+        return None
+
+    with spinner("Finding interconnects..."):
+        hardware = get_hardware(repo)
+
+    try:
+        return next(ic for ic in hardware.interconnects if ic.id == interconnect_id)
+    except StopIteration as ex:
+        raise FatalError(
+            f'"{interconnect_id}" is not a valid interconnect. '
+            'Run "zmk keyboard list --type interconnect" to list possible values.'
+        ) from ex
 
 
 def _prompt_keyboard_platform():
@@ -309,6 +362,11 @@ _PLATFORM_ARCH: dict[KeyboardPlatform, str] = {
     KeyboardPlatform.NRF52840: "arm",
 }
 
+_DEFAULT_GPIO = "&gpio0"
+_PLATFORM_GPIO: dict[KeyboardPlatform, str] = {
+    KeyboardPlatform.NRF52840: "&gpio0",
+}
+
 
 def _get_template(
     keyboard_type: KeyboardType,
@@ -317,22 +375,33 @@ def _get_template(
     keyboard_name: str,
     short_name: str,
     keyboard_id: str,
+    interconnect: Interconnect | None = None,
 ):
     template = TemplateData()
     template.data["id"] = keyboard_id
     template.data["name"] = keyboard_name
     template.data["shortname"] = short_name
     template.data["keyboard_type"] = str(keyboard_type)
+    template.data["interconnect"] = ""
     template.data["arch"] = ""
+    template.data["gpio"] = _DEFAULT_GPIO
 
     match keyboard_type:
         case KeyboardType.SHIELD:
             template.folder = "shield/"
             template.dest = f"shields/{keyboard_id}"
 
+            if interconnect:
+                template.data["interconnect"] = interconnect.id
+                try:
+                    template.data["gpio"] = "&" + interconnect.node_labels["gpio"]
+                except KeyError:
+                    pass
+
         case _:
             arch = _PLATFORM_ARCH.get(keyboard_platform, _DEFAULT_ARCH)
             template.data["arch"] = arch
+            template.data["gpio"] = _PLATFORM_GPIO.get(keyboard_platform, _DEFAULT_GPIO)
 
             template.folder = f"board/{keyboard_platform}/"
             template.dest = f"{arch}/{keyboard_id}"

@@ -13,8 +13,14 @@ import typer
 from ...build import BuildItem, BuildMatrix
 from ...config import get_config
 from ...exceptions import FatalError
-from ...hardware import Board, Keyboard, Shield, get_hardware, is_compatible
-from ...menu import show_menu
+from ...hardware import (
+    Board,
+    Keyboard,
+    Shield,
+    get_hardware,
+    is_compatible,
+    show_hardware_menu,
+)
 from ...repo import Repo
 from ...util import spinner
 
@@ -85,17 +91,15 @@ def keyboard_add(
 
     # Prompt the user for any necessary components they didn't specify
     if keyboard is None:
-        keyboard = show_menu(
-            "Select a keyboard:", hardware.keyboards, filter_func=_filter
-        )
+        keyboard = show_hardware_menu("Select a keyboard:", hardware.keyboards)
 
     if isinstance(keyboard, Shield):
         if controller is None:
             hardware.controllers = [
                 c for c in hardware.controllers if is_compatible(c, keyboard)
             ]
-            controller = show_menu(
-                "Select a controller:", hardware.controllers, filter_func=_filter
+            controller = show_hardware_menu(
+                "Select a controller:", hardware.controllers
             )
 
         # Sanity check that everything is compatible
@@ -114,11 +118,6 @@ def keyboard_add(
         console.print(f'"{name}" is already in the build matrix.')
 
     console.print(f'Run "zmk code {keyboard.id}" to edit the keymap.')
-
-
-def _filter(item: Keyboard, text: str):
-    text = text.casefold().strip()
-    return text in item.id.casefold() or text in item.name.casefold()
 
 
 class KeyboardNotFound(FatalError):

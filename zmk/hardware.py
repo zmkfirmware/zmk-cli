@@ -6,24 +6,35 @@ from collections.abc import Generator, Iterable
 from dataclasses import dataclass, field
 from functools import reduce
 from pathlib import Path
-from typing import Any, Literal, Type, TypeAlias, TypeGuard, TypeVar
+from typing import Any, Literal, Type, TypeAlias, TypedDict, TypeGuard, TypeVar
 
 import dacite
 
+from .menu import show_menu
 from .repo import Repo
 from .util import flatten
 from .yaml import read_yaml
 
-Feature: TypeAlias = Literal[
-    "keys", "display", "encoder", "underglow", "backlight", "pointer"
-]
+Feature: TypeAlias = (
+    Literal["keys", "display", "encoder", "underglow", "backlight", "pointer", "studio"]
+    | str
+)
 Output: TypeAlias = Literal["usb", "ble"]
 
-# TODO: dict should match { id: str, features: list[Feature] }
-Variant: TypeAlias = str | dict[str, str]
+
+class VariantDict(TypedDict):
+    """Keyboard variant with custom options"""
+
+    id: str
+    features: list[Feature]
+
+
+Variant: TypeAlias = str | VariantDict
 
 # TODO: replace with typing.Self once minimum Python version is >= 3.11
 _Self = TypeVar("_Self", bound="Hardware")
+
+_HW = TypeVar("_HW", bound="Hardware")
 
 
 @dataclass
@@ -241,3 +252,22 @@ def _find_hardware(path: Path) -> Generator[Hardware, None, None]:
 
             case "interconnect":
                 yield Interconnect.from_dict(meta)
+
+
+def _filter_hardware(item: Hardware, text: str):
+    text = text.casefold().strip()
+    return text in item.id.casefold() or text in item.name.casefold()
+
+
+def show_hardware_menu(
+    title: str,
+    items: Iterable[_HW],
+    **kwargs,
+) -> _HW:
+    """
+    Show a menu to select from a list of Hardware objects.
+
+    kwargs are passed through to zmk.menu.show_menu(), except for filter_func,
+    which is set to a function appropriate for filtering Hardware objects.
+    """
+    return show_menu(title=title, items=items, **kwargs, filter_func=_filter_hardware)

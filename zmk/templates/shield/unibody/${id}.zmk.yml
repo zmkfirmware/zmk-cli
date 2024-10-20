@@ -1,5 +1,5 @@
 <%inherit file="/common/hardware.zmk.yml" />
-# Set this to the interconnect the shield uses.
-# Run "zmk keyboard list --type interconnect" to get the possible values.
+% if interconnect:
 requires:
-  - pro_micro
+  - ${interconnect}
+% endif
