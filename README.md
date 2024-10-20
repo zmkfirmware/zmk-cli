@@ -94,6 +94,14 @@ It should print a help message if everything installed correctly.
 
 On Linux, you may get an error saying you need to install another package such as `python3.10-venv`. If so, follow the instructions in the error message, then try the above commands again.
 
+## Update ZMK CLI
+
+If you have already installed ZMK CLI, you can update to the latest version with the following command:
+
+```sh
+pipx upgrade zmk
+```
+
 # Usage
 
 All ZMK CLI commands start with `zmk`. Run `zmk --help` for general usage instructions. For help with a specific subcommand, add `--help` after the subcommand, e.g. `zmk init --help`.
