@@ -7,7 +7,9 @@ Templates will be provided the following parameters:
     name: str -- The keyboard display name
     shortname: str -- A name abbreviated to <= 16 characters
     keyboard_type: str -- "board" or "shield"
-    arch: Optional[str] -- The board architecture, e.g "arm"
+    interconnect: str -- The interconnect ID for the controller board. May be empty.
+    arch: str -- The board architecture, e.g "arm". May be empty.
+    gpio: str -- The default node label for GPIO, e.g. "&gpio0".
 
 """
 

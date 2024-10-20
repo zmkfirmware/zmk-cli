@@ -1,4 +1,3 @@
-<%page args="node = '&gpio0'" />
     kscan: kscan {
         // If the hardware does not use a switch matrix, change this to the
         // appropriate driver and update the properties below to match.
@@ -14,7 +13,7 @@
         // Replace these comments with the GPIO pins in the matrix.
         // See https://zmk.dev/docs/development/hardware-integration/new-shield#shield-overlays
         row-gpios
-            = </* ${node} 0 */ (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
-            , </* ${node} 0 */ (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            = <${gpio} 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <${gpio} 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
             ;
     };
