@@ -22,5 +22,6 @@ def download(ctx: typer.Context) -> None:
 def _get_actions_url(repo: Repo):
     remote = repo.git("remote", capture_output=True).strip()
     remote_url = repo.git("remote", "get-url", remote, capture_output=True).strip()
-
+    remote_url = remote_url.replace("git@github.com:", "https://github.com/").replace(".git", "")
+    
     return f"{remote_url}/actions/workflows/build.yml"
