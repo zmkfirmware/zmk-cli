@@ -2,6 +2,8 @@
 "zmk download" command.
 """
 
+import webbrowser
+
 import typer
 
 from ..config import get_config
@@ -16,7 +18,7 @@ def download(ctx: typer.Context) -> None:
 
     actions_url = _get_actions_url(repo)
 
-    typer.launch(actions_url)
+    webbrowser.open(actions_url)
 
 
 def _get_actions_url(repo: Repo):
