@@ -5,6 +5,7 @@
 import platform
 import shutil
 import subprocess
+import webbrowser
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -115,7 +116,7 @@ def _get_repo_url():
         width=TEXT_WIDTH,
     )
     input()
-    typer.launch(TEMPLATE_URL)
+    webbrowser.open(TEMPLATE_URL)
 
     url = UrlPrompt.ask("Repository URL")
     return url
