@@ -6,6 +6,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+import shutil
 
 import shellingham
 import typer
@@ -39,6 +40,7 @@ def cd(ctx: typer.Context) -> None:
 
     try:
         _, shell = shellingham.detect_shell()
+        shell = shutil.which(shell) or _default_shell()
     except shellingham.ShellDetectionFailure:
         shell = _default_shell()
 
