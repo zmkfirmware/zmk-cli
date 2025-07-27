@@ -14,9 +14,11 @@ Install Git from https://git-scm.com/downloads.
 
 If you have Windows 11, you can instead open a terminal and run:
 
+```sh
+winget install git.git -i
 ```
-winget install git.git
-```
+
+The Windows installer will give you lots of options. You can leave all of them as their defaults, but when you get to the "choosing the default editor used by Git" screen, you may want to select a different text editor to use when writing Git commit messages.
 
 ## Install Python
 
@@ -226,7 +228,7 @@ Other commands use the following settings:
 
 Command line for a text editor to use with the `zmk code` command.
 
-For example, so set Visual Studio Code as the editor and make it always open a new window, run:
+For example, to set Visual Studio Code as the editor and make it always open a new window, run:
 
 ```sh
 zmk config core.editor "code --new-window"
@@ -250,14 +252,16 @@ zmk config user.home ~/Documents/zmk-config
 
 # Development
 
-If you would like to help improve ZMK CLI, you can clone this repo and install it in editable mode so your changes to the code apply when you run `zmk`. Open a terminal to the root directory of the repository and run:
+If you would like to help improve ZMK CLI, you can clone this repo and install it in editable mode so your changes to the code apply when you run `zmk`. First, open a terminal to the root directory of the repository.
+
+You may optionally run the following commands inside a [virtual environment](https://docs.python.org/3/library/venv.html) if you don't want to install ZMK CLI's dependencies globally or if your OS disallows doing this.
+
+To install ZMK CLI in editable mode, run:
 
 ```sh
 pip install -e ".[dev]"
 pre-commit install
 ```
-
-You may optionally run these commands inside a [virtual environment](https://docs.python.org/3/library/venv.html) if you don't want to install ZMK CLI's dependencies globally or if your OS disallows doing this.
 
 After running `pre-commit install`, your code will be checked when you make a commit, but there are some slower checks that do not run automatically. To run these additional checks, run these commands:
 
@@ -266,4 +270,4 @@ pyright .
 pylint zmk
 ```
 
-Alternatively, you can just create a pull request and GitHub will run the checks and report any errors.
+GitHub will also run these checks and report any errors when you make a pull request.
