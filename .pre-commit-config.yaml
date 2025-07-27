@@ -1,16 +1,16 @@
 fail_fast: false
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.17.0
+    rev: v3.20.0
     hooks:
       - id: pyupgrade
         args: [--py310-plus]
   - repo: https://github.com/pycqa/isort
-    rev: "5.13.2"
+    rev: "6.0.1"
     hooks:
       - id: isort
   - repo: https://github.com/psf/black
-    rev: "24.8.0"
+    rev: "25.1.0"
     hooks:
       - id: black
   - repo: https://github.com/Lucas-C/pre-commit-hooks
@@ -18,10 +18,15 @@ repos:
     hooks:
       - id: remove-tabs
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: check-yaml
         exclude: ^zmk/templates
       - id: check-added-large-files
       - id: check-shebang-scripts-are-executable
+  - repo: https://github.com/tombi-toml/tombi-pre-commit
+    rev: v0.4.37
+    hooks:
+      - id: tombi-format
+      - id: tombi-lint
