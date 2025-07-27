@@ -3,3 +3,7 @@
 requires:
   - ${interconnect}
 % endif
+
+siblings:
+  - ${id}_left
+  - ${id}_right
