@@ -158,7 +158,12 @@ def _get_build_items(keyboard: Keyboard, controller: Board | None):
         case _:
             raise ValueError("Unexpected keyboard/controller combination")
 
-    return [BuildItem(board=b, shield=s) for b, s in itertools.product(boards, shields)]
+    if shields:
+        return [
+            BuildItem(board=b, shield=s) for b, s in itertools.product(boards, shields)
+        ]
+
+    return [BuildItem(board=b) for b in boards]
 
 
 def _add_keyboard(repo: Repo, keyboard: Keyboard, controller: Board | None):
