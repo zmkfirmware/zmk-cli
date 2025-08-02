@@ -35,7 +35,7 @@ class Config:
         self.force_home = force_home
 
         self._overrides: defaultdict[str, dict[str, str]] = defaultdict(dict)
-        self._parser = ConfigParser()
+        self._parser = ConfigParser(interpolation=None)
         self._parser.read(self.path, encoding="utf-8")
 
     def write(self) -> None:
