@@ -4,6 +4,7 @@ Config repo and Zephyr module utilities.
 
 import shutil
 import subprocess
+import sys
 from collections.abc import Generator
 from contextlib import redirect_stdout
 from io import StringIO
@@ -22,6 +23,13 @@ _PROJECT_MANIFEST_PATH = f"{_CONFIG_DIR_NAME}/west.yml"
 _MODULE_MANIFEST_PATH = "zephyr/module.yml"
 _WEST_STAGING_PATH = ".zmk"
 _WEST_CONFIG_PATH = ".west/config"
+
+# Don't clone projects from ZMK's manifest that aren't needed for discovering keyboards
+_PROJECT_BLOCKLIST = [
+    "lvgl",
+    "zephyr",
+    "zmk-studio-messages",
+]
 
 
 def is_repo(path: Path) -> bool:
@@ -186,7 +194,9 @@ class Repo(Module):
         self._update_west_manifest()
 
         config_path = self.path / _WEST_STAGING_PATH / _WEST_CONFIG_PATH
-        if not config_path.exists():
+        if config_path.exists():
+            self._update_project_filter()
+        else:
             self._init_west_app()
 
         self._west_ready = True
@@ -201,14 +211,15 @@ class Repo(Module):
     def _run_west(self, *args: str, capture_output: bool) -> str | None: ...
 
     def _run_west(self, *args: str, capture_output=False):
-        if capture_output:
-            with redirect_stdout(StringIO()) as output:
-                self.run_west(*args, capture_output=False)
-                return output.getvalue()
+        command = [sys.executable, "-m", "west", *args]
 
-        with set_directory(self.west_path):
-            west_main(args)
-            return None
+        if capture_output:
+            return subprocess.check_output(
+                command, cwd=self.west_path, text=True, stderr=subprocess.STDOUT
+            )
+
+        subprocess.check_call(command, cwd=self.west_path)
+        return None
 
     def _update_gitignore(self):
         gitignore = self.path / ".gitignore"
@@ -249,18 +260,23 @@ class Repo(Module):
         print("Initializing west application. This may take a while...")
         self._run_west("init", "-l", _CONFIG_DIR_NAME)
 
-        # Don't clone zephyr, because it's not necessary to discover keyboards.
-        self._run_west("config", "--local", "manifest.project-filter", " -zephyr")
-
+        self._update_project_filter()
         self._run_west("update")
 
+    def _get_project_filter(self):
+        try:
+            return self._run_west(
+                "config", "--local", "manifest.project-filter", capture_output=True
+            ).strip()
+        except subprocess.CalledProcessError:
+            return ""
 
-def _run_west(path: Path, args: list[str], capture_output=False):
-    if capture_output:
-        with redirect_stdout(StringIO()) as output:
-            _run_west(path, args, capture_output=False)
-            return output.getvalue()
+    def _update_project_filter(self):
+        current_filter = self._get_project_filter()
 
-    with set_directory(path):
-        west_main(args)
-        return None
+        new_filter = ",".join("-" + project for project in _PROJECT_BLOCKLIST)
+
+        if current_filter != new_filter:
+            self._run_west(
+                "config", "--local", "manifest.project-filter", "--", new_filter
+            )
