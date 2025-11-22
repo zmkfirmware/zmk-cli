@@ -10,9 +10,7 @@ from rich.console import Console
 from .. import styles
 from ..config import Config, get_config
 
-console = Console(
-    highlighter=styles.KeyValueHighlighter(), theme=styles.KEY_VALUE_THEME
-)
+console = Console(highlighter=styles.KeyValueHighlighter(), theme=styles.THEME)
 
 
 def _path_callback(ctx: typer.Context, value: bool):

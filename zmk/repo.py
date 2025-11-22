@@ -6,14 +6,9 @@ import shutil
 import subprocess
 import sys
 from collections.abc import Generator
-from contextlib import redirect_stdout
-from io import StringIO
 from pathlib import Path
 from typing import Any, Literal, overload
 
-from west.app.main import main as west_main
-
-from .util import set_directory
 from .yaml import read_yaml
 
 _APP_DIR_NAME = "app"

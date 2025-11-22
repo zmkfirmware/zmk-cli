@@ -2,6 +2,7 @@
 Hardware metadata discovery and processing.
 """
 
+import re
 from collections.abc import Generator, Iterable
 from dataclasses import dataclass, field
 from functools import reduce
@@ -65,6 +66,27 @@ class Hardware:
         """Read a hardware description from a dict"""
         return dacite.from_dict(cls, data)
 
+    def has_id(self, hardware_id: str) -> bool:
+        """Get whether this hardware has the given ID (case insensitive)"""
+        return hardware_id.casefold() == self.id.casefold()
+
+    def has_revision(self, revision: str) -> bool:
+        """
+        Get whether this hardware supports the given revision.
+
+        Any empty string is treated as "default revision" and always returns True.
+        """
+        # By default, the only supported revision is no revision at all.
+        return not revision
+
+    def get_revisions(self) -> list[str]:
+        """Get a list of supported revisions"""
+        return []
+
+    def get_default_revision(self) -> str | None:
+        """Get the default item from get_revisions or None if no default is set"""
+        return None
+
 
 @dataclass
 class Interconnect(Hardware):
@@ -92,15 +114,27 @@ class Keyboard(Hardware):
         self.features = self.features or []
         self.variants = self.variants or []
 
-    @property
-    def config_path(self) -> Path:
+    def get_config_path(self, revision: str | None = None) -> Path:
         """Path to the .conf file for this keyboard"""
-        return self.directory / f"{self.id}.conf"
+        return self._get_keyboard_file(".conf", revision)
 
-    @property
-    def keymap_path(self) -> Path:
+    def get_keymap_path(self, revision: str | None = None) -> Path:
         """Path to the .keymap file for this keyboard"""
-        return self.directory / f"{self.id}.keymap"
+        return self._get_keyboard_file(".keymap", revision)
+
+    def _get_revision_suffixes(self, revision: str | None = None) -> Generator[str]:
+        if revision:
+            for rev in get_revision_forms(revision):
+                yield "_" + rev.replace(".", "_")
+
+    def _get_keyboard_file(self, extension: str, revision: str | None = None) -> Path:
+        if revision:
+            for rev in get_revision_forms(revision):
+                path = self.directory / f"{self.id}_{rev.replace('.', '_')}{extension}"
+                if path.exists():
+                    return path
+
+        return self.directory / f"{self.id}{extension}"
 
 
 @dataclass
@@ -111,9 +145,96 @@ class Board(Keyboard):
     outputs: list[Output] = field(default_factory=list)
     """List of methods by which this board supports sending HID data"""
 
+    revisions: list[str] = field(default_factory=list)
+    default_revision: str | None = None
+
     def __post_init__(self):
         super().__post_init__()
         self.outputs = self.outputs or []
+        self.revisions = self.revisions or []
+
+    def has_revision(self, revision: str):
+        # Empty string means "use default revision"
+        if not revision:
+            return True
+
+        revision = normalize_revision(revision)
+
+        return any(normalize_revision(rev) == revision for rev in self.revisions)
+
+    def get_revisions(self):
+        return self.revisions
+
+    def get_default_revision(self):
+        return self.default_revision
+
+
+def split_revision(identifier: str) -> tuple[str, str]:
+    """
+    Splits a string containing a hardware ID and optionally a revision into the
+    ID and revision.
+
+    Examples:
+    "foo" -> "foo", ""
+    "foo@2" -> "foo", "2"
+    """
+    hardware_id, _, revision = identifier.partition("@")
+    return hardware_id, revision
+
+
+def append_revision(identifier: str, revision: str | None):
+    """
+    Joins a hardware ID with a revision string.
+
+    Examples:
+    "foo" + None -> "foo"
+    "foo" + "2" -> "foo@2"
+    """
+    return f"{identifier}@{revision}" if revision else identifier
+
+
+def normalize_revision(revision: str | None) -> str:
+    """
+    Normalizes letter revisions to uppercase and shortens numeric versions to
+    the smallest form with the same meaning.
+
+    Examples:
+    "a" -> "A"
+    "1.2.0" -> "1.2"
+    "2.0.0" -> "2"
+    """
+    if not revision:
+        return ""
+
+    return re.sub(r"(?:\.0){1,2}$", "", revision).upper()
+
+
+def get_revision_forms(revision: str) -> list[str]:
+    """
+    Returns a list of all equivalent spellings of a revision.
+
+    Examples:
+    "a" -> ["A", "a"]
+    "1.2.3" -> ["1.2.3"]
+    "1.2.0" -> ["1.2", "1.2.0"]
+    "2.0.0" -> ["2", "2.0", "2.0.0"]
+    """
+    revision = normalize_revision(revision)
+
+    if revision.isalpha():
+        return [revision.upper(), revision.lower()]
+
+    result = []
+
+    dot_count = revision.count(".")
+    if dot_count == 0:
+        result.append(revision + ".0.0")
+    if dot_count <= 1:
+        result.append(revision + ".0")
+
+    result.append(revision)
+
+    return result
 
 
 @dataclass
@@ -271,3 +392,34 @@ def show_hardware_menu(
     which is set to a function appropriate for filtering Hardware objects.
     """
     return show_menu(title=title, items=items, **kwargs, filter_func=_filter_hardware)
+
+
+def show_revision_menu(
+    board: Hardware, title: str | None = None, **kwargs
+) -> str | None:
+    """
+    Show a menu to select from a list of revisions for a board.
+
+    If the board has no revisions, returns None without showing a menu.
+    If the board has only one revision, returns it without showing a menu.
+
+    kwargs are passed through to zmk.menu.show_menu(), except for default_index,
+    which is set based on the board's default revision.
+    """
+
+    revisions = board.get_revisions()
+    if not revisions:
+        return None
+
+    if len(revisions) == 1:
+        return revisions[0]
+
+    default_revision = board.get_default_revision()
+    default_index = revisions.index(default_revision) if default_revision else 0
+
+    return show_menu(
+        title=title or f"Select a {board.name} revision:",
+        items=revisions,
+        default_index=default_index,
+        **kwargs,
+    )
