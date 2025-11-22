@@ -5,17 +5,27 @@
 from collections.abc import Iterable
 from typing import Annotated
 
-import rich
 import typer
 from rich import box
 from rich.columns import Columns
+from rich.console import Console
 from rich.table import Table
+
+from zmk import styles
 
 from ...backports import StrEnum
 from ...build import BuildItem, BuildMatrix
 from ...config import get_config
 from ...exceptions import FatalError
-from ...hardware import Board, Hardware, Shield, get_hardware, is_compatible
+from ...hardware import (
+    Board,
+    Hardware,
+    Shield,
+    append_revision,
+    get_hardware,
+    is_compatible,
+    normalize_revision,
+)
 from ...util import spinner
 
 # TODO: allow output as unformatted list
@@ -36,7 +46,12 @@ def _list_build_matrix(ctx: typer.Context, value: bool):
     if not value:
         return
 
-    console = rich.get_console()
+    console = Console(
+        highlighter=styles.chain_highlighters(
+            [styles.BoardIdHighlighter(), styles.CommandLineHighlighter()]
+        ),
+        theme=styles.THEME,
+    )
 
     cfg = get_config(ctx)
     repo = cfg.get_repo()
@@ -48,7 +63,12 @@ def _list_build_matrix(ctx: typer.Context, value: bool):
     has_cmake_args = any(item.cmake_args for item in include)
     has_artifact_name = any(item.artifact_name for item in include)
 
-    table = Table(box=box.SQUARE, border_style="dim blue", header_style="bright_cyan")
+    table = Table(
+        box=box.SQUARE,
+        border_style="dim blue",
+        header_style="bright_cyan",
+        highlight=True,
+    )
     table.add_column("Board")
     table.add_column("Shield")
     if has_snippet:
@@ -129,10 +149,16 @@ def keyboard_list(
             "--standalone", help="List only keyboards with onboard controllers."
         ),
     ] = False,
+    revisions: Annotated[
+        bool,
+        typer.Option(
+            "--revisions", "--rev", "-r", help="Display revisions for each board."
+        ),
+    ] = False,
 ) -> None:
     """List supported keyboards or keyboards in the build matrix."""
 
-    console = rich.get_console()
+    console = Console(highlighter=styles.BoardIdHighlighter(), theme=styles.THEME)
 
     cfg = get_config(ctx)
     repo = cfg.get_repo()
@@ -187,7 +213,15 @@ def keyboard_list(
         list_type = ListType.KEYBOARD
 
     def print_items(header: str, items: Iterable[Hardware]):
-        names = [item.id for item in items]
+        if revisions:
+            names = [
+                append_revision(item.id, normalize_revision(rev))
+                for item in items
+                for rev in (item.get_revisions() or [None])
+            ]
+        else:
+            names = [item.id for item in items]
+
         if not names:
             return
 
