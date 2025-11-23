@@ -117,6 +117,9 @@ def keyboard_new(
             callback=_short_name_callback,
         ),
     ] = None,
+    vendor: Annotated[
+        str | None, typer.Option("--vendor", "-v", help="Keyboard vendor ID")
+    ] = None,
     keyboard_type: Annotated[
         KeyboardType | None,
         typer.Option(
@@ -129,6 +132,7 @@ def keyboard_new(
         KeyboardPlatform | None,
         typer.Option(
             "--platform",
+            "--soc",
             "-p",
             help="If creating a board, the platform/SoC on which it is based.",
         ),
@@ -171,6 +175,11 @@ def keyboard_new(
     if not keyboard_type:
         keyboard_type = _prompt_keyboard_type()
 
+    if not vendor and keyboard_type == KeyboardType.BOARD:
+        print("Boards are typically organized into folders by vendor name.")
+        print("(You may leave this blank to not create a vendor folder.)")
+        vendor = VendorPrompt.ask()
+
     if not interconnect_id and keyboard_type == KeyboardType.SHIELD:
         interconnect = _prompt_interconnect(repo)
     else:
@@ -193,6 +202,7 @@ def keyboard_new(
         short_name=short_name,
         keyboard_id=keyboard_id,
         interconnect=interconnect,
+        vendor=vendor,
     )
 
     dest = board_root / template.dest
@@ -357,6 +367,22 @@ class IdPrompt(NamePromptBase):
         return result
 
 
+class VendorPrompt(NamePromptBase):
+    """Prompt for a vendor identifier."""
+
+    @classmethod
+    def validate(cls, value: str) -> None:
+        if not value:
+            # Vendor is allowed to be blank
+            return
+
+        _validate_id(value)
+
+    @classmethod
+    def ask(cls) -> str:  # pyright: ignore[reportIncompatibleMethodOverride]
+        return super().ask("Enter an ID for the vendor")
+
+
 _DEFAULT_ARCH = "arm"
 _PLATFORM_ARCH: dict[KeyboardPlatform, str] = {
     KeyboardPlatform.NRF52840: "arm",
@@ -376,15 +402,20 @@ def _get_template(
     short_name: str,
     keyboard_id: str,
     interconnect: Interconnect | None = None,
+    vendor: str | None = None,
 ):
     template = TemplateData()
     template.data["id"] = keyboard_id
     template.data["name"] = keyboard_name
     template.data["shortname"] = short_name
+    template.data["vendor"] = vendor or ""
     template.data["keyboard_type"] = str(keyboard_type)
     template.data["interconnect"] = ""
     template.data["arch"] = ""
     template.data["gpio"] = _DEFAULT_GPIO
+    template.data["soc"] = (
+        "" if keyboard_platform == KeyboardPlatform.OTHER else str(keyboard_platform)
+    )
 
     match keyboard_type:
         case KeyboardType.SHIELD:
@@ -404,7 +435,7 @@ def _get_template(
             template.data["gpio"] = _PLATFORM_GPIO.get(keyboard_platform, _DEFAULT_GPIO)
 
             template.folder = f"board/{keyboard_platform}/"
-            template.dest = f"{arch}/{keyboard_id}"
+            template.dest = f"{vendor}/{keyboard_id}" if vendor else keyboard_id
 
     match keyboard_layout:
         case KeyboardLayout.UNIBODY:

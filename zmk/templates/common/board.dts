@@ -1,5 +1,5 @@
 // This file was generated from a template. Edit it to match your keyboard.
-// See https://docs.zephyrproject.org/3.5.0/hardware/porting/board_porting.html
+// See https://docs.zephyrproject.org/4.1.0/hardware/porting/board_porting.html
 // and https://zmk.dev/docs/development/hardware-integration/new-shield for more
 // instructions.
 
