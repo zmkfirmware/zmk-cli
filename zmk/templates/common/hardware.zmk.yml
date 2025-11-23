@@ -18,4 +18,12 @@ url: https://example.com
 features:
   - keys
   - studio  # Remove this line if your keyboard will not support ZMK Studio
+
 ${self.body()}
+% if keyboard_type == "board":
+# If your board has multiple revisions in its board.yml, create a matching list here:
+# revisions:
+#   - 2.0.0
+#   - 1.0.0
+# default_revision: 2.0.0
+% endif

@@ -1,3 +1,17 @@
+// Uncomment this to switch from the LDO to the DC/DC regulator on REG0.
+// Do not enable the DC/DC regulator without an LC filter connected to the DCCH
+// pin, or the keyboard will not boot until an LC filter is connected.
+// &reg0 {
+//     status = "okay";
+// };
+
+// Uncomment this to switch from the LDO to the DC/DC regulator on REG1.
+// Do not enable the DC/DC regulator without an LC filter connected to the DCC
+// pin, or the keyboard will not boot until an LC filter is connected.
+// &reg1 {
+//     regulator-initial-mode = <NRF5X_REG_MODE_DCDC>;
+// };
+
 &adc {
     status = "okay";
 };
@@ -22,13 +36,18 @@
     pinctrl-names = "default", "sleep";
 };
 
+// If you use the NFC pins as GPIOs, uncomment this. Otherwise, remove it.
+// &uicr {
+//     nfct-pins-as-gpios;
+// };
+
 zephyr_udc0: &usbd {
     status = "okay";
 };
 
 &flash0 {
     // Adjust this flash map as is necessary for your board. For more information, see
-    // https://docs.zephyrproject.org/3.5.0/services/storage/flash_map/flash_map.html#relationship-with-devicetree
+    // https://docs.zephyrproject.org/4.1.0/services/storage/flash_map/flash_map.html#relationship-with-devicetree
     partitions {
         compatible = "fixed-partitions";
         #address-cells = <1>;
