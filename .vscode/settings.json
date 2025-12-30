@@ -23,5 +23,6 @@
   "isort.check": true,
   "isort.args": ["--settings-path", "${workspaceFolder}"],
   "python.analysis.importFormat": "relative",
-  "python.analysis.typeCheckingMode": "standard"
+  "python.analysis.typeCheckingMode": "standard",
+  "python-envs.pythonProjects": []
 }
