@@ -165,7 +165,7 @@ def _select_editor(cfg: Config):
     if not file_editors:
         raise FatalError(
             "Could not find a known text editor.\n"
-            "Run \"zmk config core.editor='<command>'\" "
+            "Run \"zmk config core.editor '<command>'\" "
             'replacing "<command>" with the path to a text editor.'
         )
 
@@ -195,9 +195,9 @@ def _select_editor(cfg: Config):
     cfg.write()
 
     rich.print("Editor saved:")
-    rich.print(Markdown(f'`zmk config core.editor="{editor.get_command()}"`'))
+    rich.print(Markdown(f'`zmk config core.editor "{editor.get_command()}"`'))
     if explorer:
-        rich.print(Markdown(f'`zmk config core.explorer="{explorer.get_command()}"`'))
+        rich.print(Markdown(f'`zmk config core.explorer "{explorer.get_command()}"`'))
 
     rich.print()
 
