@@ -54,7 +54,7 @@ def code(
     editor = _get_editor(cfg, path.is_dir())
 
     cmd = shlex.split(editor) + [path]
-    subprocess.call(cmd, shell=True)
+    subprocess.call(cmd)
 
 
 def _get_file(repo: Repo, keyboard: str | None, open_conf: bool):
