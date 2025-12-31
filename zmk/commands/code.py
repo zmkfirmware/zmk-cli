@@ -5,7 +5,6 @@
 import platform
 import shlex
 import shutil
-import subprocess
 from collections.abc import Callable
 from configparser import NoOptionError
 from dataclasses import dataclass, field
@@ -16,6 +15,7 @@ import rich
 import typer
 from rich.markdown import Markdown
 
+from .. import shell
 from ..config import Config, Settings, get_config
 from ..exceptions import FatalError
 from ..menu import show_menu
@@ -54,7 +54,7 @@ def code(
     editor = _get_editor(cfg, path.is_dir())
 
     cmd = shlex.split(editor) + [path]
-    subprocess.call(cmd, shell=True)
+    shell.call(cmd)
 
 
 def _get_file(repo: Repo, keyboard: str | None, open_conf: bool):
