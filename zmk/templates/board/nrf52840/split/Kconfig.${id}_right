@@ -1,0 +1,5 @@
+config BOARD_${id.upper()}_RIGHT
+    select SOC_NRF52840_QIAA
+    imply RETAINED_MEM
+    imply RETENTION
+    imply RETENTION_BOOT_MODE

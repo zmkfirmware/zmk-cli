@@ -2,9 +2,5 @@
 # See https://docs.zephyrproject.org/4.1.0/hardware/porting/board_porting.html#write-kconfig-files
 # for more information.
 
-if ${self.guard() | trim}
-
-# Define any board-specific Kconfig options here.
-# If there are none, you may delete this file.
-
-endif # ${self.guard() | trim}
+config BOARD_${id.upper()}_LEFT
+    select SOC_PART_NUMBER_ABCDEFGH

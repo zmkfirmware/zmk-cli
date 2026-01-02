@@ -39,15 +39,17 @@ def get_template_files(
     template_path = _ROOT_PATH / folder
 
     for file in template_path.rglob("*"):
-        template_name = str(file.relative_to(_ROOT_PATH))
-        template = lookup.get_template(template_name)
+        name_template = Template(text=file.name, strict_undefined=True)
+        name = cast(str, name_template.render_unicode(**data))
 
-        file_name = Template(text=file.name, strict_undefined=True)
+        # Board identifiers can contain forward slashes. File names cannot.
+        name = name.replace("/", "_")
 
-        yield (
-            cast(str, file_name.render_unicode(**data)),
-            _ensure_trailing_newline(cast(str, template.render_unicode(**data))),
-        )
+        file_template_name = str(file.relative_to(_ROOT_PATH))
+        file_template = lookup.get_template(file_template_name)
+        text = _ensure_trailing_newline(cast(str, file_template.render_unicode(**data)))
+
+        yield name, text
 
 
 # Matches <%tag ...>, </%tag ...>, and <%tag ... />. Group 1 is the tag name.

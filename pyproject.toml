@@ -58,6 +58,7 @@ disable = [
   "too-many-instance-attributes",
   "too-many-locals",
   "too-many-positional-arguments",
+  "too-many-statements",
 ]
 
 [tool.setuptools]

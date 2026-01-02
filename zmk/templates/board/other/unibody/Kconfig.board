@@ -1,8 +1,0 @@
-# This file was generated from a template. Edit it to match your keyboard.
-# See https://docs.zephyrproject.org/3.5.0/hardware/porting/board_porting.html#write-kconfig-files
-# for more information.
-
-config BOARD_${id.upper()}
-    bool "${name}"
-    depends on SOC_SERIES_YOUR_SOC_SERIES_HERE
-    select SOC_PART_NUMBER_ABCDEFGH

@@ -1,7 +1,0 @@
-config BOARD_${id.upper()}_LEFT
-    bool "${name} left"
-    depends on SOC_NRF52840_QIAA
-
-config BOARD_${id.upper()}_RIGHT
-    bool "${name} right"
-    depends on SOC_NRF52840_QIAA

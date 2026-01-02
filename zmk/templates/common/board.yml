@@ -1,0 +1,21 @@
+# This file was generated from a template. Edit it to match your keyboard.
+# See https://docs.zephyrproject.org/4.1.0/hardware/porting/board_porting.html
+# for more instructions.
+
+board:
+  name: ${id}
+% if vendor:
+  vendor: ${vendor}
+% endif
+  socs:
+    - name: ${soc}
+
+# If your board has multiple revisions, specify them here. See
+# https://docs.zephyrproject.org/4.1.0/hardware/porting/board_porting.html#multiple-board-revisions
+
+#   revision:
+#     format: major.minor.patch
+#     default: 2.0.0
+#     revisions:
+#       - name: 1.0.0
+#       - name: 2.0.0
