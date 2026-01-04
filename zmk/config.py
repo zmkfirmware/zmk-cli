@@ -24,6 +24,9 @@ class Settings(StrEnum):
     CORE_EXPLORER = "core.explorer"  # Directory editor tool
 
 
+_PATH_SETTINGS = (Settings.USER_HOME,)
+
+
 class Config:
     """Wrapper around ConfigParser to store CLI configuration"""
 
@@ -58,6 +61,8 @@ class Config:
     def set(self, name: str, value: str) -> None:
         """Set a setting"""
         section, option = self._split_option(name)
+        if name in _PATH_SETTINGS:
+            value = str(Path(value).resolve())
         self._parser.set(section, option, value)
 
     def remove(self, name: str) -> None:
@@ -95,7 +100,7 @@ class Config:
 
     @home_path.setter
     def home_path(self, value: Path) -> None:
-        self.set(Settings.USER_HOME, str(value.resolve()))
+        self.set(Settings.USER_HOME, str(value))
 
     def get_repo(self) -> Repo:
         """
