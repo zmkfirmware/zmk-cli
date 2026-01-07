@@ -116,6 +116,11 @@ class Repo(Module):
         for line in modules.splitlines():
             yield Module(self.west_path / line)
 
+    def get_remote_url(self) -> str:
+        """Get the remote URL for the checked out Git branch."""
+        remote = self.git("remote", capture_output=True).strip()
+        return self.git("remote", "get-url", remote, capture_output=True).strip()
+
     @property
     def build_matrix_path(self) -> Path:
         """Path to the "build.yaml" file."""

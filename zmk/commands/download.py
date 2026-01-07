@@ -4,9 +4,11 @@
 
 import webbrowser
 
+import giturlparse
 import typer
 
 from ..config import get_config
+from ..exceptions import FatalError
 from ..repo import Repo
 
 
@@ -22,7 +24,13 @@ def download(ctx: typer.Context) -> None:
 
 
 def _get_actions_url(repo: Repo):
-    remote = repo.git("remote", capture_output=True).strip()
-    remote_url = repo.git("remote", "get-url", remote, capture_output=True).strip()
+    remote_url = repo.get_remote_url()
 
-    return f"{remote_url}/actions/workflows/build.yml"
+    p = giturlparse.parse(remote_url)
+
+    match p.platform:
+        case "github":
+            return f"https://github.com/{p.owner}/{p.repo}/actions/workflows/build.yml"
+
+        case _:
+            raise FatalError(f"Unsupported remote URL: {remote_url}")
