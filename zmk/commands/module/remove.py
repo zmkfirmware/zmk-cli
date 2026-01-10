@@ -11,7 +11,7 @@ from typing import Annotated, Any
 
 import rich
 import typer
-from west.manifest import ImportFlag, Manifest, Project
+from west.manifest import Project
 
 from ...config import get_config
 from ...exceptions import FatalError
@@ -32,9 +32,7 @@ def module_remove(
     cfg = get_config(ctx)
     repo = cfg.get_repo()
 
-    manifest = Manifest.from_topdir(
-        topdir=repo.west_path, import_flags=ImportFlag.IGNORE
-    )
+    manifest = repo.get_west_manifest()
 
     # Don't allow deleting ZMK, or the repo won't build anymore.
     projects = [p for p in manifest.projects[1:] if p.name != "zmk"]

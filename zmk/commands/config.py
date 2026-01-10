@@ -47,7 +47,7 @@ def config(
         ),
     ] = False,
 ) -> None:
-    """Get and set ZMK CLI settings."""
+    """Get or set ZMK CLI settings."""
 
     cfg = get_config(ctx)
 

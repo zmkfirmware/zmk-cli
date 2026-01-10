@@ -6,7 +6,6 @@ import rich
 import typer
 from rich import box
 from rich.table import Table
-from west.manifest import ImportFlag, Manifest
 
 from ...config import get_config
 
@@ -19,9 +18,7 @@ def module_list(ctx: typer.Context) -> None:
     cfg = get_config(ctx)
     repo = cfg.get_repo()
 
-    manifest = Manifest.from_topdir(
-        topdir=repo.west_path, import_flags=ImportFlag.IGNORE
-    )
+    manifest = repo.get_west_manifest()
 
     table = Table(box=box.SQUARE, border_style="dim blue", header_style="bright_cyan")
     table.add_column("Name")

@@ -9,7 +9,7 @@ import rich
 import typer
 from rich.console import Console
 from rich.prompt import InvalidResponse, Prompt, PromptBase
-from west.manifest import ImportFlag, Manifest
+from west.manifest import Manifest
 
 from ...config import get_config
 from ...exceptions import FatalError
@@ -37,9 +37,7 @@ def module_add(
     cfg = get_config(ctx)
     repo = cfg.get_repo()
 
-    manifest = Manifest.from_topdir(
-        topdir=repo.west_path, import_flags=ImportFlag.IGNORE
-    )
+    manifest = repo.get_west_manifest()
 
     if name:
         _error_if_existing_name(manifest, name)
