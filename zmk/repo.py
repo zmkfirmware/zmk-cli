@@ -26,8 +26,12 @@ _WEST_CONFIG_PATH = ".west/config"
 # Don't clone projects from ZMK's manifest that aren't needed for discovering keyboards
 _PROJECT_BLOCKLIST = [
     "lvgl",
+    "nanopb",
     "zephyr",
     "zmk-studio-messages",
+]
+_GROUP_BLOCKLIST = [
+    "hal",
 ]
 
 
@@ -226,7 +230,7 @@ class Repo(Module):
 
         config_path = self.path / _WEST_STAGING_PATH / _WEST_CONFIG_PATH
         if config_path.exists():
-            self._update_project_filter()
+            self._update_filters()
         else:
             self._init_west_app()
 
@@ -283,6 +287,19 @@ class Repo(Module):
                 yaml.dump(data, self.build_workflow_path)
         except KeyError:
             pass
+
+    def get_west_config(self, name: str) -> str:
+        """Get the value of a West configuration setting"""
+        try:
+            return self._run_west(
+                "config", "--local", name, capture_output=True
+            ).removesuffix("\n")
+        except subprocess.CalledProcessError:
+            return ""
+
+    def set_west_config(self, name: str, value: str) -> None:
+        """Set the value of a West configuration setting"""
+        self._run_west("config", "--local", name, "--", value)
 
     @overload
     def _run_west(self, *args: str, capture_output: Literal[False] = False) -> None: ...
@@ -343,23 +360,22 @@ class Repo(Module):
         print("Initializing west application. This may take a while...")
         self._run_west("init", "-l", _CONFIG_DIR_NAME)
 
-        self._update_project_filter()
+        self._update_filters()
         self._run_west("update")
 
-    def _get_project_filter(self):
-        try:
-            return self._run_west(
-                "config", "--local", "manifest.project-filter", capture_output=True
-            ).strip()
-        except subprocess.CalledProcessError:
-            return ""
+    def _update_filters(self):
+        current_group_filter = self.get_west_config("manifest.group-filter")
+        current_project_filter = self.get_west_config("manifest.project-filter")
 
-    def _update_project_filter(self):
-        current_filter = self._get_project_filter()
+        new_group_filter = _blocklist_to_filter(_GROUP_BLOCKLIST)
+        new_project_filter = _blocklist_to_filter(_PROJECT_BLOCKLIST)
 
-        new_filter = ",".join("-" + project for project in _PROJECT_BLOCKLIST)
+        if current_group_filter != new_group_filter:
+            self.set_west_config("manifest.group-filter", new_group_filter)
 
-        if current_filter != new_filter:
-            self._run_west(
-                "config", "--local", "manifest.project-filter", "--", new_filter
-            )
+        if current_project_filter != new_project_filter:
+            self.set_west_config("manifest.project-filter", new_project_filter)
+
+
+def _blocklist_to_filter(blocklist: list[str]) -> str:
+    return ",".join("-" + item for item in blocklist)
