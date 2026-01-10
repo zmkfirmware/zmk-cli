@@ -209,6 +209,26 @@ After pushing changes, GitHub will automatically build the firmware for you. Run
 
 From this page, you can click on a build (the latest is at the top) to view its status. If the build succeeded, you can download the firmware from the "Artifacts" section at the bottom of the build summary page.
 
+## ZMK Version Management
+
+The `zmk version` command manages the version of ZMK you are using:
+
+```sh
+zmk version             # Print the current ZMK version
+zmk version --list      # List the available versions
+zmk version <revision>  # Switch to the version given by <revision>
+```
+
+You can set the revision to any Git tag, branch, or commit:
+
+```sh
+zmk version v0.3     # Switch to tag "v0.3"
+zmk version main     # Switch to branch "main"
+zmk version 1958217  # Switch to commit "1958217"
+```
+
+Note that `zmk version --list` will only list tagged versions.
+
 ## Configuration
 
 The `zmk config` command manages settings for ZMK CLI:

@@ -9,7 +9,10 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import Any, Literal, overload
 
-from .yaml import read_yaml
+import west.manifest
+
+from .remote import Remote
+from .yaml import YAML, read_yaml
 
 _APP_DIR_NAME = "app"
 _BUILD_MATRIX_PATH = "build.yaml"
@@ -121,6 +124,28 @@ class Repo(Module):
         remote = self.git("remote", capture_output=True).strip()
         return self.git("remote", "get-url", remote, capture_output=True).strip()
 
+    def get_remote(self) -> Remote:
+        """Get a Remote object for the checked out Git branch's remote URL."""
+        return Remote(self.get_remote_url())
+
+    def get_west_manifest(self) -> west.manifest.Manifest:
+        """Return the parsed contents of the "west.yml" file."""
+        return west.manifest.Manifest.from_topdir(
+            topdir=self.west_path, import_flags=west.manifest.ImportFlag.IGNORE
+        )
+
+    def get_west_zmk_project(self) -> west.manifest.Project:
+        """Return the West project for the "zmk" repo."""
+        manifest = self.get_west_manifest()
+        projects = manifest.get_projects(["zmk"])
+
+        try:
+            return projects[0]
+        except IndexError as ex:
+            raise RuntimeError(
+                f'{self.project_manifest_path} is missing "zmk" project.'
+            ) from ex
+
     @property
     def build_matrix_path(self) -> Path:
         """Path to the "build.yaml" file."""
@@ -200,6 +225,31 @@ class Repo(Module):
             self._init_west_app()
 
         self._west_ready = True
+
+    def set_zmk_version(self, revision: str) -> None:
+        """
+        Modifies the "west.yml" file to change the revision for the "zmk" project.
+
+        This does not automatically check out the new revision. Run
+        Repo.run_west("update") after calling this.
+
+        :raises ValueError: if the given revision does not exist in the remote repo.
+        """
+        zmk = self.get_west_zmk_project()
+
+        remote = Remote(zmk.url)
+        if not remote.revision_exists(revision):
+            raise ValueError(f'Revision "{revision}" does not exist in {zmk.url}')
+
+        yaml = YAML()
+        data = yaml.load(self.project_manifest_path)
+
+        for project in data["manifest"]["projects"]:
+            if project["name"] == "zmk":
+                project["revision"] = revision
+                break
+
+        yaml.dump(data, self.project_manifest_path)
 
     @overload
     def _run_west(self, *args: str, capture_output: Literal[False] = False) -> None: ...
