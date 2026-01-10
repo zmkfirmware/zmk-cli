@@ -11,13 +11,16 @@ from urllib.parse import urlparse
 
 import rich
 import typer
+from rich.console import Console
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
+from ..build import BuildMatrix
 from ..config import Config, get_config
 from ..exceptions import FatalError
 from ..prompt import UrlPrompt
 from ..repo import Repo, find_containing_repo, is_repo
+from .keyboard.add import keyboard_add
 
 TEMPLATE_URL = (
     "https://github.com/new?template_name=unified-zmk-config-template"
@@ -58,6 +61,8 @@ def init(ctx: typer.Context) -> None:
     table.add_row('[green]"zmk code"', "Edit the repo files.")
     table.add_row('[green]"zmk cd"', "Move to the repo directory.")
     console.print(table)
+
+    _add_first_keyboard(ctx, console, repo)
 
     # TODO: add some help for how to commit and push changes
 
@@ -133,3 +138,15 @@ def _clone_repo(url: str, name: str):
         subprocess.check_call(["git", "clone", url, name])
     except subprocess.CalledProcessError as ex:
         raise typer.Exit(code=ex.returncode)
+
+
+def _add_first_keyboard(ctx: typer.Context, console: Console, repo: Repo):
+    matrix = BuildMatrix.from_repo(repo)
+    if matrix.include:
+        return
+
+    console.print()
+    console.print("This looks like a new repo.")
+
+    if Confirm.ask("Would you like to add a keyboard now?", default=True):
+        keyboard_add(ctx)
