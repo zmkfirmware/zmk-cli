@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import webbrowser
 from pathlib import Path
+from typing import Annotated
 from urllib.parse import urlparse
 
 import rich
@@ -29,7 +30,24 @@ TEMPLATE_URL = (
 TEXT_WIDTH = 80
 
 
-def init(ctx: typer.Context) -> None:
+def init(
+    ctx: typer.Context,
+    url: Annotated[
+        str | None, typer.Argument(help="URL of an existing repository to clone.")
+    ] = None,
+    name: Annotated[
+        str | None,
+        typer.Argument(help="Directory name where the repo should be cloned."),
+    ] = None,
+    revision: Annotated[
+        str | None,
+        typer.Option(
+            "--zmk-version",
+            metavar="REVISION",
+            help="Use the specified version of ZMK instead of the default.",
+        ),
+    ] = None,
+) -> None:
     """Create a new ZMK config repo or clone an existing one."""
 
     console = rich.get_console()
@@ -38,12 +56,28 @@ def init(ctx: typer.Context) -> None:
     _check_dependencies()
     _check_for_existing_repo(cfg)
 
-    url = _get_repo_url()
-    name = _get_directory_name(url)
+    if url is None:
+        url = _get_repo_url()
+
+    if name is None:
+        name = _get_directory_name(url)
 
     _clone_repo(url, name)
 
     repo = Repo(Path() / name)
+
+    if revision:
+        try:
+            repo.ensure_west_ready()
+            repo.set_zmk_version(revision)
+        except ValueError as ex:
+            console.print()
+            console.print(
+                f'[yellow]Failed to switch to ZMK revision "{revision}":[/yellow]'
+            )
+            console.print(ex)
+            console.print()
+
     repo.run_west("update")
 
     console.print()
