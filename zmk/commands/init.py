@@ -17,7 +17,7 @@ from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
 from ..build import BuildMatrix
-from ..config import Config, get_config
+from ..config import Config, get_config, set_context_repo
 from ..exceptions import FatalError
 from ..prompt import UrlPrompt
 from ..repo import Repo, find_containing_repo, is_repo
@@ -66,6 +66,9 @@ def init(
 
     repo = Repo(Path() / name)
 
+    # Make sure everything we do after this point applies to this new repo.
+    set_context_repo(ctx, repo)
+
     if revision:
         try:
             repo.ensure_west_ready()
@@ -97,6 +100,14 @@ def init(
     console.print(table)
 
     _add_first_keyboard(ctx, console, repo)
+
+    if repo.path != cfg.home_path:
+        console.print()
+        console.print("[yellow]The new repo is not your default repo.")
+        console.print('Run the following command before any other "zmk" commands:')
+        console.print()
+        console.print(f'    [green]cd "{repo.path}"')
+        console.print()
 
     # TODO: add some help for how to commit and push changes
 
