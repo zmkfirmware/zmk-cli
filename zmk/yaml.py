@@ -18,6 +18,22 @@ class YAML(ruamel.yaml.YAML):
     readable or seekable, a leading comment will be overwritten.
     """
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.preserve_quotes = True
+        self.indent(mapping=2, sequence=4, offset=2)
+
+    def load(self, stream: Path | IO | str) -> Any:
+        # Reading from a Path causes a round-trip conversion to drop blank lines
+        # for some reason. As a workaround, just read in the whole file to a
+        # string and parse that. It's probably slower, but none of the file we
+        # work with are large enough for it to matter.
+        if isinstance(stream, Path):
+            return super().load(stream.read_text())
+
+        return super().load(stream)
+
     def dump(self, data, stream: Path | IO | None = None, *, transform=None) -> None:
         if stream is None:
             raise TypeError("Dumping from a context manager is not supported.")
