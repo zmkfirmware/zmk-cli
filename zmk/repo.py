@@ -16,6 +16,7 @@ from .yaml import YAML, read_yaml
 
 _APP_DIR_NAME = "app"
 _BUILD_MATRIX_PATH = "build.yaml"
+_BUILD_WORKFLOW_PATH = ".github/workflows/build.yml"
 _CONFIG_DIR_NAME = "config"
 _PROJECT_MANIFEST_PATH = f"{_CONFIG_DIR_NAME}/west.yml"
 _MODULE_MANIFEST_PATH = "zephyr/module.yml"
@@ -152,6 +153,11 @@ class Repo(Module):
         return self.path / _BUILD_MATRIX_PATH
 
     @property
+    def build_workflow_path(self) -> Path:
+        """Path to the GitHub workflow build.yml file."""
+        return self.path / _BUILD_WORKFLOW_PATH
+
+    @property
     def config_path(self) -> Path:
         """Path to the "config" folder."""
         return self.path / _CONFIG_DIR_NAME
@@ -228,7 +234,8 @@ class Repo(Module):
 
     def set_zmk_version(self, revision: str) -> None:
         """
-        Modifies the "west.yml" file to change the revision for the "zmk" project.
+        Modifies the "west.yml" file to change the default revision for projects
+        and modifies the GitHub workflow file to match.
 
         This does not automatically check out the new revision. Run
         Repo.run_west("update") after calling this.
@@ -241,15 +248,41 @@ class Repo(Module):
         if not remote.revision_exists(revision):
             raise ValueError(f'Revision "{revision}" does not exist in {zmk.url}')
 
+        # Update the project manifest
         yaml = YAML()
         data = yaml.load(self.project_manifest_path)
 
+        if not "defaults" in data["manifest"]:
+            data["manifest"]["defaults"] = yaml.map()
+
+        data["manifest"]["defaults"]["revision"] = revision
+
         for project in data["manifest"]["projects"]:
             if project["name"] == "zmk":
-                project["revision"] = revision
+                try:
+                    del project["revision"]
+                except KeyError:
+                    pass
                 break
 
         yaml.dump(data, self.project_manifest_path)
+
+        # Update the build workflow to match. The user may have customized this
+        # file, so only update it if it looks like it's using the default workflow,
+        # and ignore any errors to read or update it.
+        try:
+            yaml = YAML()
+            data = yaml.load(self.build_workflow_path)
+
+            build = data["jobs"]["build"]
+            workflow, _, _ = build["uses"].rpartition("@")
+
+            if workflow.endswith(".github/workflows/build-user-config.yml"):
+                build["uses"] = f"{workflow}@{revision}"
+
+                yaml.dump(data, self.build_workflow_path)
+        except KeyError:
+            pass
 
     @overload
     def _run_west(self, *args: str, capture_output: Literal[False] = False) -> None: ...
