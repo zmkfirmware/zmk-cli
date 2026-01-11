@@ -33,6 +33,9 @@ class Config:
     path: Path
     force_home: bool
 
+    override_repo_path: Path | None = None
+    "Set this to override the path used for get_repo() without changing home_path."
+
     def __init__(self, path: Path | None, force_home=False):
         self.path = path or _default_config_path()
         self.force_home = force_home
@@ -109,7 +112,13 @@ class Config:
 
         Exits the program if neither the current directory nor the home path
         point to a valid directory.
+
+        If override_repo_path is set, this takes priority over all other methods
+        of finding the repo.
         """
+        if self.override_repo_path:
+            return Repo(self.override_repo_path)
+
         if not self.force_home:
             if home := find_containing_repo():
                 return Repo(home)
@@ -131,6 +140,20 @@ def get_config(ctx: typer.Context) -> Config:
     if cfg is None:
         raise RuntimeError("Could not find Config for current context")
     return cfg
+
+
+def set_context_repo(ctx: typer.Context, repo: Repo) -> None:
+    """
+    Set the override_repo_path on the Config object for the given context to
+    point to a given repo. All subsequent calls to get_config(ctx).get_repo()
+    will return a Repo instance with the same path as the given one.
+
+    This should be used when a command wants to apply changes to a specific repo
+    that isn't necessarily what get_config(ctx).get_repo() would normally use
+    (e.g. when creating a new repo with "zmk init"), and when that command
+    calls another command that gets its repo from the context.
+    """
+    get_config(ctx).override_repo_path = repo.path
 
 
 def _default_config_path():
