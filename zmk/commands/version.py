@@ -70,7 +70,7 @@ def _print_current_version(repo: Repo):
 
 def _set_version(repo: Repo, revision: str):
     repo.set_zmk_version(revision)
-    repo.run_west("update", "zmk")
+    repo.run_west("update")
 
     rich.print()
     rich.print(f'ZMK is now using revision "{revision}"')
