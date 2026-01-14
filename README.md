@@ -121,13 +121,13 @@ cd ~/Documents
 zmk init
 ```
 
-Follow the instructions it gives you. If you already have a ZMK config repo, you can enter its URL when prompted, for example:
+Follow the instructions it gives you. If you already have a ZMK config repo, select "Clone an existing repo" and enter the repo's URL, for example:
 
 ```
 Repository URL: https://github.com/myusername/zmk-config
 ```
 
-Otherwise, leave this first prompt blank and press <kbd>Enter</kbd>, and it will walk you through creating a new repo.
+Otherwise, select "Create a new ZMK config repo" and it will walk you through creating a new repo.
 
 Once you finish following all the instructions, you will have a copy of the repo stored on your computer. All `zmk` commands will run on this repo (unless the working directory is inside a different repo). If you ever forget where the repo is located, you can run `zmk cd` to find it.
 
