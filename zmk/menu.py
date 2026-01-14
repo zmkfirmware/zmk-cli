@@ -4,10 +4,10 @@ Terminal menus
 
 from collections.abc import Callable, Iterable
 from contextlib import contextmanager
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 
 import rich
-from rich.console import Console
+from rich.console import Console, RenderableType
 from rich.highlighter import Highlighter
 from rich.style import Style
 from rich.text import Text
@@ -50,7 +50,7 @@ class TerminalMenu(Generic[T], Highlighter):
         }
     )
 
-    title: Any
+    title: RenderableType | None
     items: list[T]
     default_index: int
 
@@ -67,7 +67,7 @@ class TerminalMenu(Generic[T], Highlighter):
 
     def __init__(
         self,
-        title: Any,
+        title: RenderableType | None,
         items: Iterable[T],
         *,
         default_index=0,
@@ -101,9 +101,13 @@ class TerminalMenu(Generic[T], Highlighter):
         self._focus_index = 0
         self._scroll_index = 0
 
-        title_lines = self.console.render_lines(self.title, pad=False)
-        self._num_title_lines = len(title_lines)
-        self._last_title_line_len = 1 + sum(s.cell_length for s in title_lines[-1])
+        if self.title:
+            title_lines = self.console.render_lines(self.title, pad=False)
+            self._num_title_lines = len(title_lines)
+            self._last_title_line_len = 1 + sum(s.cell_length for s in title_lines[-1])
+        else:
+            self._num_title_lines = 0
+            self._last_title_line_len = 0
 
         if self._get_display_count() == self._max_items_per_page:
             self._top_row = 1
@@ -202,11 +206,12 @@ class TerminalMenu(Generic[T], Highlighter):
         self._clamp_focus_index()
 
     def _print_menu(self):
-        self.console.print(
-            f"[title]{self.title}[/title] [filter]{self._filter_text}[/filter]",
-            justify="left",
-            highlight=False,
-        )
+        if self.title:
+            self.console.print(
+                f"[title]{self.title}[/title] [filter]{self._filter_text}[/filter]",
+                justify="left",
+                highlight=False,
+            )
 
         display_count = self._get_display_count()
 
@@ -404,7 +409,7 @@ class TerminalMenu(Generic[T], Highlighter):
 
 
 def show_menu(
-    title: str,
+    title: RenderableType | None,
     items: Iterable[T],
     *,
     default_index=0,
