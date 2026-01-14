@@ -19,6 +19,7 @@ from rich.table import Table
 from ..build import BuildMatrix
 from ..config import Config, get_config, set_context_repo
 from ..exceptions import FatalError
+from ..menu import show_menu
 from ..prompt import UrlPrompt
 from ..repo import Repo, find_containing_repo, is_repo
 from .keyboard.add import keyboard_add
@@ -139,26 +140,29 @@ def _check_for_existing_repo(cfg: Config):
 
     if cfg.home_path and is_repo(cfg.home_path):
         rich.print(f'You already have a ZMK config repo at "{cfg.home_path}".')
-        if not Confirm.ask("Create a new repo?", default=False):
+        if not Confirm.ask("Initialize a new repo?", default=False):
             raise typer.Exit()
+
+        rich.print()
+
+
+_CREATE_NEW_REPO = "Create a new ZMK config repo"
+_CLONE_REPO = "Clone an existing repo"
 
 
 def _get_repo_url():
-    rich.print(
-        "If you already have a ZMK config repo, enter its URL here. "
-        "Otherwise, leave this blank to create a new repo."
-    )
-
-    url = Prompt.ask("Repository URL")
-    if url:
-        return url
-
     console = rich.get_console()
+
+    response = show_menu(title=None, items=[_CREATE_NEW_REPO, _CLONE_REPO])
+
+    if response == _CLONE_REPO:
+        console.print("Enter the URL of your ZMK config repo.")
+        return UrlPrompt.ask("Repository URL")
+
     console.print(
-        "\n"
-        "To create your ZMK config repo, we will open a GitHub page in your "
+        "To create your ZMK config repo, we will open a GitHub page in your web "
         "browser to create a repo from a template. Log in to GitHub if necessary, "
-        "then click the green [green]Create repository[/green] button. "
+        "then click the green [green]Create repository[/green] button."
         "\n\n"
         "Once it finishes creating the repo, Click the green [green]<> Code[/green] "
         "button, then copy the HTTPS URL and paste it here. "
@@ -166,14 +170,21 @@ def _get_repo_url():
         width=TEXT_WIDTH,
     )
     input()
-    webbrowser.open(TEMPLATE_URL)
 
-    url = UrlPrompt.ask("Repository URL")
-    return url
+    if not webbrowser.open(TEMPLATE_URL):
+        console.print(
+            "[yellow]Failed to open a browser. Please open the following link in a web browser:"
+        )
+        console.print("")
+        console.print(TEMPLATE_URL)
+        console.print("")
+
+    return UrlPrompt.ask("Repository URL")
 
 
 def _get_directory_name(url: str):
-    default = urlparse(url).path.split("/")[-1]
+    # Default name is the last path component of the URL without any ".git" suffix
+    default = urlparse(url).path.split("/")[-1].removesuffix(".git")
 
     return Prompt.ask("Enter a directory name", default=default)
 
