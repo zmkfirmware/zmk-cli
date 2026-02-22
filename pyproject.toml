@@ -86,7 +86,12 @@ select = [
   # ruff
   "RUF",
   # flake8-bandit
-  # "S", TODO: enable this and fix issues in a separate commit
+  "S1",
+  "S2",
+  "S3",
+  "S5",
+  "S602",
+  "S604",
   # flake8-simplify
   "SIM",
   # flake8-self
