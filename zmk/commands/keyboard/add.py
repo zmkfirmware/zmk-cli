@@ -71,7 +71,7 @@ def keyboard_add(
 
         keyboard = hardware.find_keyboard(keyboard_id)
         if keyboard is None:
-            raise KeyboardNotFound(keyboard_id)
+            raise KeyboardNotFoundError(keyboard_id)
 
         # If the keyboard ID contained a revision, use that.
         # Make sure it is valid before continuing to any other prompts.
@@ -88,7 +88,7 @@ def keyboard_add(
 
             controller = hardware.find_controller(controller_id)
             if controller is None:
-                raise ControllerNotFound(controller_id)
+                raise ControllerNotFoundError(controller_id)
 
     elif controller_id:
         controller_id, controller_revision = split_revision(controller_id)
@@ -97,7 +97,7 @@ def keyboard_add(
         # list to just those compatible with the controller.
         controller = hardware.find_controller(controller_id)
         if controller is None:
-            raise ControllerNotFound(controller_id)
+            raise ControllerNotFoundError(controller_id)
 
         # If the controller ID contained a revision, use that.
         # Make sure it is valid before continuing to any other prompts.
@@ -154,14 +154,14 @@ def keyboard_add(
     console.print(f'Run "zmk code {keymap_name}" to edit the keymap.')
 
 
-class KeyboardNotFound(FatalError):
+class KeyboardNotFoundError(FatalError):
     """Fatal error for an invalid keyboard ID"""
 
     def __init__(self, keyboard_id: str):
         super().__init__(f'Could not find a keyboard with ID "{keyboard_id}"')
 
 
-class ControllerNotFound(FatalError):
+class ControllerNotFoundError(FatalError):
     """Fatal error for an invalid controller ID"""
 
     def __init__(self, controller_id: str):
@@ -206,7 +206,7 @@ def _get_build_items(
 def _get_revision(board: Hardware, revision: str | None):
     # If no revision was specified and the board uses revisions, prompt to
     # select a revision.
-    return revision if revision else show_revision_menu(board)
+    return revision or show_revision_menu(board)
 
 
 def _check_revision(board: Hardware, revision: str):

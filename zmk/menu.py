@@ -3,8 +3,8 @@ Terminal menus
 """
 
 from collections.abc import Callable, Iterable
-from contextlib import contextmanager
-from typing import Generic, TypeVar
+from contextlib import contextmanager, suppress
+from typing import Generic, Self, TypeVar
 
 import rich
 from rich.console import Console, RenderableType
@@ -196,10 +196,8 @@ class TerminalMenu(Generic[T], Highlighter):
             ]
 
             if old_focus is not None:
-                try:
+                with suppress(ValueError):
                     self._focus_index = self._filter_items.index(old_focus)
-                except ValueError:
-                    pass
         else:
             self._filter_items = self.items
 
@@ -253,7 +251,7 @@ class TerminalMenu(Generic[T], Highlighter):
             overflow="crop",
         )
 
-    def _print_item(self, item: T | str, focused: bool, show_more: bool):
+    def _print_item(self, item: T | str, *, focused: bool, show_more: bool):
         style = "ellipsis" if show_more else "focus" if focused else "unfocus"
 
         indent = "> " if focused else "  "
@@ -450,34 +448,31 @@ class Detail(Generic[T]):
 
     data: T
     detail: str
-    _pad_len: int
+    pad_len: int
 
     def __init__(self, data: T, detail: str):
         self.data = data
         self.detail = detail
-        self._pad_len = self.MIN_PAD
+        self.pad_len = self.MIN_PAD
 
     def __rich__(self):
-        text = Text.assemble(str(self.data), " " * self._pad_len, (self.detail, "dim"))
+        text = Text.assemble(str(self.data), " " * self.pad_len, (self.detail, "dim"))
         # Returning the Text object directly works, but it doesn't get highlighted.
         return text.markup
 
-    # pylint: disable=protected-access
     @classmethod
-    def align(
-        cls, items: Iterable["Detail[T]"], console: Console | None = None
-    ) -> list["Detail[T]"]:
+    def align(cls, items: Iterable[Self], console: Console | None = None) -> list[Self]:
         """Set the padding for each item in the list to align the detail strings."""
         items = list(items)
         console = console or rich.get_console()
 
         for item in items:
-            item._pad_len = console.measure(str(item.data)).minimum
+            item.pad_len = console.measure(str(item.data)).minimum
 
-        width = max(item._pad_len for item in items)
+        width = max(item.pad_len for item in items)
 
         for item in items:
-            item._pad_len = width - item._pad_len + cls.MIN_PAD
+            item.pad_len = width - item.pad_len + cls.MIN_PAD
 
         return items
 

@@ -1,9 +1,9 @@
 {
   "editor.formatOnSave": true,
   "[python]": {
-    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.codeActionsOnSave": {
-      "source.organizeImports": "always"
+      "source.organizeImports": "explicit"
     }
   },
   "[markdown][yaml]": {
@@ -20,8 +20,8 @@
     "**/templates/shield/**": "mako",
     "**/templates/common/**": "mako"
   },
-  "isort.check": true,
-  "isort.args": ["--settings-path", "${workspaceFolder}"],
+  "pylint.enabled": false,
+  "ruff.enabled": true,
   "python.analysis.importFormat": "relative",
   "python.analysis.typeCheckingMode": "standard",
   "python-envs.pythonProjects": []

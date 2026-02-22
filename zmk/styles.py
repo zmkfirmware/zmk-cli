@@ -11,7 +11,9 @@ from rich.theme import Theme
 class KeyValueHighlighter(RegexHighlighter):
     """Highlight "key=value" items."""
 
-    highlights = [r"(?P<key>[\w.]+)(?P<equals>=)(?P<value>.*)"]
+    highlights = [  # noqa: RUF012 https://github.com/astral-sh/ruff/issues/5429
+        r"(?P<key>[\w.]+)(?P<equals>=)(?P<value>.*)"
+    ]
 
 
 class BoardIdHighlighter(RegexHighlighter):
@@ -19,7 +21,7 @@ class BoardIdHighlighter(RegexHighlighter):
 
     base_style = "board."
 
-    highlights = [
+    highlights = [  # noqa: RUF012 https://github.com/astral-sh/ruff/issues/5429
         r"(?P<separator>[/])",
         r"(?P<revision>@(?:[A-Z]|([0-9]+(\.[0-9]+){0,2})))",
     ]
@@ -30,7 +32,9 @@ class CommandLineHighlighter(RegexHighlighter):
 
     base_style = "cmd."
 
-    highlights = [r"(?P<flag>-[a-zA-Z]|--[a-zA-Z-_]+)"]
+    highlights = [  # noqa: RUF012 https://github.com/astral-sh/ruff/issues/5429
+        r"(?P<flag>-[a-zA-Z]|--[a-zA-Z-_]+)"
+    ]
 
 
 THEME = Theme(

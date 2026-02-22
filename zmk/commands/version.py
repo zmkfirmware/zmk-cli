@@ -22,6 +22,7 @@ def version(
             help="Switch to this ZMK version. Prints the current ZMK version if omitted.",
         ),
     ] = None,
+    *,
     list_versions: Annotated[
         bool | None,
         typer.Option("--list", "-l", help="Print the available versions and exit."),

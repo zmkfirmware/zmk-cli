@@ -2,11 +2,11 @@
 "zmk module remove" command.
 """
 
-import os
 import shutil
 import stat
 import subprocess
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Annotated, Any
 
 import rich
@@ -47,7 +47,7 @@ def module_remove(
     data = yaml.load(repo.project_manifest_path)
 
     items: list[dict[str, Any]] = data["manifest"]["projects"]
-    items = [i for i in items if not i["name"] == project.name]
+    items = [i for i in items if i["name"] != project.name]
 
     data["manifest"]["projects"] = items
     yaml.dump(data, repo.project_manifest_path)
@@ -66,8 +66,9 @@ def _find_project(projects: list[Project], module: str):
 
 def _delete_project_files(repo: Repo, project: Project):
     # Workaround for shutil.rmtree() failing on Windows.
+    # Clear the readonly bit and reattempt the removal.
     def remove_readonly(func, path, _):
-        os.chmod(path, stat.S_IWRITE)
+        Path(path).chmod(stat.S_IWRITE)
         func(path)
 
     module_path = repo.west_path / project.path

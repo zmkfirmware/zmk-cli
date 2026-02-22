@@ -15,7 +15,7 @@ app = typer.Typer(rich_markup_mode="rich")
 commands.register(app)
 
 
-def _version_callback(version: bool):
+def _version_callback(*, version: bool):
     if version:
         print(metadata.version("zmk"))
         raise typer.Exit()
@@ -24,6 +24,7 @@ def _version_callback(version: bool):
 @app.callback()
 def main(
     ctx: typer.Context,
+    *,
     config_file: Annotated[
         Path | None,
         typer.Option(

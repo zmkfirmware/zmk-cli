@@ -66,7 +66,7 @@ class BuildMatrix:
         self._yaml = YAML(typ="rt")
         self._yaml.indent(mapping=2, sequence=4, offset=2)
         try:
-            self._data = cast(dict[str, Any], self._yaml.load(self._path))
+            self._data = cast("dict[str, Any]", self._yaml.load(self._path))
         except FileNotFoundError:
             self._data = None
 
@@ -108,7 +108,7 @@ class BuildMatrix:
             return []
 
         if not self._data:
-            self._data = cast(dict[str, Any], self._yaml.map())
+            self._data = cast("dict[str, Any]", self._yaml.map())
 
         if "include" not in self._data:
             self._data["include"] = self._yaml.seq()

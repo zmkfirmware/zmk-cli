@@ -1,20 +1,12 @@
 fail_fast: false
 repos:
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.21.2
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.2
     hooks:
-      - id: pyupgrade
-        args: [--py310-plus]
-  - repo: https://github.com/pycqa/isort
-    rev: "7.0.0"
-    hooks:
-      - id: isort
-  - repo: https://github.com/psf/black
-    rev: "25.12.0"
-    hooks:
-      - id: black
+      - id: ruff-check
+      - id: ruff-format
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.5
+    rev: v1.5.6
     hooks:
       - id: remove-tabs
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -26,7 +18,7 @@ repos:
       - id: check-added-large-files
       - id: check-shebang-scripts-are-executable
   - repo: https://github.com/tombi-toml/tombi-pre-commit
-    rev: v0.7.14
+    rev: v0.7.32
     hooks:
       - id: tombi-format
       - id: tombi-lint

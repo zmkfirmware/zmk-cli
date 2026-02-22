@@ -8,21 +8,23 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ">=3.10"
-          cache: "pip"
-      - name: Install dependencies
-        run: |
-          pip install .
-          pip install pylint
+      - uses: actions/checkout@v6
 
-      - name: pre-commit
-        uses: pre-commit/actions@v3.0.1
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked --all-extras --dev
+
+      - name: prek
+        uses: j178/prek-action@v1
 
       - name: pyright
-        uses: jakebailey/pyright-action@v2
-
-      - name: pylint
-        run: pylint zmk
+        uses: jakebailey/pyright-action@v3

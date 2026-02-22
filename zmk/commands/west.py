@@ -10,7 +10,6 @@ from ..config import get_config
 
 
 def west(ctx: typer.Context) -> None:
-    # pylint: disable=line-too-long
     """
     Run [link=https://docs.zephyrproject.org/latest/develop/west/index.html]west[/link] in the config repo.
     """

@@ -30,6 +30,7 @@ def code(
             help="Name of the keyboard to edit. If omitted, opens the repo directory.",
         ),
     ] = None,
+    *,
     open_conf: Annotated[
         bool,
         typer.Option("--conf", "-c", help="Open the .conf file instead of the keymap."),
@@ -49,15 +50,15 @@ def code(
     if open_build_matrix:
         path = repo.build_matrix_path
     else:
-        path = _get_file(repo, keyboard, open_conf)
+        path = _get_file(repo, keyboard, open_conf=open_conf)
 
-    editor = _get_editor(cfg, path.is_dir())
+    editor = _get_editor(cfg, is_directory=path.is_dir())
 
-    cmd = shlex.split(editor) + [path]
+    cmd = [*shlex.split(editor), path]
     shell.call(cmd)
 
 
-def _get_file(repo: Repo, keyboard: str | None, open_conf: bool):
+def _get_file(repo: Repo, keyboard: str | None, *, open_conf: bool):
     if not keyboard:
         return repo.path
 
@@ -65,7 +66,7 @@ def _get_file(repo: Repo, keyboard: str | None, open_conf: bool):
     return repo.config_path / f"{keyboard}{ext}"
 
 
-def _get_editor(cfg: Config, is_directory: bool):
+def _get_editor(cfg: Config, *, is_directory: bool):
     if is_directory:
         try:
             return cfg.get(Settings.CORE_EXPLORER)
@@ -78,7 +79,7 @@ def _get_editor(cfg: Config, is_directory: bool):
 
     # No editor found. Prompt the user to select one and try again.
     _select_editor(cfg)
-    return _get_editor(cfg, is_directory)
+    return _get_editor(cfg, is_directory=is_directory)
 
 
 class Support(Flag):

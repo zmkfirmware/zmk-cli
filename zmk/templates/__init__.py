@@ -40,14 +40,16 @@ def get_template_files(
 
     for file in template_path.rglob("*"):
         name_template = Template(text=file.name, strict_undefined=True)
-        name = cast(str, name_template.render_unicode(**data))
+        name = cast("str", name_template.render_unicode(**data))
 
         # Board identifiers can contain forward slashes. File names cannot.
         name = name.replace("/", "_")
 
         file_template_name = str(file.relative_to(_ROOT_PATH))
         file_template = lookup.get_template(file_template_name)
-        text = _ensure_trailing_newline(cast(str, file_template.render_unicode(**data)))
+        text = _ensure_trailing_newline(
+            cast("str", file_template.render_unicode(**data))
+        )
 
         yield name, text
 
@@ -68,9 +70,8 @@ def _remove_tag_newlines(text: str) -> str:
     """
 
     def escape(line: str):
-        if m := _MAKO_TAG_RE.fullmatch(line):
-            if m.group(1) not in _IGNORE_TAGS:
-                return line + "\\"
+        if (m := _MAKO_TAG_RE.fullmatch(line)) and m.group(1) not in _IGNORE_TAGS:
+            return line + "\\"
         return line
 
     lines = text.splitlines()

@@ -26,10 +26,10 @@ class FatalError(ClickException):
     def format_message(self) -> str:
         # format_message() expects a str, but if we convert to a string here,
         # we will lose any formatting.
-        return cast(str, self.highlighter(Text.from_markup(self.message)))
+        return cast("str", self.highlighter(Text.from_markup(self.message)))
 
 
-class FatalHomeNotSet(FatalError):
+class HomeNotSetError(FatalError):
     """
     Exception which indicates that the command requires a home directory, but the
     "user.home" setting is not set.
@@ -41,7 +41,7 @@ class FatalHomeNotSet(FatalError):
         )
 
 
-class FatalHomeMissing(FatalError):
+class HomeMissingError(FatalError):
     """
     Exception which indicates that the "user.home" setting points to a directory
     that no longer exists.
