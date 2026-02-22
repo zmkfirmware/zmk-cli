@@ -7,7 +7,7 @@ from collections.abc import Generator, Iterable
 from dataclasses import dataclass, field
 from functools import reduce
 from pathlib import Path
-from typing import Any, Literal, Type, TypeAlias, TypedDict, TypeGuard, TypeVar
+from typing import Any, Literal, Self, TypeAlias, TypedDict, TypeGuard, TypeVar
 
 import dacite
 
@@ -31,9 +31,6 @@ class VariantDict(TypedDict):
 
 
 Variant: TypeAlias = str | VariantDict
-
-# TODO: replace with typing.Self once minimum Python version is >= 3.11
-_Self = TypeVar("_Self", bound="Hardware")
 
 _HW = TypeVar("_HW", bound="Hardware")
 
@@ -62,7 +59,7 @@ class Hardware:
         return f"{self.id}  [dim]{self.name}"
 
     @classmethod
-    def from_dict(cls: "Type[_Self]", data) -> _Self:
+    def from_dict(cls, data) -> Self:
         """Read a hardware description from a dict"""
         return dacite.from_dict(cls, data)
 

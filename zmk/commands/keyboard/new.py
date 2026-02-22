@@ -3,14 +3,15 @@
 """
 
 import re
+from contextlib import suppress
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Annotated
 
 import rich
 import typer
 from rich.prompt import Confirm, InvalidResponse, PromptBase
 
-from ...backports import StrEnum
 from ...config import get_config
 from ...exceptions import FatalError
 from ...hardware import Interconnect, get_hardware, show_hardware_menu
@@ -100,6 +101,7 @@ def _short_name_callback(name: str | None):
 
 def keyboard_new(
     ctx: typer.Context,
+    *,
     keyboard_id: Annotated[
         str | None,
         typer.Option("--id", "-i", help="Board/shield ID.", callback=_id_callback),
@@ -424,10 +426,8 @@ def _get_template(
 
             if interconnect:
                 template.data["interconnect"] = interconnect.id
-                try:
+                with suppress(KeyError):
                     template.data["gpio"] = "&" + interconnect.node_labels["gpio"]
-                except KeyError:
-                    pass
 
         case _:
             arch = _PLATFORM_ARCH.get(keyboard_platform, _DEFAULT_ARCH)
@@ -461,4 +461,4 @@ def _get_default_id(name: str):
     # ID cannot start with a number
     result = re.sub(r"^\d+_*", "", result)
 
-    return result if result else ...
+    return result or ...

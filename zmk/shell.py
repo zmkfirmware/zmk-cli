@@ -15,7 +15,7 @@ def get_subprocess_args(cmd: list[str | Path]) -> list[str | Path]:
     """
 
     if executable := shutil.which(cmd[0]):
-        return [executable] + cmd[1:]
+        return [executable, *cmd[1:]]
 
     return cmd
 

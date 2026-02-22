@@ -42,7 +42,7 @@ def set_directory(path: Path) -> Generator[None, None, None]:
 
 
 @contextmanager
-def spinner(message: str, console: Console | None = None, transient: bool = True):
+def spinner(message: str, console: Console | None = None, *, transient: bool = True):
     """Context manager which displays a loading spinner for its duration"""
     with Progress(
         SpinnerColumn(),

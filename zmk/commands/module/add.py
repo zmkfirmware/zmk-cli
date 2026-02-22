@@ -70,10 +70,10 @@ def module_add(
     project["revision"] = revision
     project["path"] = f"modules/{name}"
 
-    if not "manifest" in data:
+    if "manifest" not in data:
         data["manifest"] = yaml.map()
 
-    if not "projects" in data["manifest"]:
+    if "projects" not in data["manifest"]:
         data["manifest"]["projects"] = yaml.seq()
 
     data["manifest"]["projects"].append(project)

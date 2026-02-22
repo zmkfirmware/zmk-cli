@@ -8,100 +8,30 @@ The instructions below contain commands that need to be run in a terminal progra
 
 # Installation
 
+This readme will provide brief instructions for installing ZMK CLI. For instructions in more detail, see the [ZMK Documentation](https://zmk.dev/docs/user-setup).
+
 ## Install Git
 
-Install Git from https://git-scm.com/downloads.
+Install Git from https://git-scm.com/downloads or your OS's package manager.
 
-If you have Windows 11, you can instead open a terminal and run:
+You will also need a [GitHub account](https://github.com/signup).
 
-```sh
-winget install git.git -i
-```
+## Install uv
 
-The Windows installer will give you lots of options. You can leave all of them as their defaults, but when you get to the "choosing the default editor used by Git" screen, you may want to select a different text editor to use when writing Git commit messages.
-
-## Install Python
-
-ZMK CLI requires Python 3.10 or newer.
-
-### On Windows and macOS
-
-Install the latest version of Python from https://www.python.org/downloads/.
-
-If you have Windows 11, you can instead open a terminal and run:
-
-```sh
-winget install python3
-```
-
-### On Linux
-
-Most Linux distributions come with Python already installed. Open a terminal and run the following command to check its version:
-
-```sh
-python3 --version
-```
-
-If Python is not installed, install `python3` with your package manager.
-
-If the version is older than 3.10, you will need to find and install a package for a newer version of Python. On Ubuntu 20.04 and older, you can get Python 3.10 from the deadsnakes PPA with the following commands:
-
-```sh
-sudo add-apt-repository ppa:deadsnakes/ppa
-sudo apt install python3.10
-```
-
-You will then need to replace `python3` with `python3.10` in the rest of the installation instructions.
-
-## Install pipx
-
-ZMK CLI can be installed with pip, but using [pipx](https://github.com/pypa/pipx) is recommended to avoid conflicts between Python packages.
-
-### On Windows and Linux
-
-Open a terminal and run:
-
-```sh
-python3 -m pip install --user pipx
-python3 -m pipx ensurepath
-```
-
-Some Linux distributions may disallow installing packages with pip. If this gives you an error, see the [install instructions](https://github.com/pypa/pipx?tab=readme-ov-file#on-linux) specific to your distribution.
-
-Close and reopen your terminal, then run the following command. It should print a version number if everything is installed correctly:
-
-```sh
-pipx --version
-```
-
-### On macOS
-
-Open Terminal and run:
-
-```
-brew install pipx
-pipx ensurepath
-```
+Install uv from https://docs.astral.sh/uv/getting-started/installation/.
 
 ## Install ZMK CLI
 
-Next, run the following commands:
+Run the following command to install ZMK CLI:
 
 ```sh
-pipx install zmk
-zmk --help
+uv tool install zmk
 ```
-
-It should print a help message if everything installed correctly.
-
-On Linux, you may get an error saying you need to install another package such as `python3.10-venv`. If so, follow the instructions in the error message, then try the above commands again.
-
-## Update ZMK CLI
 
 If you have already installed ZMK CLI, you can update to the latest version with the following command:
 
 ```sh
-pipx upgrade zmk
+uv tool upgrade zmk
 ```
 
 # Usage
@@ -272,22 +202,44 @@ zmk config user.home ~/Documents/zmk-config
 
 # Development
 
-If you would like to help improve ZMK CLI, you can clone this repo and install it in editable mode so your changes to the code apply when you run `zmk`. First, open a terminal to the root directory of the repository.
-
-You may optionally run the following commands inside a [virtual environment](https://docs.python.org/3/library/venv.html) if you don't want to install ZMK CLI's dependencies globally or if your OS disallows doing this.
-
-To install ZMK CLI in editable mode, run:
+If you would like to help improve ZMK CLI, you can clone this repo and install it into a virtual environment where you can modify it. First, open a terminal to the root directory of the repository. Then, create a virtual environment and install the project's dependencies:
 
 ```sh
-pip install -e ".[dev]"
-pre-commit install
+# Create virtual environment and install dependencies
+uv sync
+# Install pre-commit hooks
+uv run prek install
 ```
 
-After running `pre-commit install`, your code will be checked when you make a commit, but there are some slower checks that do not run automatically. To run these additional checks, run these commands:
+To run the development version of the program, either prefix commands with `uv run`...
 
 ```sh
-pyright .
-pylint zmk
+uv run zmk <args...>
+```
+
+...or [activate the virtual environment](https://docs.astral.sh/uv/pip/environments/#using-a-virtual-environment) first, and then you can use just `zmk`.
+
+If you want `zmk` to run the development version even when you are not inside the virtual environment, you can install it globally in editable mode:
+
+```sh
+uv tool install -e .
+```
+
+## Linting
+
+After running `uv run prek install`, linting and code formatting will be run automatically when you make a commit. You can also run these tools manually:
+
+```sh
+# lint codebase
+uv run ruff check
+# format files
+uv run ruff format
+```
+
+Type checking is slower and difficult to configure to run as a Git commit hook, so this needs to be run manually.
+
+```sh
+uv run pyright .
 ```
 
 GitHub will also run these checks and report any errors when you make a pull request.

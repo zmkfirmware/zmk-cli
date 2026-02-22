@@ -193,7 +193,7 @@ def _clone_repo(url: str, name: str):
     try:
         subprocess.check_call(["git", "clone", url, name])
     except subprocess.CalledProcessError as ex:
-        raise typer.Exit(code=ex.returncode)
+        raise typer.Exit(code=ex.returncode) from ex
 
 
 def _add_first_keyboard(ctx: typer.Context, console: Console, repo: Repo):

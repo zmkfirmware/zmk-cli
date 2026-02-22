@@ -3,6 +3,7 @@
 """
 
 from collections.abc import Iterable
+from enum import StrEnum
 from typing import Annotated
 
 import typer
@@ -13,7 +14,6 @@ from rich.table import Table
 
 from zmk import styles
 
-from ...backports import StrEnum
 from ...build import BuildItem, BuildMatrix
 from ...config import get_config
 from ...exceptions import FatalError
@@ -42,7 +42,7 @@ class ListType(StrEnum):
     INTERCONNECT = "interconnect"
 
 
-def _list_build_matrix(ctx: typer.Context, value: bool):
+def _list_build_matrix(ctx: typer.Context, *, value: bool):
     if not value:
         return
 
@@ -99,6 +99,7 @@ def _list_build_matrix(ctx: typer.Context, value: bool):
 
 def keyboard_list(
     ctx: typer.Context,
+    *,
     _: Annotated[
         bool | None,
         typer.Option(

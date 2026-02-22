@@ -5,13 +5,13 @@ User configuration.
 from collections import defaultdict
 from collections.abc import Generator
 from configparser import ConfigParser
+from enum import StrEnum
 from itertools import chain
 from pathlib import Path
 
 import typer
 
-from .backports import StrEnum
-from .exceptions import FatalHomeMissing, FatalHomeNotSet
+from .exceptions import HomeMissingError, HomeNotSetError
 from .repo import Repo, find_containing_repo, is_repo
 
 
@@ -36,7 +36,7 @@ class Config:
     override_repo_path: Path | None = None
     "Set this to override the path used for get_repo() without changing home_path."
 
-    def __init__(self, path: Path | None, force_home=False):
+    def __init__(self, path: Path | None, *, force_home=False):
         self.path = path or _default_config_path()
         self.force_home = force_home
 
@@ -119,16 +119,15 @@ class Config:
         if self.override_repo_path:
             return Repo(self.override_repo_path)
 
-        if not self.force_home:
-            if home := find_containing_repo():
-                return Repo(home)
+        if not self.force_home and (home := find_containing_repo()):
+            return Repo(home)
 
         home = self.home_path
         if not home:
-            raise FatalHomeNotSet()
+            raise HomeNotSetError()
 
         if not is_repo(home):
-            raise FatalHomeMissing(home)
+            raise HomeMissingError(home)
 
         return Repo(home)
 

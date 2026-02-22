@@ -2,6 +2,7 @@
 Config repo and Zephyr module utilities.
 """
 
+import contextlib
 import shutil
 import subprocess
 import sys
@@ -256,17 +257,15 @@ class Repo(Module):
         yaml = YAML()
         data = yaml.load(self.project_manifest_path)
 
-        if not "defaults" in data["manifest"]:
+        if "defaults" not in data["manifest"]:
             data["manifest"]["defaults"] = yaml.map()
 
         data["manifest"]["defaults"]["revision"] = revision
 
         for project in data["manifest"]["projects"]:
             if project["name"] == "zmk":
-                try:
+                with contextlib.suppress(KeyError):
                     del project["revision"]
-                except KeyError:
-                    pass
                 break
 
         yaml.dump(data, self.project_manifest_path)

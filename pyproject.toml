@@ -2,8 +2,8 @@
 name = "zmk"
 description = "A command line program to help set up ZMK Firmware"
 readme = "README.md"
-requires-python = ">=3.10"
-license = { file = "LICENSE" }
+requires-python = ">=3.11"
+license-files = ["LICENSE"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",
@@ -15,11 +15,10 @@ classifiers = [
   "Topic :: Utilities",
 ]
 dependencies = [
-  "backports.strenum; python_version < '3.11'",
   "dacite >= 1.9.2, < 2.0.0",
   "giturlparse >= 0.14.0, < 0.15.0",
   "mako >= 1.3.10, < 2.0.0",
-  "rich >= 14.2.0, < 15.0.0",
+  "rich >= 14.3.3, < 15.0.0",
   "ruamel.yaml >= 0.18.17, < 0.19.0",
   "shellingham >= 1.5.4, < 2.0.0",
   "typer >= 0.21.0, < 0.22.0",
@@ -36,30 +35,66 @@ Documentation = "https://zmk.dev/docs"
 [project.scripts]
 zmk = "zmk.main:app"
 
-[project.optional-dependencies]
-dev = ["pre-commit", "pylint", "pyright"]
+[dependency-groups]
+dev = [
+  "prek>=0.3.3",
+  "pyright>=1.1.408",
+  "ruff>=0.15.2",
+]
 
 [build-system]
 requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
-[tool.isort]
-profile = "black"
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
 
-[tool.pylint.MAIN]
-ignore = "_version.py"
-
-[tool.pylint."MESSAGES CONTROL"]
-disable = [
-  "arguments-differ",  # Covered by pyright
-  "fixme",
-  "too-few-public-methods",
-  "too-many-arguments",
-  "too-many-branches",
-  "too-many-instance-attributes",
-  "too-many-locals",
-  "too-many-positional-arguments",
-  "too-many-statements",
+[tool.ruff.lint]
+select = [
+  # flake8-builtins
+  "A",
+  # flake8-bugbear
+  "B",
+  # flake8-blind-except
+  "BLE",
+  # flake8-comprehensions
+  "C4",
+  # pycodestyle
+  "E4",
+  "E7",
+  "E9",
+  # pyflakes
+  "F",
+  # flake8-boolean-trap
+  "FBT",
+  # refurb
+  "FURB",
+  # flake8-implicit-str-concat
+  "ISC",
+  # pep8-naming
+  "N",
+  # perflint
+  "PERF1",
+  "PERF4",
+  # flake8-pie
+  "PIE",
+  # flake8-use-pathlib
+  "PTH",
+  # flake8-return
+  "RET",
+  # ruff
+  "RUF",
+  # flake8-bandit
+  # "S", TODO: enable this and fix issues in a separate commit
+  # flake8-simplify
+  "SIM",
+  # flake8-self
+  "SLF",
+  # flake8-type-checking
+  "TC",
+  # pyupgrade
+  "UP"
 ]
 
 [tool.setuptools]

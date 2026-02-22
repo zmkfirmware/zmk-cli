@@ -13,7 +13,7 @@ from ..config import Config, get_config
 console = Console(highlighter=styles.KeyValueHighlighter(), theme=styles.THEME)
 
 
-def _path_callback(ctx: typer.Context, value: bool):
+def _path_callback(ctx: typer.Context, *, value: bool):
     if value:
         cfg = get_config(ctx)
         print(cfg.path)
@@ -32,6 +32,7 @@ def config(
         str | None,
         typer.Argument(help="New setting value. Prints the current value if omitted."),
     ] = None,
+    *,
     unset: Annotated[
         bool,
         typer.Option("--unset", "-u", help="Remove the setting with the given name."),
