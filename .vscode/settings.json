@@ -21,8 +21,7 @@
     "**/templates/common/**": "mako"
   },
   "pylint.enabled": false,
-  "ruff.enabled": true,
+  "ruff.enable": true,
   "python.analysis.importFormat": "relative",
-  "python.analysis.typeCheckingMode": "standard",
   "python-envs.pythonProjects": []
 }
