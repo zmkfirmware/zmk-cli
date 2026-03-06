@@ -158,7 +158,12 @@ except ImportError:
         Special keys such as arrow keys return xterm or vt escape sequences.
         """
         with disable_echo():
-            return os.read(sys.stdin.fileno(), 4)
+            key = os.read(sys.stdin.fileno(), 4)
+
+            if key == b"\x7f":  # Bash uses DELETE instead of BACKSPACE
+                return BACKSPACE
+
+            return key
 
 
 def get_cursor_pos() -> tuple[int, int]:
