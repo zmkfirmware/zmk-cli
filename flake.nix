@@ -69,6 +69,16 @@
                 python.west
               ];
             });
+          devShells.default = self'.devShells.zmk-cli;
+          devShells.zmk-cli = pkgs.mkShell {
+            name = "zmk-cli dev shell";
+            packages = [
+              self'.packages.zmk-cli
+              # `zmk-cli` starts `west` processes so we need it to be available
+              # in the shell environment
+              python.west
+            ];
+          };
         };
     };
 }
