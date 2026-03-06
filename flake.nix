@@ -18,6 +18,7 @@
       perSystem =
         {
           self',
+          lib,
           pkgs,
           ...
         }:
@@ -26,44 +27,48 @@
         in
         {
           packages.default = self'.packages.zmk-cli;
-          packages.zmk-cli = python.buildPythonPackage (finalAttrs: {
-            pname = "zmk";
-            version = "0.4.0";
-            src = ./.;
+          packages.zmk-cli =
+            let
+              pyprojectToml = lib.importTOML ./pyproject.toml;
+            in
+            python.buildPythonPackage (finalAttrs: {
+              pname = pyprojectToml.project.name;
+              version = pyprojectToml.project.version;
+              src = ./.;
 
-            pyproject = true;
+              pyproject = true;
 
-            # basically required for all python packages
-            build-system = [
-              python.setuptools
-              python.setuptools-scm
-            ];
+              # basically required for all python packages
+              build-system = [
+                python.setuptools
+                python.setuptools-scm
+              ];
 
-            # This is required since some deps in the nixpkgs python
-            # distribution are slightly too old. But this should be resolved
-            # fairly soon
-            #
-            # At the time of writing this we have
-            #
-            # > Checking runtime dependencies for zmk-0.4.0-py3-none-any.whl
-            # >   - dacite<2.0.0,>=1.9.2 not satisfied by version 1.9.1
-            # >   - mako<2.0.0,>=1.3.10 not satisfied by version 1.3.10.dev0
-            # >   - ruamel-yaml<0.19.0,>=0.18.17 not satisfied by version 0.18.16
-            pythonRelaxDeps = true;
+              # This is required since some deps in the nixpkgs python
+              # distribution are slightly too old. But this should be resolved
+              # fairly soon
+              #
+              # At the time of writing this we have
+              #
+              # > Checking runtime dependencies for zmk-0.4.0-py3-none-any.whl
+              # >   - dacite<2.0.0,>=1.9.2 not satisfied by version 1.9.1
+              # >   - mako<2.0.0,>=1.3.10 not satisfied by version 1.3.10.dev0
+              # >   - ruamel-yaml<0.19.0,>=0.18.17 not satisfied by version 0.18.16
+              pythonRelaxDeps = true;
 
-            # those were infered by just building the package, the check phase
-            # will inform you about missing deps if any new ones should pop up
-            dependencies = [
-              python.dacite
-              python.giturlparse
-              python.mako
-              python.rich
-              python.ruamel-yaml
-              python.shellingham
-              python.typer
-              python.west
-            ];
-          });
+              # those were infered by just building the package, the check phase
+              # will inform you about missing deps if any new ones should pop up
+              dependencies = [
+                python.dacite
+                python.giturlparse
+                python.mako
+                python.rich
+                python.ruamel-yaml
+                python.shellingham
+                python.typer
+                python.west
+              ];
+            });
         };
     };
 }
