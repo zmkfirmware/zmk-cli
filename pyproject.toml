@@ -1,9 +1,4 @@
 [project]
-name = "zmk"
-description = "A command line program to help set up ZMK Firmware"
-readme = "README.md"
-requires-python = ">=3.11"
-license-files = ["LICENSE"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",
@@ -24,31 +19,33 @@ dependencies = [
   "typer >= 0.21.0, < 0.22.0",
   "west >= 1.5.0, < 2.0.0",
 ]
-dynamic = ["version"]
+description = "A command line program to help set up ZMK Firmware"
+license-files = ["LICENSE"]
+name = "zmk"
+readme = "README.md"
+requires-python = ">=3.11"
+version = "0.4.0"
+# dynamic = ["version"]
 
 [project.urls]
-Chat = "https://zmk.dev/community/discord/invite"
-Documentation = "https://zmk.dev/docs"
+Chat            = "https://zmk.dev/community/discord/invite"
+Documentation   = "https://zmk.dev/docs"
 "Issue Tracker" = "https://github.com/zmkfirmware/zmk-cli/issues/"
-"Source Code" = "https://github.com/zmkfirmware/zmk-cli/"
+"Source Code"   = "https://github.com/zmkfirmware/zmk-cli/"
 
 [project.scripts]
 zmk = "zmk.main:app"
 
 [dependency-groups]
-dev = [
-  "prek>=0.3.3",
-  "pyright>=1.1.408",
-  "ruff>=0.15.2",
-]
+dev = ["prek>=0.3.3", "pyright>=1.1.408", "ruff>=0.15.2"]
 
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
+requires      = ["setuptools", "setuptools-scm"]
 
 [tool.pyright]
+venv     = ".venv"
 venvPath = "."
-venv = ".venv"
 
 [tool.ruff.lint]
 select = [
@@ -99,7 +96,7 @@ select = [
   # flake8-type-checking
   "TC",
   # pyupgrade
-  "UP"
+  "UP",
 ]
 
 [tool.setuptools]
