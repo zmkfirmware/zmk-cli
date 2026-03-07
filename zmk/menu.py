@@ -2,19 +2,24 @@
 Terminal menus
 """
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Generator, Iterable
 from contextlib import contextmanager, suppress
-from typing import Generic, Self, TypeVar
+from typing import Generic, Protocol, TypeVar, runtime_checkable
 
 import rich
-from rich.console import Console, RenderableType
+from rich.console import Console, RenderableType, group
+from rich.control import Control
 from rich.highlighter import Highlighter
-from rich.style import Style
+from rich.live import Live
+from rich.padding import Padding
+from rich.style import Style, StyleType
+from rich.table import Table
 from rich.text import Text
 from rich.theme import Theme
 
 from . import terminal
-from .util import splice
+from .styles import chain_highlighters
+from .util import horizontal_group, splice
 
 
 class StopMenu(KeyboardInterrupt):
@@ -23,7 +28,23 @@ class StopMenu(KeyboardInterrupt):
     """
 
 
-T = TypeVar("T")
+@runtime_checkable
+class MenuRow(Protocol):
+    """
+    An object that will display multiple values in a menu.
+
+    __menu_row__() functions like __rich__(), except it returns any number of
+    renderables, and each must be no more than one line tall. They will be
+    aligned in columns in the menu.
+    """
+
+    def __menu_row__(self) -> Iterable[RenderableType]: ...
+
+
+T = TypeVar("T", bound=RenderableType | MenuRow)
+
+_MenuRow = tuple[list[RenderableType], StyleType | None]
+"""Type alias for a list of values to render for a row and the style to apply to them"""
 
 
 class TerminalMenu(Generic[T], Highlighter):
@@ -50,7 +71,7 @@ class TerminalMenu(Generic[T], Highlighter):
         }
     )
 
-    title: RenderableType | None
+    title: str | None
     items: list[T]
     default_index: int
 
@@ -67,13 +88,14 @@ class TerminalMenu(Generic[T], Highlighter):
 
     def __init__(
         self,
-        title: RenderableType | None,
+        title: str | None,
         items: Iterable[T],
         *,
         default_index=0,
         filter_func: Callable[[T, str], bool] | None = None,
         console: Console | None = None,
         theme: Theme | None = None,
+        padding=3,
     ):
         """
         An interactive terminal menu.
@@ -87,12 +109,14 @@ class TerminalMenu(Generic[T], Highlighter):
             field will be displayed after the menu title.
         :param console: Console in which to display the menu.
         :param theme: Theme to apply. See TerminalMenu.DEFAULT_THEME for style names.
+        :param padding: Number of spaces between columns.
         """
         self.title = title
         self.items = list(items)
         self.console = console or rich.get_console()
         self.theme = theme or self.DEFAULT_THEME
         self.default_index = default_index
+        self.padding = padding
 
         self._filter_func = filter_func
         self._filter_text = ""
@@ -112,8 +136,8 @@ class TerminalMenu(Generic[T], Highlighter):
         if self._get_display_count() == self._max_items_per_page:
             self._top_row = 1
         else:
-            row, _ = terminal.get_cursor_pos()
-            self._top_row = min(row, self.console.height - self._get_menu_height())
+            _, y = terminal.get_cursor_pos()
+            self._top_row = min(y, self.console.height - self._get_menu_height())
 
         self._apply_filter()
 
@@ -127,28 +151,16 @@ class TerminalMenu(Generic[T], Highlighter):
 
         self._focus_index = self.default_index
 
-        try:
-            with self._context():
-                while True:
-                    self._scroll_index = self._get_scroll_index()
-                    self._print_menu()
-                    self._move_cursor_to_filter()
+        with self._context() as live:
+            while True:
+                self._scroll_index = self._get_scroll_index()
+                live.update(self._render_menu(), refresh=True)
 
-                    if self.has_filter:
-                        terminal.show_cursor()
-
+                with self._move_cursor_to_filter():
                     if self._handle_input():
-                        try:
+                        # _focus_index may be invalid if _filter_items is empty.
+                        with suppress(IndexError):
                             return self._filter_items[self._focus_index]
-                        except IndexError:
-                            pass
-
-                    if self.has_filter:
-                        terminal.hide_cursor()
-
-                    self._move_cursor_to_top()
-        finally:
-            self._erase_controls()
 
     @property
     def has_filter(self) -> bool:
@@ -173,16 +185,47 @@ class TerminalMenu(Generic[T], Highlighter):
 
     @contextmanager
     def _context(self):
+        controls = Text(self.CONTROLS, style="dim", no_wrap=True, overflow="crop")
+        if self.has_filter:
+            controls.append(self.FILTER_CONTROLS)
+
         old_highlighter = self.console.highlighter
         try:
-            terminal.hide_cursor()
-            self.console.highlighter = self
+            self.console.show_cursor(show=False)
 
-            with self.console.use_theme(self.theme):
-                yield
+            # Merge the console's existing highlighter with the menu highlighter
+            self.console.highlighter = chain_highlighters(old_highlighter, self)
+
+            # Display the title and menu items in a live view, which we will
+            # update as the user interacts with the menu. Below that, display
+            # the control help text. This never gets updated, but it uses a
+            # transient live view to it gets hidden when the menu is closed.
+            # Both need redirect_stdout=False because the default behavior will
+            # conflict with our cursor position modifications, resulting in the
+            # rendered menu not being cleaned up properly on Esc/Ctrl+C.
+            with (
+                self.console.use_theme(self.theme),
+                Live(
+                    console=self.console,
+                    redirect_stdout=False,
+                    auto_refresh=False,
+                ) as live,
+                Live(
+                    controls,
+                    console=self.console,
+                    redirect_stdout=False,
+                    auto_refresh=False,
+                    transient=True,
+                ),
+            ):
+                yield live
         finally:
-            terminal.show_cursor()
             self.console.highlighter = old_highlighter
+            self.console.show_cursor(show=True)
+
+            # Add one blank line when the menu is closed to give some space
+            # between the menu and whatever follows it.
+            self.console.print()
 
     def _apply_filter(self):
         if self._filter_func:
@@ -195,78 +238,91 @@ class TerminalMenu(Generic[T], Highlighter):
                 i for i in self.items if self._filter_func(i, self._filter_text)
             ]
 
+            # If the previously-focused item is still visible, update the focus
+            # index to that item's new index. Update the scroll index as well to
+            # try to keep that item in the same place on the screen.
             if old_focus is not None:
                 with suppress(ValueError):
+                    scroll_offset = self._focus_index - self._scroll_index
                     self._focus_index = self._filter_items.index(old_focus)
+                    self._scroll_index = self._focus_index - scroll_offset
         else:
             self._filter_items = self.items
 
         self._clamp_focus_index()
 
-    def _print_menu(self):
+    @group()
+    def _render_menu(self):
         if self.title:
-            self.console.print(
-                f"[title]{self.title}[/title] [filter]{self._filter_text}[/filter]",
-                justify="left",
-                highlight=False,
+            yield Text.assemble(
+                (self.title, "title"), " ", (self._filter_text, "filter")
             )
 
+        # Find the items that are visible and render them to a list of rows.
+        # Organize the rows into a grid to align columns of data.
+        grid = Table.grid(padding=(0, self.padding))
+        grid.highlight = True
+
+        if rows := list(self._render_rows()):
+            max_columns = max(len(row) for row, _ in rows)
+
+            for _ in range(max_columns):
+                grid.add_column(no_wrap=True)
+
+            for row, style in rows:
+                grid.add_row(*row, style=style)
+
+        # Wrap the grid in a Padding() so it clears the entire width of the terminal.
+        # (expand=True on the grid would also work, but that affects column widths.)
+        yield Padding(grid)
+
+    def _render_rows(self) -> Generator[_MenuRow]:
         display_count = self._get_display_count()
 
-        for row in range(display_count):
-            if row == 0 and not self._filter_items:
-                self.console.print(
-                    "[dim]No matching items",
-                    justify="left",
-                    highlight=False,
-                    no_wrap=True,
-                )
-                continue
+        # If the filter doesn't match any items, display a message on the first
+        # line and blank the rest of the menu.
+        if not self._filter_items:
+            yield (["No matching items"], Style(dim=True))
+            for _ in range(display_count - 1):
+                yield ([], None)
 
+            return
+
+        scroll_at_top = self._scroll_index == 0
+        scroll_at_bottom = self._scroll_index + display_count >= len(self._filter_items)
+
+        for row in range(display_count):
             index = self._scroll_index + row
             focused = index == self._focus_index
 
-            at_start = self._scroll_index == 0
-            at_end = self._scroll_index + display_count >= len(self._filter_items)
-            show_more = (not at_start and row == 0) or (
-                not at_end and row == display_count - 1
-            )
+            is_top_ellipsis = row == 0 and not scroll_at_top
+            is_bottom_ellipsis = row == display_count - 1 and not scroll_at_bottom
 
-            try:
-                item = self._filter_items[index]
-                self._print_item(item, focused=focused, show_more=show_more)
-            except IndexError:
-                self.console.print(justify="left")
+            if is_top_ellipsis or is_bottom_ellipsis:
+                yield (["  ..."], "ellipsis")
+            else:
+                try:
+                    yield self._render_item(self._filter_items[index], focused=focused)
+                except IndexError:
+                    yield ([], None)
 
-        controls = self.CONTROLS
-        if self.has_filter:
-            controls += self.FILTER_CONTROLS
+    def _render_item(self, item: T | str, *, focused: bool) -> _MenuRow:
+        style = "focus" if focused else "unfocus"
 
-        self.console.print(
-            controls,
-            style="controls",
-            end="",
-            highlight=False,
-            no_wrap=True,
-            overflow="crop",
-        )
+        columns: list[RenderableType]
+        if isinstance(item, MenuRow):
+            columns = list(item.__menu_row__()) or [""]
+        else:
+            columns = [item]
 
-    def _print_item(self, item: T | str, *, focused: bool, show_more: bool):
-        style = "ellipsis" if show_more else "focus" if focused else "unfocus"
-
+        # The table has larger padding between columns than we want for the
+        # focused item indicator or indent on unfocused items, so modify the
+        # value in the first column to contain the indicator/indent instead of
+        # putting it in a separate column.
         indent = "> " if focused else "  "
-        item = "..." if show_more else item
+        columns[0] = horizontal_group(indent, columns[0])
 
-        self.console.print(
-            indent,
-            item,
-            sep="",
-            style=style,
-            highlight=True,
-            justify="left",
-            no_wrap=True,
-            overflow="ellipsis",
-        )
+        return ([*columns], style)
 
     def _clamp_focus_index(self):
         self._focus_index = min(max(0, self._focus_index), len(self._filter_items) - 1)
@@ -370,44 +426,65 @@ class TerminalMenu(Generic[T], Highlighter):
         items_count = len(self._filter_items)
         display_count = self._get_display_count()
 
-        if items_count < display_count:
+        if items_count <= display_count:
+            # There is enough space to show the whole menu without scrolling.
             return 0
 
         first_displayed = self._scroll_index
         last_displayed = first_displayed + display_count - 1
 
+        if last_displayed >= items_count:
+            # There are more items in the menu than available space, but the
+            # current scroll position would leave blank spaces at the bottom.
+            # Scroll up enough to fill every row of the menu with an item.
+            first_displayed = items_count - display_count
+            last_displayed = first_displayed + display_count - 1
+
         if self._focus_index <= first_displayed + self.SCROLL_MARGIN:
-            return max(0, self._focus_index - 1 - self.SCROLL_MARGIN)
+            # The focused item is off the top of the screen. Scroll up enough to
+            # get it in view. Also fit as many menu items in as possible so we
+            # don't get just a couple visible when there's room for more.
+            start = min(
+                items_count - display_count,
+                self._focus_index - 1 - self.SCROLL_MARGIN,
+            )
+            return max(0, start)
 
         if self._focus_index >= last_displayed - self.SCROLL_MARGIN:
+            # Focused item is off the bottom of the screen. Scroll down enough
+            # to get it in view.
             end = min(items_count - 1, self._focus_index + 1 + self.SCROLL_MARGIN)
             return end - (display_count - 1)
 
-        return self._scroll_index
+        return first_displayed
 
-    def _move_cursor_to_top(self):
-        """Move the cursor to the start of the menu"""
-        terminal.set_cursor_pos(row=self._top_row)
-
+    @contextmanager
     def _move_cursor_to_filter(self):
-        """Move the cursor to the filter text field"""
-        row = self._top_row + self._num_title_lines - 1
-        col = self._last_title_line_len + self._cursor_index
+        """
+        Context manager which move the cursor to the filter text field and shows
+        it, runs the context, then sets the cursor back where it was and hides it.
+        """
 
-        terminal.set_cursor_pos(row, col)
+        if not self.has_filter:
+            yield
+            return
 
-    def _erase_controls(self):
-        """Hide the controls text and reset the cursor to after the menu"""
-        row = self.console.height - 1
+        orig_x, orig_y = terminal.get_cursor_pos()
 
-        terminal.set_cursor_pos(row=row, col=0)
-        self.console.print(justify="left")
+        x = self._last_title_line_len + self._cursor_index
+        y = self._top_row + self._num_title_lines - 1
 
-        terminal.set_cursor_pos(self._top_row + len(self._filter_items) + 1)
+        try:
+            self.console.control(Control.move_to(x, y))
+            self.console.show_cursor(show=True)
+            yield
+        finally:
+            self.console.show_cursor(show=False)
+            self.console.control(Control.move_to(orig_x, orig_y))
 
 
 def show_menu(
-    title: RenderableType | None,
+    title: str | None,
     items: Iterable[T],
     *,
     default_index=0,
@@ -442,45 +519,26 @@ def show_menu(
 
 
 class Detail(Generic[T]):
-    """A menu item with a description appended to the end."""
-
-    MIN_PAD = 2
+    """A menu item with a description."""
 
     data: T
     detail: str
-    pad_len: int
 
     def __init__(self, data: T, detail: str):
         self.data = data
         self.detail = detail
-        self.pad_len = self.MIN_PAD
 
-    def __rich__(self):
-        text = Text.assemble(str(self.data), " " * self.pad_len, (self.detail, "dim"))
-        # Returning the Text object directly works, but it doesn't get highlighted.
-        return text.markup
+    def __menu_row__(self) -> Iterable[RenderableType]:
+        if isinstance(self.data, MenuRow):
+            yield from self.data.__menu_row__()
+        else:
+            yield self.data
 
-    @classmethod
-    def align(cls, items: Iterable[Self], console: Console | None = None) -> list[Self]:
-        """Set the padding for each item in the list to align the detail strings."""
-        items = list(items)
-        console = console or rich.get_console()
-
-        for item in items:
-            item.pad_len = console.measure(str(item.data)).minimum
-
-        width = max(item.pad_len for item in items)
-
-        for item in items:
-            item.pad_len = width - item.pad_len + cls.MIN_PAD
-
-        return items
+        yield f"[dim]{self.detail}"
 
 
-def detail_list(
-    items: Iterable[tuple[T, str]], console: Console | None = None
-) -> list[Detail[T]]:
+def detail_list(items: Iterable[tuple[T, str]]) -> list[Detail[T]]:
     """
-    Create a list of menu items with a description appended to each item.
+    Create a list of menu items with a description next to each item.
     """
-    return Detail.align([Detail(item, desc) for item, desc in items], console=console)
+    return [Detail(item, desc) for item, desc in items]
