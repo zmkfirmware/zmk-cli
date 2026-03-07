@@ -1,5 +1,5 @@
 """
-Terminal utilities
+Terminal utilities for things not already provided by Rich.
 """
 
 # Ignore missing attributes for platform-specific modules
@@ -12,19 +12,6 @@ import os
 import sys
 from collections.abc import Generator
 from contextlib import contextmanager
-
-
-def hide_cursor() -> None:
-    """Hides the terminal cursor."""
-    sys.stdout.write("\x1b[?25l")
-    sys.stdout.flush()
-
-
-def show_cursor() -> None:
-    """Unhides the terminal cursor."""
-    sys.stdout.write("\x1b[?25h")
-    sys.stdout.flush()
-
 
 ESCAPE = b"\x1b"
 BACKSPACE = b"\b"
@@ -168,7 +155,7 @@ except ImportError:
 
 def get_cursor_pos() -> tuple[int, int]:
     """
-    Returns the cursor position as a tuple (row, column). Positions are 0-based.
+    Returns the cursor position as a tuple (x, y). Positions are 0-based.
     """
     with disable_echo():
         sys.stdout.write("\x1b[6n")
@@ -179,13 +166,4 @@ def get_cursor_pos() -> tuple[int, int]:
             result += sys.stdin.read(1)
 
         row, _, col = result.removeprefix("\x1b[").removesuffix("R").partition(";")
-        return (int(row) - 1, int(col) - 1)
-
-
-def set_cursor_pos(row=0, col=0) -> None:
-    """
-    Sets the cursor to the given row and column. Positions are 0-based.
-    """
-    with disable_echo():
-        sys.stdout.write(f"\x1b[{row + 1};{col + 1}H")
-        sys.stdout.flush()
+        return (int(col) - 1, int(row) - 1)

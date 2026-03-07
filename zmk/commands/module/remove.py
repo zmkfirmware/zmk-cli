@@ -5,17 +5,19 @@
 import shutil
 import stat
 import subprocess
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated, Any
 
 import rich
 import typer
+from rich.console import RenderableType
 from west.manifest import Project
 
 from ...config import get_config
 from ...exceptions import FatalError
-from ...menu import Detail, detail_list, show_menu
+from ...menu import show_menu
 from ...repo import Repo
 from ...util import spinner
 from ...yaml import YAML
@@ -91,10 +93,10 @@ def _delete_project_files(repo: Repo, project: Project):
 
 
 def _prompt_project(projects: list[Project]):
-    items = detail_list((ProjectWrapper(p), p.url) for p in projects)
+    items = [ProjectWrapper(p) for p in projects]
 
     result = show_menu("Select the module to remove:", items, filter_func=_filter)
-    return result.data.project
+    return result.project
 
 
 @dataclass
@@ -103,10 +105,11 @@ class ProjectWrapper:
 
     project: Project
 
-    def __str__(self):
-        return self.project.name
+    def __menu_row__(self) -> Iterable[RenderableType]:
+        yield self.project.name
+        yield self.project.url
 
 
-def _filter(item: Detail[ProjectWrapper], text: str):
+def _filter(item: ProjectWrapper, text: str):
     text = text.casefold()
-    return text in item.data.project.name.casefold() or text in item.detail
+    return text in item.project.name.casefold() or text in item.project.url.casefold()
