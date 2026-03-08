@@ -3,7 +3,7 @@
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.codeActionsOnSave": {
-      "source.organizeImports": "explicit"
+      "source.organizeImports.ruff": "explicit"
     }
   },
   "[markdown][yaml]": {
