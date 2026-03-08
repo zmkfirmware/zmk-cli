@@ -14,7 +14,8 @@ from rich.prompt import Confirm, InvalidResponse, PromptBase
 
 from ...config import get_config
 from ...exceptions import FatalError
-from ...hardware import Interconnect, get_hardware, show_hardware_menu
+from ...hardware import Interconnect
+from ...hardware_list import get_hardware, show_hardware_menu
 from ...menu import detail_list, show_menu
 from ...repo import Repo
 from ...templates import get_template_files
