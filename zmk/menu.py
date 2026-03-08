@@ -133,11 +133,17 @@ class TerminalMenu(Generic[T], Highlighter):
             self._num_title_lines = 0
             self._last_title_line_len = 0
 
-        if self._get_display_count() == self._max_items_per_page:
-            self._top_row = 1
+        if terminal.cursor_control_supported():
+            if self._get_display_count() == self._max_items_per_page:
+                self._top_row = 1
+            else:
+                _, y = terminal.get_cursor_pos()
+                self._top_row = min(y, self.console.height - self._get_menu_height())
         else:
-            _, y = terminal.get_cursor_pos()
-            self._top_row = min(y, self.console.height - self._get_menu_height())
+            # If get_cursor_pos() is unsupported, then we can't move the cursor
+            # accurately between the end of the menu and the filter text. Disable
+            # the filter feature so the menu still mostly works.
+            self._filter_func = None
 
         self._apply_filter()
 
@@ -381,7 +387,7 @@ class TerminalMenu(Generic[T], Highlighter):
         return False
 
     def _handle_backspace(self):
-        if self._cursor_index == 0:
+        if not self.has_filter or self._cursor_index == 0:
             return
 
         self._filter_text = splice(self._filter_text, self._cursor_index - 1, count=1)
@@ -389,13 +395,16 @@ class TerminalMenu(Generic[T], Highlighter):
         self._apply_filter()
 
     def _handle_delete(self):
-        if self._cursor_index == len(self._filter_text):
+        if not self.has_filter or self._cursor_index == len(self._filter_text):
             return
 
         self._filter_text = splice(self._filter_text, self._cursor_index, count=1)
         self._apply_filter()
 
     def _handle_text(self, key: bytes):
+        if not self.has_filter:
+            return
+
         text = key.decode()
         self._filter_text = splice(
             self._filter_text, self._cursor_index, insert_text=text
