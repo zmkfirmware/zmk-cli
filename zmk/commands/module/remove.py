@@ -80,7 +80,12 @@ def _delete_project_files(repo: Repo, project: Project):
     with spinner("Deleting module files."):
         try:
             # Make sure Git isn't locking the folder first.
-            subprocess.call(["git", "fsmonitor--daemon", "stop"], cwd=module_path)
+            subprocess.call(
+                ["git", "fsmonitor--daemon", "stop"],
+                cwd=module_path,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
 
             shutil.rmtree(module_path, onexc=remove_readonly)
         except FileNotFoundError:
