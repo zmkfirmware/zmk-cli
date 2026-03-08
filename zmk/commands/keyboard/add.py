@@ -2,31 +2,22 @@
 "zmk keyboard add" command.
 """
 
-import itertools
 import shutil
 from pathlib import Path
 from typing import Annotated
 
 import rich
 import typer
+from rich.padding import Padding
 
-from ...build import BuildItem, BuildMatrix
+from ...build import BuildMatrix
 from ...config import get_config
 from ...exceptions import FatalError
-from ...hardware import (
-    Board,
-    Hardware,
-    Keyboard,
-    Shield,
-    append_revision,
-    get_hardware,
-    is_compatible,
-    normalize_revision,
-    show_hardware_menu,
-    show_revision_menu,
-    split_revision,
-)
+from ...hardware import Board, BoardTarget, Keyboard, Shield
+from ...hardware_list import get_hardware, show_hardware_menu, show_revision_menu
 from ...repo import Repo
+from ...revision import Revision
+from ...styles import THEME, BoardIdHighlighter, chain_highlighters
 from ...util import spinner
 
 
@@ -55,6 +46,8 @@ def keyboard_add(
     """Add configuration for a keyboard and add it to the build."""
 
     console = rich.get_console()
+    console.push_theme(THEME)
+    console.highlighter = chain_highlighters(console.highlighter, BoardIdHighlighter())
 
     cfg = get_config(ctx)
     repo = cfg.get_repo()
@@ -62,94 +55,111 @@ def keyboard_add(
     with spinner("Finding hardware..."):
         hardware = get_hardware(repo)
 
-    keyboard = None
-    controller = None
-    revision = None
+    keyboard = Keyboard()
 
     if keyboard_id:
-        keyboard_id, keyboard_revision = split_revision(keyboard_id)
+        # User specified a keyboard. It might be either a board (with optional
+        # revision and board qualifiers) or a shield.
+        target = BoardTarget.parse(keyboard_id)
+        keyboard_id = target.name + target.qualifiers
 
-        keyboard = hardware.find_keyboard(keyboard_id)
-        if keyboard is None:
+        keys_component = hardware.find_keyboard(keyboard_id)
+        if not keys_component:
             raise KeyboardNotFoundError(keyboard_id)
 
-        # If the keyboard ID contained a revision, use that.
-        # Make sure it is valid before continuing to any other prompts.
-        if keyboard_revision:
-            revision = keyboard_revision
-            _check_revision(keyboard, revision)
+        keyboard.add_component(keys_component)
+        if target.revision:
+            _check_revision(keys_component, target.revision)
+            keyboard.board_revision = target.revision
 
         if controller_id:
-            if not isinstance(keyboard, Shield):
+            # User also specified a controller board (with optional revision and
+            # board qualifiers). If the specified keyboard was already a board,
+            # then this is invalid because we can't have two boards.
+            if keyboard.board:
                 raise FatalError(
-                    f'Keyboard "{keyboard.id}" has an onboard controller '
+                    f'Keyboard "{keys_component.id}" has an onboard controller '
                     "and does not require a controller board."
                 )
 
+            target = BoardTarget.parse(controller_id)
+            controller_id = target.name + target.qualifiers
+
             controller = hardware.find_controller(controller_id)
-            if controller is None:
+            if not controller:
                 raise ControllerNotFoundError(controller_id)
 
-    elif controller_id:
-        controller_id, controller_revision = split_revision(controller_id)
+            keyboard.add_component(controller)
+            if target.revision:
+                _check_revision(controller, target.revision)
+                keyboard.board_revision = target.revision
 
-        # User specified a controller but not a keyboard. Filter the keyboard
-        # list to just those compatible with the controller.
+    elif controller_id:
+        # User specified a controller but not a keyboard. Find the controller.
+        # We will prompt for the shield later.
+
+        target = BoardTarget.parse(controller_id)
+
         controller = hardware.find_controller(controller_id)
-        if controller is None:
+        if not controller:
             raise ControllerNotFoundError(controller_id)
 
-        # If the controller ID contained a revision, use that.
-        # Make sure it is valid before continuing to any other prompts.
-        if controller_revision:
-            revision = controller_revision
-            _check_revision(controller, revision)
+        keyboard.add_component(controller)
+        if target.revision:
+            _check_revision(controller, target.revision)
+            keyboard.board_revision = target.revision
 
-        hardware.keyboards = [
-            kb
-            for kb in hardware.keyboards
-            if isinstance(kb, Shield) and is_compatible(controller, kb)
-        ]
+        # When prompting for a keyboard later, it should only display the shields
+        # that are compatible with the chosen board.
+        hardware.filter_compatible_keyboards(keyboard)
 
     # Prompt the user for any necessary components they didn't specify
-    if keyboard is None:
-        keyboard = show_hardware_menu("Select a keyboard:", hardware.keyboards)
+    if not keyboard.keys_component:
+        keyboard.add_component(
+            show_hardware_menu("Select a keyboard:", hardware.keyboards)
+        )
 
-    if isinstance(keyboard, Shield):
-        if controller is None:
-            hardware.controllers = [
-                c for c in hardware.controllers if is_compatible(c, keyboard)
-            ]
-            controller = show_hardware_menu(
-                "Select a controller:", hardware.controllers
-            )
+    if not keyboard.board:
+        hardware.filter_compatible_controllers(keyboard)
 
-        # Sanity check that everything is compatible
-        if not is_compatible(controller, keyboard):
-            raise FatalError(
-                f'Keyboard "{keyboard.id}" is not compatible with controller "{controller.id}"'
-            )
+        keyboard.add_component(
+            show_hardware_menu("Select a controller:", hardware.controllers)
+        )
 
-        # Check if the controller needs a revision.
-        revision = _get_revision(controller, revision)
+    # Sanity check the resulting hardware compatibility
+    if not keyboard.board:
+        raise FatalError(
+            "Controller board is missing (this is probably a bug in ZMK CLI)."
+        )
+
+    if not keyboard.keys_component:
+        raise FatalError(
+            "Component with 'keys' feature is missing (this is probably a bug in ZMK CLI)."
+        )
+
+    if keyboard.missing_requirements:
+        raise FatalError(
+            f'Keyboard "{keyboard.keys_component}" is not compatible with controller "{keyboard.board}". '
+            f"Required interconnects are missing: {', '.join(keyboard.missing_requirements)}"
+        )
+
+    # If a revision wasn't already set from the command line, the user may need
+    # to choose a revision.
+    if not keyboard.board_revision and keyboard.board_revisions:
+        keyboard.board_revision = show_revision_menu(keyboard.board)
+
+    if added := _add_keyboard(repo, keyboard):
+        console.print("[title]Added:")
+
+        for item in added:
+            console.print(Padding.indent(item, 2))
+
+        console.print()
     else:
-        # If the keyboard isn't a shield, it may need a revision.
-        revision = _get_revision(keyboard, revision)
-
-    name = keyboard.id
-    if controller:
-        name += ", " + controller.id
-
-    if revision:
-        revision = normalize_revision(revision)
-        name = append_revision(name, revision)
-
-    if _add_keyboard(repo, keyboard, controller, revision):
-        console.print(f'Added "{name}".')
-    else:
+        name = keyboard.keys_component.name
         console.print(f'"{name}" is already in the build matrix.')
 
-    keymap_name = keyboard.get_keymap_path(revision).with_suffix("").name
+    keymap_name = keyboard.get_keymap_path().with_suffix("").name
 
     console.print(f'Run "zmk code {keymap_name}" to edit the keymap.')
 
@@ -174,64 +184,28 @@ def _copy_keyboard_file(repo: Repo, path: Path):
         shutil.copy2(path, dest_path)
 
 
-def _get_build_items(
-    keyboard: Keyboard, controller: Board | None, revision: str | None
-):
-    boards = []
-    shields = []
+def _check_revision(board: Board | Shield, revision: Revision):
+    if not isinstance(board, Board):
+        raise FatalError(f"{board.id} is a shield. Only boards support revisions.")
 
-    match keyboard:
-        case Shield(id=shield_id, siblings=siblings):
-            if controller is None:
-                raise FatalError("controller may not be None if keyboard is a shield")
-
-            shields = siblings or [shield_id]
-            boards = [append_revision(controller.id, revision)]
-
-        case Board(id=board_id, siblings=siblings):
-            boards = siblings or [board_id]
-            boards = [append_revision(board, revision) for board in boards]
-
-        case _:
-            raise FatalError("Unexpected keyboard/controller combination")
-
-    if shields:
-        return [
-            BuildItem(board=b, shield=s) for b, s in itertools.product(boards, shields)
-        ]
-
-    return [BuildItem(board=b) for b in boards]
-
-
-def _get_revision(board: Hardware, revision: str | None):
-    # If no revision was specified and the board uses revisions, prompt to
-    # select a revision.
-    return revision or show_revision_menu(board)
-
-
-def _check_revision(board: Hardware, revision: str):
-    if board.has_revision(revision):
+    if revision in board.revisions:
         # Revision is OK
         return
 
-    supported_revisions = board.get_revisions()
-
-    if not supported_revisions:
+    if not board.revisions:
         raise FatalError(f"{board.id} does not have any revisions.")
 
     raise FatalError(
         f'{board.id} does not support revision "@{revision}". Use one of:\n'
-        + "\n".join(f"  @{normalize_revision(rev)}" for rev in supported_revisions)
+        + "\n".join(f"  @{rev}" for rev in board.revisions)
     )
 
 
-def _add_keyboard(
-    repo: Repo, keyboard: Keyboard, controller: Board | None, revision: str | None
-):
-    _copy_keyboard_file(repo, keyboard.get_keymap_path(revision))
-    _copy_keyboard_file(repo, keyboard.get_config_path(revision))
+def _add_keyboard(repo: Repo, keyboard: Keyboard):
+    items = keyboard.get_build_items()
 
-    items = _get_build_items(keyboard, controller, revision)
+    _copy_keyboard_file(repo, keyboard.get_keymap_path())
+    _copy_keyboard_file(repo, keyboard.get_config_path())
 
     matrix = BuildMatrix.from_repo(repo)
     added = matrix.append(items)
