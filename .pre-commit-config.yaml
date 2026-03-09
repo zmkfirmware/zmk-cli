@@ -1,7 +1,7 @@
 fail_fast: false
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.2
+    rev: v0.15.5
     hooks:
       - id: ruff-check
       - id: ruff-format
@@ -18,7 +18,7 @@ repos:
       - id: check-added-large-files
       - id: check-shebang-scripts-are-executable
   - repo: https://github.com/tombi-toml/tombi-pre-commit
-    rev: v0.7.32
+    rev: v0.9.4
     hooks:
       - id: tombi-format
       - id: tombi-lint
