@@ -11,6 +11,8 @@ from rich.theme import Theme
 class KeyValueHighlighter(RegexHighlighter):
     """Highlight "key=value" items."""
 
+    base_style = "kv."
+
     highlights = [  # noqa: RUF012 https://github.com/astral-sh/ruff/issues/5429
         r"(?P<key>[\w.]+)(?P<equals>=)(?P<value>.*)"
     ]
@@ -22,7 +24,7 @@ class BoardIdHighlighter(RegexHighlighter):
     base_style = "board."
 
     highlights = [  # noqa: RUF012 https://github.com/astral-sh/ruff/issues/5429
-        r"(?P<separator>[/])",
+        r"(?P<qualifier>/[a-zA-Z_]?\w*/[a-zA-Z_]\w*\b)",
         r"(?P<revision>@(?:[A-Z]|([0-9]+(\.[0-9]+){0,2})))",
     ]
 
@@ -33,30 +35,39 @@ class CommandLineHighlighter(RegexHighlighter):
     base_style = "cmd."
 
     highlights = [  # noqa: RUF012 https://github.com/astral-sh/ruff/issues/5429
-        r"(?P<flag>-[a-zA-Z]|--[a-zA-Z-_]+)"
+        r"(?<!\S)(?P<flag>-[a-zA-Z]|--[a-zA-Z-_]+)"
     ]
 
 
 THEME = Theme(
     {
-        "key": "bright_blue",
-        "equals": "dim blue",
+        "title": "bright_magenta",
+        "kv.key": "bright_blue",
+        "kv.equals": "dim blue",
         "value": "default",
-        "board.separator": "dim",
-        "board.revision": "sky_blue2",
+        "board.revision": "rgb(135,95,175)",
+        "board.qualifier": "rgb(135,95,175)",
         "cmd.flag": "dim",
     }
 )
 
+# Don't use colors in menus, as that will override the focus style.
+MENU_THEME = Theme({"board.revision": "dim", "board.qualifier": "dim"})
 
-def chain_highlighters(highlighters: list[HighlighterType]) -> HighlighterType:
-    """Return a new highlighter which runs each of the given highlighters in order"""
+
+def chain_highlighters(*highlighters: HighlighterType | None) -> HighlighterType:
+    """
+    Return a new highlighter which runs each of the given highlighters in order.
+
+    Arguments that are None will be skipped.
+    """
 
     def run_all_highlighters(text: str | Text):
         text = text if isinstance(text, Text) else Text(text)
 
         for item in highlighters:
-            text = item(text)
+            if item:
+                text = item(text)
 
         return text
 

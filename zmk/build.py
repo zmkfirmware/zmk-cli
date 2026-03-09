@@ -3,45 +3,17 @@ Build matrix processing.
 """
 
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, TypeVar, cast, overload
 
 import dacite
 
+from .hardware import BoardTarget, BuildItem
 from .repo import Repo
 from .yaml import YAML
 
 T = TypeVar("T")
-
-
-@dataclass
-class BuildItem:
-    """An item in the build matrix"""
-
-    board: str
-    shield: str | None = None
-    snippet: str | None = None
-    cmake_args: str | None = None
-    artifact_name: str | None = None
-
-    def __rich__(self) -> str:
-        parts = []
-        parts.append(self.board)
-
-        if self.shield:
-            parts.append(self.shield)
-
-        if self.snippet:
-            parts.append(f"[dim]snippet: {self.snippet}[/dim]")
-
-        if self.artifact_name:
-            parts.append(f"[dim]artifact-name: {self.artifact_name}[/dim]")
-
-        if self.cmake_args:
-            parts.append(f"[dim]cmake-args: {self.cmake_args}[/dim]")
-
-        return "[dim], [/dim]".join(parts)
 
 
 @dataclass
@@ -71,7 +43,7 @@ class BuildMatrix:
             self._data = None
 
     def write(self) -> None:
-        """Updated the YAML file, creating it if necessary"""
+        """Update the YAML file, creating it if necessary"""
         self._yaml.dump(self._data, self._path)
 
     @property
@@ -86,7 +58,8 @@ class BuildMatrix:
         if not normalized:
             return []
 
-        wrapper = dacite.from_dict(_BuildMatrixWrapper, normalized)
+        config = dacite.Config(type_hooks={BoardTarget: BoardTarget.parse})
+        wrapper = dacite.from_dict(_BuildMatrixWrapper, normalized, config)
         return wrapper.include
 
     def has_item(self, item: BuildItem) -> bool:
@@ -183,12 +156,19 @@ def _keys_to_python(data: Any) -> Any:
 
 def _to_yaml(item: BuildItem):
     """
-    Convert a BuildItem to a dict with keys changed back from underscores to hyphens.
+    Convert a BuildItem to a dict with keys changed back from underscores to hyphens
+    and values changed to YAML-compatible types.
     """
 
     def fix_key(key: str):
         return key.replace("_", "-")
 
-    data = asdict(item)
+    def fix_value(value: Any):
+        match value:
+            case BoardTarget():
+                return str(value)
 
-    return {fix_key(k): v for k, v in data.items() if v is not None}
+            case _:
+                return value
+
+    return {fix_key(k): fix_value(v) for k, v in item.__dict__.items() if v is not None}

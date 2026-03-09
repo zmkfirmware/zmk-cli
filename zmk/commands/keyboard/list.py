@@ -14,18 +14,11 @@ from rich.table import Table
 
 from zmk import styles
 
-from ...build import BuildItem, BuildMatrix
+from ...build import BuildMatrix
 from ...config import get_config
 from ...exceptions import FatalError
-from ...hardware import (
-    Board,
-    Hardware,
-    Shield,
-    append_revision,
-    get_hardware,
-    is_compatible,
-    normalize_revision,
-)
+from ...hardware import Board, BoardTarget, BuildItem, Hardware, Keyboard, Shield
+from ...hardware_list import get_hardware
 from ...util import spinner
 
 # TODO: allow output as unformatted list
@@ -48,7 +41,7 @@ def _list_build_matrix(ctx: typer.Context, *, value: bool):
 
     console = Console(
         highlighter=styles.chain_highlighters(
-            [styles.BoardIdHighlighter(), styles.CommandLineHighlighter()]
+            styles.BoardIdHighlighter(), styles.CommandLineHighlighter()
         ),
         theme=styles.THEME,
     )
@@ -64,7 +57,7 @@ def _list_build_matrix(ctx: typer.Context, *, value: bool):
     has_artifact_name = any(item.artifact_name for item in include)
 
     table = Table(
-        box=box.SQUARE,
+        box=box.ROUNDED,
         border_style="dim blue",
         header_style="bright_cyan",
         highlight=True,
@@ -123,7 +116,7 @@ def keyboard_list(
             "--board",
             "-b",
             metavar="BOARD",
-            help="List only keyboards compatible with this controller board.",
+            help="List keyboards compatible with this controller board.",
         ),
     ] = None,
     shield: Annotated[
@@ -132,7 +125,7 @@ def keyboard_list(
             "--shield",
             "-s",
             metavar="SHIELD",
-            help="List only controllers compatible with this keyboard shield.",
+            help="List controllers compatible with this keyboard shield.",
         ),
     ] = None,
     interconnect: Annotated[
@@ -141,7 +134,7 @@ def keyboard_list(
             "--interconnect",
             "-i",
             metavar="INTERCONNECT",
-            help="List only keyboards and controllers that have this interconnect.",
+            help="List keyboards and controllers that use this interconnect.",
         ),
     ] = None,
     standalone: Annotated[
@@ -173,11 +166,9 @@ def keyboard_list(
         if item is None:
             raise FatalError(f'Could not find controller board "{board}".')
 
-        groups.keyboards = [
-            kb
-            for kb in groups.keyboards
-            if isinstance(kb, Shield) and is_compatible(item, kb)
-        ]
+        keyboard = Keyboard()
+        keyboard.add_component(item)
+        groups.filter_compatible_keyboards(keyboard)
         list_type = ListType.KEYBOARD
 
     elif shield:
@@ -189,23 +180,21 @@ def keyboard_list(
         if not isinstance(item, Shield):
             raise FatalError(f'Keyboard "{shield}" is a standalone keyboard.')
 
-        groups.controllers = [c for c in groups.controllers if is_compatible(c, item)]
+        keyboard = Keyboard()
+        keyboard.add_component(item)
+        groups.filter_compatible_controllers(keyboard)
         list_type = ListType.CONTROLLER
 
     elif interconnect:
-        # Filter to controllers that provide an interconnect and keyboards that use it.
+        # Filter to controllers that provide an interconnect and keyboards that
+        # use or provide it.
         item = groups.find_interconnect(interconnect)
         if item is None:
             raise FatalError(f'Could not find interconnect "{interconnect}".')
 
-        groups.controllers = [
-            c for c in groups.controllers if c.exposes and item.id in c.exposes
-        ]
-        groups.keyboards = [
-            kb
-            for kb in groups.keyboards
-            if isinstance(kb, Shield) and kb.requires and item.id in kb.requires
-        ]
+        groups.filter_to_interconnect(item)
+
+        # When filtering to an interconnect, don't show interconnects.
         groups.interconnects = []
 
     elif standalone:
@@ -214,14 +203,16 @@ def keyboard_list(
         list_type = ListType.KEYBOARD
 
     def print_items(header: str, items: Iterable[Hardware]):
-        if revisions:
-            names = [
-                append_revision(item.id, normalize_revision(rev))
-                for item in items
-                for rev in (item.get_revisions() or [None])
-            ]
-        else:
-            names = [item.id for item in items]
+        names: list[str] = []
+
+        for item in items:
+            if revisions and isinstance(item, Board):
+                names.extend(
+                    str(BoardTarget.parse(item.id).with_revision(rev))
+                    for rev in item.revisions
+                )
+            else:
+                names.append(item.id)
 
         if not names:
             return
@@ -232,6 +223,10 @@ def keyboard_list(
         columns = Columns(names, padding=(0, 2), equal=True, column_first=True)
         console.print(columns)
         console.print()
+
+    # TODO: when filtering to an interconnect, we should specify which hardware
+    # exposes vs. which requires. This would be useful if we start to add things
+    # like non-keyboard shields to the hardware info.
 
     if list_type in (ListType.ALL, ListType.KEYBOARD):
         print_items("Keyboards:", groups.keyboards)

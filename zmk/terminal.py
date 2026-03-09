@@ -1,5 +1,5 @@
 """
-Terminal utilities
+Terminal utilities for things not already provided by Rich.
 """
 
 # Ignore missing attributes for platform-specific modules
@@ -12,19 +12,6 @@ import os
 import sys
 from collections.abc import Generator
 from contextlib import contextmanager
-
-
-def hide_cursor() -> None:
-    """Hides the terminal cursor."""
-    sys.stdout.write("\x1b[?25l")
-    sys.stdout.flush()
-
-
-def show_cursor() -> None:
-    """Unhides the terminal cursor."""
-    sys.stdout.write("\x1b[?25h")
-    sys.stdout.flush()
-
 
 ESCAPE = b"\x1b"
 BACKSPACE = b"\b"
@@ -48,14 +35,7 @@ try:
     _STD_INPUT_HANDLE = -10
     _STD_OUTPUT_HANDLE = -11
 
-    _ENABLE_PROCESSED_OUTPUT = 1
-    _ENABLE_WRAP_AT_EOL_OUTPUT = 2
     _ENABLE_VIRTUAL_TERMINAL_PROCESSING = 4
-    _VT_FLAGS = (
-        _ENABLE_PROCESSED_OUTPUT
-        | _ENABLE_WRAP_AT_EOL_OUTPUT
-        | _ENABLE_VIRTUAL_TERMINAL_PROCESSING
-    )
 
     _WINDOWS_SPECIAL_KEYS = {
         71: HOME,
@@ -90,25 +70,6 @@ try:
         return key
 
     @contextmanager
-    def enable_vt_mode() -> Generator[None, None, None]:
-        """
-        Context manager which enables virtual terminal processing.
-        """
-        kernel32 = windll.kernel32
-        stdout_handle = kernel32.GetStdHandle(_STD_OUTPUT_HANDLE)
-
-        old_stdout_mode = wintypes.DWORD()
-        kernel32.GetConsoleMode(stdout_handle, byref(old_stdout_mode))
-
-        new_stdout_mode = old_stdout_mode.value | _VT_FLAGS
-
-        try:
-            kernel32.SetConsoleMode(stdout_handle, new_stdout_mode)
-            yield
-        finally:
-            kernel32.SetConsoleMode(stdout_handle, old_stdout_mode)
-
-    @contextmanager
     def disable_echo() -> Generator[None, None, None]:
         """
         Context manager which disables console echo
@@ -125,16 +86,22 @@ try:
         finally:
             kernel32.SetConsoleMode(stdin_handle, old_stdin_mode)
 
+    def cursor_control_supported() -> bool:
+        """
+        Gets whether this terminal supports the virtual terminal escape sequence
+        for getting the cursor position.
+        """
+        kernel32 = windll.kernel32
+        stdout_handle = kernel32.GetStdHandle(_STD_OUTPUT_HANDLE)
+
+        stdout_mode = wintypes.DWORD()
+        kernel32.GetConsoleMode(stdout_handle, byref(stdout_mode))
+
+        return bool(stdout_mode.value & _ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+
+
 except ImportError:
     import termios
-
-    @contextmanager
-    def enable_vt_mode() -> Generator[None, None, None]:
-        """
-        Context manager which enables virtual terminal processing.
-        """
-        # Assume that Unix terminals support VT escape sequences by default.
-        yield
 
     @contextmanager
     def disable_echo() -> Generator[None, None, None]:
@@ -165,10 +132,20 @@ except ImportError:
 
             return key
 
+    def cursor_control_supported() -> bool:
+        """
+        Gets whether this terminal supports the virtual terminal escape sequence
+        for getting the cursor position.
+        """
+        # Assume that Unix terminals support VT escape sequences by default.
+        return True
+
 
 def get_cursor_pos() -> tuple[int, int]:
     """
-    Returns the cursor position as a tuple (row, column). Positions are 0-based.
+    Returns the cursor position as a tuple (x, y). Positions are 0-based.
+
+    This function may not work properly if cursor_control_supported() returns False.
     """
     with disable_echo():
         sys.stdout.write("\x1b[6n")
@@ -179,13 +156,4 @@ def get_cursor_pos() -> tuple[int, int]:
             result += sys.stdin.read(1)
 
         row, _, col = result.removeprefix("\x1b[").removesuffix("R").partition(";")
-        return (int(row) - 1, int(col) - 1)
-
-
-def set_cursor_pos(row=0, col=0) -> None:
-    """
-    Sets the cursor to the given row and column. Positions are 0-based.
-    """
-    with disable_echo():
-        sys.stdout.write(f"\x1b[{row + 1};{col + 1}H")
-        sys.stdout.flush()
+        return (int(col) - 1, int(row) - 1)

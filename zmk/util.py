@@ -4,14 +4,14 @@ General utilities.
 
 import functools
 import operator
-import os
-from collections.abc import Generator, Iterable
+from collections.abc import Iterable
 from contextlib import contextmanager
-from pathlib import Path
 from typing import TypeVar
 
-from rich.console import Console
+from rich.console import Console, RenderableType
+from rich.padding import PaddingDimensions
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 
 T = TypeVar("T")
 
@@ -21,7 +21,12 @@ def flatten(items: Iterable[T | Iterable[T]]) -> Iterable[T]:
     return functools.reduce(operator.iconcat, items, [])
 
 
-def splice(text: str, index: int, count: int = 0, insert_text: str = ""):
+def union(items: Iterable[set[T]]) -> set[T]:
+    """Compute the union of any number of sets"""
+    return functools.reduce(operator.or_, items, set())
+
+
+def splice(text: str, index: int, count: int = 0, insert_text: str = "") -> str:
     """
     Remove `count` characters starting from `index` in `text` and replace them
     with `insert_text`.
@@ -29,16 +34,27 @@ def splice(text: str, index: int, count: int = 0, insert_text: str = ""):
     return text[0:index] + insert_text + text[index + count :]
 
 
-@contextmanager
-def set_directory(path: Path) -> Generator[None, None, None]:
-    """Context manager to temporarily change the working directory"""
-    original = Path().absolute()
-
-    try:
-        os.chdir(path)
-        yield
-    finally:
-        os.chdir(original)
+def horizontal_group(
+    *renderables: RenderableType,
+    padding: PaddingDimensions = 0,
+    collapse_padding=True,
+    pad_edge=False,
+    expand=False,
+    highlight=True,
+) -> Table:
+    """
+    Similar to rich.group.Group, but uses a table to place renderables in a row
+    instead of a column.
+    """
+    grid = Table.grid(
+        padding=padding,
+        collapse_padding=collapse_padding,
+        pad_edge=pad_edge,
+        expand=expand,
+    )
+    grid.highlight = highlight
+    grid.add_row(*renderables)
+    return grid
 
 
 @contextmanager
