@@ -114,3 +114,6 @@ packages = ["zmk"]
 
 [tool.setuptools_scm]
 version_file = "zmk/_version.py"
+
+[tool.tombi.files]
+exclude = ["uv.lock"]
