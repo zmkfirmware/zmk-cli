@@ -148,15 +148,11 @@ class Repo(Module):
                 "@{upstream}",
                 capture_output=True,
             ).strip()
-            return upstream.split("/", 1)[0]
+            return upstream.split("/", maxsplit=1)[0]
         except subprocess.CalledProcessError:
             pass  # No upstream configured for the current branch.
 
-        remotes = [
-            line
-            for line in self.git("remote", capture_output=True).splitlines()
-            if line.strip()
-        ]
+        remotes = self.git("remote", capture_output=True).splitlines()
         if not remotes:
             raise RuntimeError("This repo has no Git remotes configured.")
 
