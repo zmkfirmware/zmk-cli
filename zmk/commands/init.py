@@ -44,7 +44,6 @@ def init(
         str | None,
         typer.Option(
             "--zmk-version",
-            metavar="REVISION",
             help="Use the specified version of ZMK instead of the default.",
         ),
     ] = None,
