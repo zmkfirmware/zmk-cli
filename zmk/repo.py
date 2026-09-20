@@ -131,15 +131,15 @@ class Repo(Module):
         return self.git("remote", "get-url", remote, capture_output=True).strip()
 
     def _get_tracking_remote(self) -> str:
-       """
-       Get the name of the remote tracked by the checked out Git branch.
+        """
+        Get the name of the remote tracked by the checked out Git branch.
 
-       If the checked out branch does not have a remote-tracking branch, or if
-       no branch is checked out, this falls back to "origin" if it exists, else 
-       the first defined remote.
+        If the checked out branch does not have a remote-tracking branch, or if
+        no branch is checked out, this falls back to "origin" if it exists, else
+        the first defined remote.
 
-       :raise: RuntimeError if the repo has no remotes
-       """
+        :raise: RuntimeError if the repo has no remotes
+        """
         try:
             upstream = self.git(
                 "rev-parse",
