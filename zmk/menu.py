@@ -133,7 +133,7 @@ class TerminalMenu(Generic[T], Highlighter):
             self._num_title_lines = 0
             self._last_title_line_len = 0
 
-        if terminal.cursor_control_supported():
+        if terminal.get_cursor_pos_supported():
             if self._get_display_count() == self._max_items_per_page:
                 self._top_row = 1
             else:
