@@ -115,7 +115,6 @@ def keyboard_list(
         typer.Option(
             "--board",
             "-b",
-            metavar="BOARD",
             help="List keyboards compatible with this controller board.",
         ),
     ] = None,
@@ -124,7 +123,6 @@ def keyboard_list(
         typer.Option(
             "--shield",
             "-s",
-            metavar="SHIELD",
             help="List controllers compatible with this keyboard shield.",
         ),
     ] = None,
@@ -133,7 +131,6 @@ def keyboard_list(
         typer.Option(
             "--interconnect",
             "-i",
-            metavar="INTERCONNECT",
             help="List keyboards and controllers that use this interconnect.",
         ),
     ] = None,

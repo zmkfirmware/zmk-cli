@@ -5,12 +5,12 @@ Exception types.
 from pathlib import Path
 from typing import cast
 
-from click import ClickException
 from rich.highlighter import Highlighter, ReprHighlighter
 from rich.text import Text
+from typer.exceptions import TyperException
 
 
-class FatalError(ClickException):
+class FatalError(TyperException):
     """
     Exception which terminates the program.
 

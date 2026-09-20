@@ -28,7 +28,6 @@ def keyboard_add(
         typer.Option(
             "--controller",
             "-c",
-            metavar="CONTROLLER",
             help="ID of the controller board to add.",
         ),
     ] = None,
@@ -38,7 +37,6 @@ def keyboard_add(
             "--keyboard",
             "--kb",
             "-k",
-            metavar="KEYBOARD",
             help="ID of the keyboard board/shield to add.",
         ),
     ] = None,
