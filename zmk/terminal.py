@@ -10,6 +10,7 @@ Terminal utilities for things not already provided by Rich.
 
 import os
 import sys
+import time
 from collections.abc import Generator
 from contextlib import contextmanager
 
@@ -31,6 +32,9 @@ PAGE_DOWN = b"\x1b[6~"
 try:
     import msvcrt
     from ctypes import byref, windll, wintypes
+
+    _getch = msvcrt.getch
+    _kbhit = msvcrt.kbhit
 
     _STD_INPUT_HANDLE = -10
     _STD_OUTPUT_HANDLE = -11
@@ -86,10 +90,9 @@ try:
         finally:
             kernel32.SetConsoleMode(stdin_handle, old_stdin_mode)
 
-    def cursor_control_supported() -> bool:
+    def _vt_supported() -> bool:
         """
-        Gets whether this terminal supports the virtual terminal escape sequence
-        for getting the cursor position.
+        Get whether this terminal supports virtual terminal escape sequences.
         """
         kernel32 = windll.kernel32
         stdout_handle = kernel32.GetStdHandle(_STD_OUTPUT_HANDLE)
@@ -101,6 +104,7 @@ try:
 
 
 except ImportError:
+    import select
     import termios
 
     @contextmanager
@@ -132,28 +136,81 @@ except ImportError:
 
             return key
 
-    def cursor_control_supported() -> bool:
+    def _getch() -> bytes:
+        return os.read(sys.stdin.fileno(), 1)
+
+    def _kbhit() -> bool:
+        return bool(select.select([sys.stdin], [], [], 0)[0])
+
+    def _vt_supported() -> bool:
         """
-        Gets whether this terminal supports the virtual terminal escape sequence
-        for getting the cursor position.
+        Get whether this terminal supports virtual terminal escape sequences.
         """
-        # Assume that Unix terminals support VT escape sequences by default.
         return True
+
+
+def send_csi(command: str, timeout=0.5) -> str:
+    """
+    Attempt to send a CSI command and get the response.
+
+    The "\\x1b[" prefix and "R" suffix will not be included in the response.
+
+    If the terminal is not a TTY or does not support VT sequences, or if the
+    timeout expires without getting a full response, this returns "".
+
+    :param: The command (not including \\x1b[ prefix).
+    :timeout: Time to wait for a response in seconds.
+    """
+    if not sys.stdin.isatty() or not sys.stdout.isatty() or not _vt_supported():
+        return ""
+
+    with disable_echo():
+        # Discard any data already in stdin
+        sys.stdin.flush()
+        while _kbhit():
+            _getch()
+
+        sys.stdout.write("\x1b[" + command)
+        sys.stdout.flush()
+
+        response = b""
+        start_time = time.time()
+
+        while time.time() - start_time < timeout:
+            if _kbhit():
+                c = _getch()
+                response += c
+
+                if c == b"R":
+                    # R indicates the end of the response
+                    break
+            else:
+                time.sleep(0.001)
+
+    if response.startswith(b"\x1b[") and response.endswith(b"R"):
+        return response[2:-1].decode(errors="ignore")
+
+    return ""
+
+
+def get_cursor_pos_supported() -> bool:
+    """
+    Get whether this terminal supports the virtual terminal escape sequence for
+    getting the cursor position.
+    """
+    return bool(send_csi("6n"))
 
 
 def get_cursor_pos() -> tuple[int, int]:
     """
-    Returns the cursor position as a tuple (x, y). Positions are 0-based.
+    Get the cursor position as a tuple (x, y). Positions are 0-based.
 
-    This function may not work properly if cursor_control_supported() returns False.
+    If the terminal does not support this function, this may return (0, 0) after
+    a timeout. Use cursor_control_supported() to check if the command is supported
+    and avoid calling this function if it is not supported to avoid delays.
     """
-    with disable_echo():
-        sys.stdout.write("\x1b[6n")
-        sys.stdout.flush()
-
-        result = ""
-        while not result.endswith("R"):
-            result += sys.stdin.read(1)
-
-        row, _, col = result.removeprefix("\x1b[").removesuffix("R").partition(";")
+    if result := send_csi("6n"):
+        row, _, col = result.partition(";")
         return (int(col) - 1, int(row) - 1)
+
+    return (0, 0)
